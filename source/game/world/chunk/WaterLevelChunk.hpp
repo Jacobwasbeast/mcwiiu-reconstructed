@@ -50,12 +50,11 @@ public:
                              const Predicate<boost::shared_ptr<Entity> >* predicate);
     virtual void getEntitiesOfClass(const std::type_info& type, const AABB* box,
                                     std::vector<boost::shared_ptr<Entity> >& entities,
-                                    const Predicate<boost::shared_ptr<Entity> >* predicate,
-                                    bool exact);
+                                    const Predicate<boost::shared_ptr<Entity> >* predicate, bool exact);
     virtual int countEntities();
     virtual bool shouldSave(bool force);
-    virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z,
-                                 int width, int height, int depth, int flags, bool extra);
+    virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z, int width, int height,
+                                 int depth, int flags, bool extra);
     virtual Random* getRandom(long long seed);
     virtual Biome* getBiome(const BlockPos& pos, BiomeSource* source);
     virtual void setFromRawData(arrayWithLength<unsigned char> data);

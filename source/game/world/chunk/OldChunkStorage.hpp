@@ -49,7 +49,8 @@ public:
     virtual void save(Level* level, LevelChunk* chunk);
     static bool saveEntities(LevelChunk* chunk, Level* level, CompoundTag* tag);
     static void save(LevelChunk* chunk, Level* level, DataOutputStream* stream);
-    static boost::shared_ptr<Entity> loadEntity(CompoundTag* tag, Level* level, double x, double y, double z, bool addToWorld);
+    static boost::shared_ptr<Entity> loadEntity(CompoundTag* tag, Level* level, double x, double y, double z,
+                                                bool addToWorld);
     static void addEntityToWorld(boost::shared_ptr<Entity> entity, Level* level);
     static boost::shared_ptr<Entity> loadEntity(CompoundTag* tag, Level* level, bool addToWorld);
     static void fixCauldronData(LevelChunk* chunk);

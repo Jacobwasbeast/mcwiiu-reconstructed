@@ -39,11 +39,28 @@ extern LevelRenderer* gLevelRenderer;
 static Tesselator* t;
 static int updates = 0;
 
-Chunk::Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mutex, int x, int z, int dimension, ClipChunk* clipChunk)
-    : mLevel(level), mX(0), mZ(0), mDimension(0), mDirty(0), mEmpty(0), mRenderable(0),
-      mMinX(0), mMinZ(0), mMinDimension(0), mMaxX(0), mMaxZ(0), mMaxDimension(0),
-      mBoundingBox(NULL), mOwnsBoundingBox(false), mClipChunk(clipChunk), mUnknown(0),
-      mBlockEntities(&blockEntities), mMutex(&mutex), mNonStack(false)
+Chunk::Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mutex, int x, int z, int dimension,
+             ClipChunk* clipChunk)
+    : mLevel(level),
+      mX(0),
+      mZ(0),
+      mDimension(0),
+      mDirty(0),
+      mEmpty(0),
+      mRenderable(0),
+      mMinX(0),
+      mMinZ(0),
+      mMinDimension(0),
+      mMaxX(0),
+      mMaxZ(0),
+      mMaxDimension(0),
+      mBoundingBox(NULL),
+      mOwnsBoundingBox(false),
+      mClipChunk(clipChunk),
+      mUnknown(0),
+      mBlockEntities(&blockEntities),
+      mMutex(&mutex),
+      mNonStack(false)
 {
     mClipChunk->mVisible = false;
     mClipChunk->mChunk = this;
@@ -51,8 +68,7 @@ Chunk::Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mute
     mNonStack = true;
 }
 
-Chunk::Chunk()
-    : mOwnsBoundingBox(false)
+Chunk::Chunk() : mOwnsBoundingBox(false)
 {
 }
 
@@ -215,11 +231,10 @@ void Chunk::rebuild(unsigned int* count)
                 unsigned int index = ((y & 0x80) << 8) | (y & 0x7f) | (xz << 7);
                 unsigned short element = cachedElements[index];
                 unsigned int id = elementToBlockId(element);
-                if (id == BlockId::STONE || id == BlockId::GRASS || id == BlockId::DIRT ||
-                    id == BlockId::BEDROCK || id == BlockId::SAND || id == BlockId::GRAVEL ||
-                    id == BlockId::GOLD_ORE || id == BlockId::IRON_ORE || id == BlockId::COAL_ORE ||
-                    id == BlockId::LAPIS_ORE || id == BlockId::DIAMOND_ORE ||
-                    id == BlockId::REDSTONE_ORE || id == BlockId::QUARTZ_ORE)
+                if (id == BlockId::STONE || id == BlockId::GRASS || id == BlockId::DIRT || id == BlockId::BEDROCK
+                    || id == BlockId::SAND || id == BlockId::GRAVEL || id == BlockId::GOLD_ORE
+                    || id == BlockId::IRON_ORE || id == BlockId::COAL_ORE || id == BlockId::LAPIS_ORE
+                    || id == BlockId::DIAMOND_ORE || id == BlockId::REDSTONE_ORE || id == BlockId::QUARTZ_ORE)
                     cachedElements[index] = element | 0x8000;
                 if (empty && y >= y0 && y < y1 && element != 0)
                     empty = false;
@@ -238,12 +253,9 @@ void Chunk::rebuild(unsigned int* count)
                         unsigned int index = ((y & 0x80) << 8) | (y & 0x7f) | (x << 11) | (z << 7);
                         unsigned int above = (((y + 1) & 0x80) << 8) | ((y + 1) & 0x7f) | (x << 11) | (z << 7);
                         unsigned int below = (((y - 1) & 0x80) << 8) | ((y - 1) & 0x7f) | (x << 11) | (z << 7);
-                        if ((cachedElements[index - 0x800] & 0x8000) &&
-                            (cachedElements[index + 0x800] & 0x8000) &&
-                            (cachedElements[index - 0x80] & 0x8000) &&
-                            (cachedElements[index + 0x80] & 0x8000) &&
-                            (y < 1 || (cachedElements[below] & 0x8000)) &&
-                            (cachedElements[above] & 0x8000))
+                        if ((cachedElements[index - 0x800] & 0x8000) && (cachedElements[index + 0x800] & 0x8000)
+                            && (cachedElements[index - 0x80] & 0x8000) && (cachedElements[index + 0x80] & 0x8000)
+                            && (y < 1 || (cachedElements[below] & 0x8000)) && (cachedElements[above] & 0x8000))
                             cachedElements[index] = 0xffff;
                     }
                 }
@@ -404,7 +416,8 @@ void Chunk::rebuild(unsigned int* count)
                                 }
                                 PIXBeginNamedEvent(0.0f, "Tesselate in world");
                                 if (useExtra)
-                                    rendered |= blockRenderer->tesselateInWorld(Block::getStateByElementId(element), pos, NULL,
+                                    rendered |= blockRenderer->tesselateInWorld(Block::getStateByElementId(element),
+                                                                                pos, NULL,
                                                                                 boost::shared_ptr<BlockEntity>());
                                 else
                                     rendered |= blockRenderer->tesselateInWorld(region->getBlockState(pos), pos, NULL,
@@ -466,8 +479,8 @@ void Chunk::rebuild(unsigned int* count)
                         (*it)->setRenderRemoveStage(1);
                     for (unsigned int i = 0; i < renderableBlockEntities.size(); i++)
                     {
-                        std::vector<boost::shared_ptr<BlockEntity> >::iterator previous =
-                            std::find(existing->second.begin(), existing->second.end(), renderableBlockEntities[i]);
+                        std::vector<boost::shared_ptr<BlockEntity> >::iterator previous = std::find(
+                            existing->second.begin(), existing->second.end(), renderableBlockEntities[i]);
                         if (previous == existing->second.end())
                             (*mBlockEntities)[key].push_back(renderableBlockEntities[i]);
                         else

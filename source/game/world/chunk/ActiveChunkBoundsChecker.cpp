@@ -73,8 +73,8 @@ bool ActiveChunkBoundsChecker::IsChunkWithinActiveArea(int chunkX, int chunkZ, c
         for (std::vector<AABB*>::const_iterator it = activeBounds.begin(), end = activeBounds.end(); it != end; ++it)
         {
             const AABB* bounds = *it;
-            isWithinActiveArea = bounds->mMinX <= chunkX && chunkX <= bounds->mMaxX &&
-                           bounds->mMinZ <= chunkZ && chunkZ <= bounds->mMaxZ;
+            isWithinActiveArea = bounds->mMinX <= chunkX && chunkX <= bounds->mMaxX && bounds->mMinZ <= chunkZ
+                                 && chunkZ <= bounds->mMaxZ;
             if (isWithinActiveArea)
             {
                 break;

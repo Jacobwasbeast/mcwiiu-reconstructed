@@ -32,29 +32,20 @@ public:
     BlockPos getBlockAt(int x, int y, int z);
     std::wstring toString();
     BlockPos getWorldPosition() const;
-    bool operator==(const ChunkPos& other) const
-    {
-        return x == other.x && z == other.z;
-    }
+    bool operator==(const ChunkPos& other) const { return x == other.x && z == other.z; }
     static bool eq_test(const ChunkPos& lhs, const ChunkPos& rhs);
 };
 
 class ChunkPosKeyHash
 {
 public:
-    std::size_t operator()(const ChunkPos& pos) const
-    {
-        return pos.hashCode();
-    }
+    std::size_t operator()(const ChunkPos& pos) const { return pos.hashCode(); }
 };
 
 class ChunkPosKeyEq
 {
 public:
-    bool operator()(const ChunkPos& left, const ChunkPos& right) const
-    {
-        return ChunkPos::eq_test(left, right);
-    }
+    bool operator()(const ChunkPos& left, const ChunkPos& right) const { return ChunkPos::eq_test(left, right); }
 };
 
 #endif

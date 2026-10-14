@@ -9,8 +9,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 
-EmptyLevelChunk::EmptyLevelChunk(Level* level, int x, int z)
-    : LevelChunk(level, x, z)
+EmptyLevelChunk::EmptyLevelChunk(Level* level, int x, int z) : LevelChunk(level, x, z)
 {
     mDontSave = true;
     mChunkFlags = TERRAIN_POPULATED_ALL;
@@ -129,14 +128,12 @@ void EmptyLevelChunk::markUnsaved()
 {
 }
 
-void EmptyLevelChunk::getEntities(boost::shared_ptr<Entity>, const AABB*,
-                                  std::vector<boost::shared_ptr<Entity> >&,
+void EmptyLevelChunk::getEntities(boost::shared_ptr<Entity>, const AABB*, std::vector<boost::shared_ptr<Entity> >&,
                                   const Predicate<boost::shared_ptr<Entity> >*)
 {
 }
 
-void EmptyLevelChunk::getEntitiesOfClass(const std::type_info&, const AABB*,
-                                         std::vector<boost::shared_ptr<Entity> >&,
+void EmptyLevelChunk::getEntitiesOfClass(const std::type_info&, const AABB*, std::vector<boost::shared_ptr<Entity> >&,
                                          const Predicate<boost::shared_ptr<Entity> >*, bool)
 {
 }
@@ -146,8 +143,8 @@ bool EmptyLevelChunk::shouldSave(bool)
     return false;
 }
 
-int EmptyLevelChunk::getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z,
-                                      int width, int height, int depth, int offset, bool includeLight)
+int EmptyLevelChunk::getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width,
+                                      int height, int depth, int offset, bool includeLight)
 {
     int volume = (width - x) * (height - y) * (depth - z);
     int length;
@@ -162,8 +159,8 @@ int EmptyLevelChunk::getBlocksAndData(arrayWithLength<unsigned char>* output, in
     return length;
 }
 
-int EmptyLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int y, int z,
-                                      int width, int height, int depth, int, bool includeLight)
+int EmptyLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int y, int z, int width, int height,
+                                      int depth, int, bool includeLight)
 {
     int volume = (width - x) * (height - y) * (depth - z);
     int length;
@@ -176,8 +173,9 @@ int EmptyLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
 
 Random* EmptyLevelChunk::getRandom(long long seed)
 {
-    return new Random(getLevel()->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
-                      (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f) ^ seed);
+    return new Random(getLevel()->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db)
+                          + (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f)
+                      ^ seed);
 }
 
 bool EmptyLevelChunk::isEmpty()

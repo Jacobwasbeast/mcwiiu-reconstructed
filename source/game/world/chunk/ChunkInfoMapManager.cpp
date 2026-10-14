@@ -77,8 +77,7 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
             int chunkZ = row - originChunkZ;
 
             LevelChunk* chunk = sClientChunkSource->getChunk(chunkX, chunkZ);
-            if ((!chunk->isReady() || chunk->isEmpty()) &&
-                !sServerChunkSource->reallyHasChunk(chunkX, chunkZ))
+            if ((!chunk->isReady() || chunk->isEmpty()) && !sServerChunkSource->reallyHasChunk(chunkX, chunkZ))
             {
                 chunk->isEmpty();
             }
@@ -88,8 +87,7 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
 
             for (int section = 0; section < CHUNK_INFO_MAP_SECTION_COUNT; section++)
             {
-                if ((sLevelRenderer->getGlobalChunkFlags(blockX, section * 16, blockZ, sLevel) &
-                     CHUNK_FLAG_BUILT) != 0)
+                if ((sLevelRenderer->getGlobalChunkFlags(blockX, section * 16, blockZ, sLevel) & CHUNK_FLAG_BUILT) != 0)
                 {
                     break;
                 }

@@ -11,12 +11,14 @@ class FjIsFeatureChunk
 {
 public:
     FjIsFeatureChunk();
-    FjIsFeatureChunk(const FjFeatureBiomeRequirements* requirements, unsigned int maxAttempts, int spacing, int separation);
+    FjIsFeatureChunk(const FjFeatureBiomeRequirements* requirements, unsigned int maxAttempts, int spacing,
+                     int separation);
 
     ChunkPos getCenterChunk(int chunkX, int chunkZ) const;
     bool couldSpawnInChunk(BiomeSource* biomeSource, int sizeInChunks, int chunkX, int chunkZ) const;
 
-    virtual bool isFeatureChunk(Random& random, BiomeSource* biomeSource, int sizeInChunks, int chunkX, int chunkZ) const;
+    virtual bool isFeatureChunk(Random& random, BiomeSource* biomeSource, int sizeInChunks, int chunkX,
+                                int chunkZ) const;
 
     static bool UseReducedSpacing(int sizeInChunks, bool isSuperflat);
     static FjIsFeatureChunk CreateReduced(const FjIsFeatureChunk& featureChunk);

@@ -29,9 +29,10 @@ std::deque<DataOutputStream*> McRegionChunkStorage::sSaveQueue;
 int McRegionChunkStorage::sActiveSaves = 0;
 C4JThread* McRegionChunkStorage::sSaveThreads[3];
 
-McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile,
-    const std::wstring& directory, DataFixerUpper* fixer)
-    : mDirectory(directory), mRegionData()
+McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile, const std::wstring& directory,
+                                           DataFixerUpper* fixer)
+    : mDirectory(directory),
+      mRegionData()
 {
     mFixer = fixer;
     mSaveFile = saveFile;
@@ -112,8 +113,7 @@ void McRegionChunkStorage::staticCtor()
 LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
 {
     bool newSaveFormat;
-    DataInputStream* stream = gRegionFileCache._getChunkDataInputStream(
-        mSaveFile, mDirectory, x, z, &newSaveFormat);
+    DataInputStream* stream = gRegionFileCache._getChunkDataInputStream(mSaveFile, mDirectory, x, z, &newSaveFormat);
     if (mSaveFile->getOriginalSaveVersion() >= 8 || newSaveFormat)
     {
         if (stream != NULL)
@@ -154,8 +154,9 @@ LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* c
     MemSect(0);
     if (!chunk->isAt(x, z))
     {
-        std::sprintf(message, "Chunk file at %d, %d is in the wrong location; relocating. Expected %d, %d, got %d, %d\n",
-            x, z, x, z, chunk->x, chunk->z);
+        std::sprintf(message,
+                     "Chunk file at %d, %d is in the wrong location; relocating. Expected %d, %d, got %d, %d\n", x, z,
+                     x, z, chunk->x, chunk->z);
         delete chunk;
         delete tag;
         return NULL;
@@ -251,8 +252,7 @@ void McRegionChunkStorage::WaitForSaves()
             EnterCriticalSection(&sSaveMutex);
             count = (unsigned int)sSaveQueue.size();
             LeaveCriticalSection(&sSaveMutex);
-        }
-        while (count > 6);
+        } while (count > 6);
     }
 }
 

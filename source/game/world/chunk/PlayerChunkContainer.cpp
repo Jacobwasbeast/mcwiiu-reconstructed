@@ -25,8 +25,7 @@
 #include "game/server/MinecraftServer.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
-PlayerChunkContainer::PlayerChunkContainer(PlayerChunkMap* map, int x, int z)
-    : mPos(x, z)
+PlayerChunkContainer::PlayerChunkContainer(PlayerChunkMap* map, int x, int z) : mPos(x, z)
 {
     mMap = map;
     mBlockChangesCount = 0;
@@ -116,13 +115,15 @@ void PlayerChunkContainer::remove(boost::shared_ptr<ServerPlayer> player, bool s
         {
             updateInhabitedTime();
 
-            PlayerChunkMap::ContainerVector::iterator all = std::find(mMap->mAllChunks.begin(), mMap->mAllChunks.end(), this);
+            PlayerChunkMap::ContainerVector::iterator all = std::find(mMap->mAllChunks.begin(), mMap->mAllChunks.end(),
+                                                                      this);
             if (all != mMap->mAllChunks.end())
             {
                 mMap->mAllChunks.erase(all);
             }
 
-            long long id = (static_cast<long long>(mPos.x) + INT_MAX) | ((static_cast<long long>(mPos.z) + INT_MAX) << 32);
+            long long id = (static_cast<long long>(mPos.x) + INT_MAX)
+                           | ((static_cast<long long>(mPos.z) + INT_MAX) << 32);
             PlayerChunkMap::ContainerMap::iterator entry = mMap->mChunks.find(id);
             if (entry != mMap->mChunks.end())
             {
@@ -132,7 +133,8 @@ void PlayerChunkContainer::remove(boost::shared_ptr<ServerPlayer> player, bool s
 
             if (mBlockChangesCount > 0)
             {
-                PlayerChunkMap::ContainerVector::iterator changed = std::find(mMap->mChangedChunks.begin(), mMap->mChangedChunks.end(), this);
+                PlayerChunkMap::ContainerVector::iterator changed = std::find(mMap->mChangedChunks.begin(),
+                                                                              mMap->mChangedChunks.end(), this);
                 mMap->mChangedChunks.erase(changed);
             }
 
@@ -147,7 +149,8 @@ void PlayerChunkContainer::remove(boost::shared_ptr<ServerPlayer> player, bool s
             if (networkPlayer != NULL)
             {
                 bool sentToSameSystem = false;
-                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator other = mPlayers.begin(); other < mPlayers.end(); ++other)
+                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator other = mPlayers.begin();
+                     other < mPlayers.end(); ++other)
                 {
                     boost::shared_ptr<ServerPlayer> otherPlayer = *other;
                     if (otherPlayer->mConnection != NULL)
@@ -172,7 +175,8 @@ void PlayerChunkContainer::remove(boost::shared_ptr<ServerPlayer> player, bool s
     }
 }
 
-namespace {
+namespace
+{
 
 const int BLOCK_REGION_UPDATE_PACKET_ID = 51;
 const int CHUNK_BLOCKS_UPDATE_PACKET_ID = 52;
@@ -228,10 +232,8 @@ bool PlayerChunkContainer::broadcast(boost::shared_ptr<Packet> packet)
         }
     }
 
-    if (packet->getPacketId() == BLOCK_REGION_UPDATE_PACKET_ID
-        || packet->getPacketId() == CHUNK_BLOCKS_UPDATE_PACKET_ID
-        || packet->getPacketId() == BLOCK_UPDATE_PACKET_ID
-        || packet->getPacketId() == BLOCK_ENTITY_DATA_PACKET_ID)
+    if (packet->getPacketId() == BLOCK_REGION_UPDATE_PACKET_ID || packet->getPacketId() == CHUNK_BLOCKS_UPDATE_PACKET_ID
+        || packet->getPacketId() == BLOCK_UPDATE_PACKET_ID || packet->getPacketId() == BLOCK_ENTITY_DATA_PACKET_ID)
     {
         for (unsigned int i = 0; i < mMap->getLevel()->getServer()->getPlayers()->mPlayers.size(); ++i)
         {
@@ -330,12 +332,14 @@ bool PlayerChunkContainer::broadcastChanges(bool allowRegionUpdate)
         }
 
         {
-            boost::shared_ptr<Packet> packet(new BlockRegionUpdatePacket(x, mMinY, z, width, height, depth, level, false, NULL));
+            boost::shared_ptr<Packet> packet(
+                new BlockRegionUpdatePacket(x, mMinY, z, width, height, depth, level, false, NULL));
             broadcast(packet);
         }
 
         std::vector<boost::shared_ptr<BlockEntity> >* blockEntities =
-            static_cast<ServerLevel*>(level)->getBlockEntitiesInRegion(x, mMinY, z, x + width, mMinY + height, z + depth);
+            static_cast<ServerLevel*>(level)->getBlockEntitiesInRegion(x, mMinY, z, x + width, mMinY + height,
+                                                                       z + depth);
         for (unsigned int i = 0; i < blockEntities->size(); ++i)
         {
             broadcast(blockEntities->at(i));
@@ -381,12 +385,18 @@ void PlayerChunkContainer::blockChanged(int x, int y, int z)
         mMinZ = mMaxZ = z;
     }
 
-    if (mMinX > x) mMinX = x;
-    if (mMaxX < x) mMaxX = x;
-    if (mMinY > y) mMinY = y;
-    if (mMaxY < y) mMaxY = y;
-    if (mMinZ > z) mMinZ = z;
-    if (mMaxZ < z) mMaxZ = z;
+    if (mMinX > x)
+        mMinX = x;
+    if (mMaxX < x)
+        mMaxX = x;
+    if (mMinY > y)
+        mMinY = y;
+    if (mMaxY < y)
+        mMaxY = y;
+    if (mMinZ > z)
+        mMinZ = z;
+    if (mMaxZ < z)
+        mMaxZ = z;
 
     if (mBlockChangesCount < MAX_BLOCK_CHANGES)
     {

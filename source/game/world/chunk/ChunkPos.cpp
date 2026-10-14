@@ -3,15 +3,11 @@
 #include <boost/functional/hash.hpp>
 #include "game/entity/mob/Entity.hpp"
 
-ChunkPos::ChunkPos(int x, int z)
-    : x(x)
-    , z(z)
+ChunkPos::ChunkPos(int x, int z) : x(x), z(z)
 {
 }
 
-ChunkPos::ChunkPos(const BlockPos& pos)
-    : x(pos.x >> 4)
-    , z(pos.z >> 4)
+ChunkPos::ChunkPos(const BlockPos& pos) : x(pos.x >> 4), z(pos.z >> 4)
 {
 }
 

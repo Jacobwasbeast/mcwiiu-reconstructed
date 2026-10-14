@@ -37,13 +37,11 @@ struct IntKeyHash2
 
 struct IntKeyEq
 {
-    bool operator()(int first, int second) const
-    {
-        return first == second;
-    }
+    bool operator()(int first, int second) const { return first == second; }
 };
 
-typedef boost::unordered_map<int, std::vector<boost::shared_ptr<BlockEntity> >, IntKeyHash, IntKeyEq> ChunkBlockEntityMap;
+typedef boost::unordered_map<int, std::vector<boost::shared_ptr<BlockEntity> >, IntKeyHash, IntKeyEq>
+    ChunkBlockEntityMap;
 
 class ClipChunk
 {
@@ -65,7 +63,8 @@ public:
 class Chunk
 {
 public:
-    Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mutex, int x, int z, int dimension, ClipChunk* clipChunk);
+    Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mutex, int x, int z, int dimension,
+          ClipChunk* clipChunk);
     Chunk();
     ~Chunk();
 

@@ -40,7 +40,8 @@ public:
     virtual LevelChunk** getCache();
     virtual void dataReceived(int chunkX, int chunkZ);
     virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos) = 0;
-    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool takeBlock) = 0;
+    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos,
+                                            bool takeBlock) = 0;
     virtual int getLoadedChunks() = 0;
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ) = 0;
 };

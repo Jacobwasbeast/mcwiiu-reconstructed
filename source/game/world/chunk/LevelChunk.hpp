@@ -48,8 +48,15 @@ public:
     friend class Level;
     friend class ConsoleSchematicFile;
 
-    typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
-    enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };
+    typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>,
+                                 std::equal_to<const BlockPos> >
+        BlockEntityMap;
+    enum EntityCreationType
+    {
+        IMMEDIATE,
+        QUEUED,
+        NO_CREATE
+    };
     static const int CURRENT_CHUNK_VERSION = 12;
     static const unsigned int LIGHT_SECTION_BYTES = 16 * 16 * 128 / 2;
 
@@ -85,6 +92,7 @@ public:
         BlockPos GetPos() const;
         const BlockState* GetState() const;
         const BlockState* GetExtraState() const;
+
     private:
         short mPackedPos;
         short mReserved;
@@ -124,7 +132,8 @@ public:
     virtual void setAllElements(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> data);
     virtual void getAllElements(arrayWithLength<unsigned char> elements, arrayWithLength<unsigned char> data);
     virtual void getElementRange(arrayWithLength<unsigned short> elements, int start, int end);
-    virtual void getElementRange(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> data, int start, int end);
+    virtual void getElementRange(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> data,
+                                 int start, int end);
     static int getRawDataMaxBytes();
     virtual arrayWithLength<unsigned char> getRawData();
     virtual void setFromRawData(arrayWithLength<unsigned char> data);
@@ -211,13 +220,20 @@ public:
     virtual bool containsPlayer();
     virtual bool isUnloaded();
     virtual void markUnsaved();
-    virtual void getEntities(boost::shared_ptr<Entity> except, const AABB* box, std::vector<boost::shared_ptr<Entity> >& entities, const Predicate<boost::shared_ptr<Entity> >* predicate);
-    virtual void getEntitiesOfClass(const std::type_info& type, const AABB* box, std::vector<boost::shared_ptr<Entity> >& entities, const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers);
+    virtual void getEntities(boost::shared_ptr<Entity> except, const AABB* box,
+                             std::vector<boost::shared_ptr<Entity> >& entities,
+                             const Predicate<boost::shared_ptr<Entity> >* predicate);
+    virtual void getEntitiesOfClass(const std::type_info& type, const AABB* box,
+                                    std::vector<boost::shared_ptr<Entity> >& entities,
+                                    const Predicate<boost::shared_ptr<Entity> >* predicate,
+                                    bool excludeInvisiblePlayers);
     virtual int countEntities();
     virtual bool shouldSave(bool force);
-    virtual int getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width, int height, int depth, int flags, bool extra);
+    virtual int getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width, int height,
+                                 int depth, int flags, bool extra);
     static void blockUpdatedCallback(int x, int y, int z, void* data, int value);
-    virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z, int width, int height, int depth, int flags, bool extra);
+    virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z, int width, int height,
+                                 int depth, int flags, bool extra);
     virtual Random* getRandom(long long seed);
     virtual bool isEmpty();
     static void staticCtor();
@@ -280,8 +296,10 @@ private:
     bool mLoaded;
     unsigned char mPrecipitationHeightmap[256];
     unsigned char mBiomeFlags[128];
+
 public:
     Level* level;
+
 private:
     SparseLightStorage* mSkyLight;
     SparseLightStorage* mSkyLightUpper;
@@ -290,24 +308,30 @@ private:
     arrayWithLength<unsigned char> mHeightmap;
     int mMinHeight;
     int mMaxHeight;
+
 public:
     int x;
     int z;
+
 private:
     bool mHasGapsToCheck;
     unsigned int mBiomePresent;
     BlockEntityMap mBlockEntityMap;
     std::vector<boost::shared_ptr<Entity> >** mEntitySections;
+
 protected:
     short mChunkFlags;
+
 private:
     unsigned short mChunkFlagsPadding;
     short* mServerChunkFlags;
     bool mPostProcess;
     bool mLightPopulated;
     bool mUnsaved;
+
 protected:
     bool mDontSave;
+
 private:
     bool mLastSaveHadEntities;
     unsigned short mEmissiveMaxHeight;

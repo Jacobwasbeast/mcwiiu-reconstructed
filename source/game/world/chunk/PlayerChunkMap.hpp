@@ -16,18 +16,12 @@ class PlayerChunkContainer;
 
 struct LongKeyHash
 {
-    std::size_t operator()(long long value) const
-    {
-        return static_cast<std::size_t>(value ^ (value >> 32));
-    }
+    std::size_t operator()(long long value) const { return static_cast<std::size_t>(value ^ (value >> 32)); }
 };
 
 struct LongKeyEq
 {
-    bool operator()(long long left, long long right) const
-    {
-        return left == right;
-    }
+    bool operator()(long long left, long long right) const { return left == right; }
 };
 
 class PlayerChunkMap
@@ -42,10 +36,13 @@ public:
         boost::shared_ptr<ServerPlayer> player;
         bool add;
 
-        PlayerChunkAddRequest(int chunkX, int chunkZ,
-                              boost::shared_ptr<ServerPlayer> chunkPlayer,
-                              bool shouldAdd)
-            : x(chunkX), z(chunkZ), player(chunkPlayer), add(shouldAdd) {}
+        PlayerChunkAddRequest(int chunkX, int chunkZ, boost::shared_ptr<ServerPlayer> chunkPlayer, bool shouldAdd)
+            : x(chunkX),
+              z(chunkZ),
+              player(chunkPlayer),
+              add(shouldAdd)
+        {
+        }
     };
 
     typedef std::vector<boost::shared_ptr<ServerPlayer> > PlayerVector;
@@ -57,13 +54,10 @@ public:
     virtual ~PlayerChunkMap();
 
     virtual PlayerChunkContainer* getOrCreateChunk(int x, int z);
-    virtual void getChunkAndAddPlayer(int x, int z,
-                                      boost::shared_ptr<ServerPlayer> player,
-                                      bool send);
+    virtual void getChunkAndAddPlayer(int x, int z, boost::shared_ptr<ServerPlayer> player, bool send);
     virtual void add(boost::shared_ptr<ServerPlayer> player);
     virtual void remove(boost::shared_ptr<ServerPlayer> player);
-    virtual void removeOutsideArea(boost::shared_ptr<ServerPlayer> player,
-                                   int minX, int minZ, int maxX, int maxZ);
+    virtual void removeOutsideArea(boost::shared_ptr<ServerPlayer> player, int minX, int minZ, int maxX, int maxZ);
     virtual void move(boost::shared_ptr<ServerPlayer> player);
     virtual void removeOutsideAreaForAllPlayers(int minX, int minZ, int maxX, int maxZ);
     virtual void reloadAllPlayers(int minX, int minZ, int maxX, int maxZ);
@@ -79,9 +73,7 @@ public:
     void tick();
     static long long getKeyForChunk(int x, int z);
     PlayerChunkContainer* getChunkIfLoaded(int x, int z);
-    void getChunkAndRemovePlayer(int x, int z,
-                                                   boost::shared_ptr<ServerPlayer> player,
-                                                   bool send);
+    void getChunkAndRemovePlayer(int x, int z, boost::shared_ptr<ServerPlayer> player, bool send);
     void broadcastBlockUpdate(boost::shared_ptr<Packet> packet, int x, int y, int z);
     void blockChanged(const BlockPos& pos);
     bool isTrackingBlock(int x, int y, int z);

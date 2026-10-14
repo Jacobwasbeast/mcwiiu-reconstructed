@@ -140,7 +140,8 @@ void PlayerChunkMap::setViewDistance(int distance)
                     for (int z = chunkZ - newDistance; z <= chunkZ + newDistance; ++z)
                     {
                         PlayerChunkContainer* chunk = getOrCreateChunk(x, z);
-                        if (!chunk->hasPlayer(player)) chunk->add(player, true);
+                        if (!chunk->hasPlayer(player))
+                            chunk->add(player, true);
                     }
                 }
             }
@@ -253,9 +254,7 @@ PlayerChunkContainer* PlayerChunkMap::getOrCreateChunk(int x, int z)
     return chunk;
 }
 
-void PlayerChunkMap::getChunkAndAddPlayer(int x, int z,
-                                          boost::shared_ptr<ServerPlayer> player,
-                                          bool send)
+void PlayerChunkMap::getChunkAndAddPlayer(int x, int z, boost::shared_ptr<ServerPlayer> player, bool send)
 {
     MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;
     if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || !gameMode->IsRoundPlaying()
@@ -269,9 +268,7 @@ void PlayerChunkMap::getChunkAndAddPlayer(int x, int z,
     }
 }
 
-void PlayerChunkMap::getChunkAndRemovePlayer(int x, int z,
-                                                               boost::shared_ptr<ServerPlayer> player,
-                                                               bool send)
+void PlayerChunkMap::getChunkAndRemovePlayer(int x, int z, boost::shared_ptr<ServerPlayer> player, bool send)
 {
     RequestVector::iterator request = mAddRequests.begin();
     while (request != mAddRequests.end())
@@ -403,8 +400,7 @@ void PlayerChunkMap::add(boost::shared_ptr<ServerPlayer> player)
     if (networkPlayer != NULL && !networkPlayer->IsLocal())
     {
         player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(
-            new ChunkVisibilityAreaPacket(minX, maxX, minZ, maxZ, true,
-                                          shouldActuallyDropChunks(), false)));
+            new ChunkVisibilityAreaPacket(minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false)));
     }
 
     static_cast<ServerChunkCache*>(static_cast<ServerLevel*>(getLevel())->getChunkSource())->dontDrop(chunkX, chunkZ);
@@ -439,8 +435,7 @@ void PlayerChunkMap::remove(boost::shared_ptr<ServerPlayer> player)
     }
 }
 
-void PlayerChunkMap::removeOutsideArea(boost::shared_ptr<ServerPlayer> player,
-                                        int minX, int minZ, int maxX, int maxZ)
+void PlayerChunkMap::removeOutsideArea(boost::shared_ptr<ServerPlayer> player, int minX, int minZ, int maxX, int maxZ)
 {
     const int chunkX = static_cast<int>(player->mLastSentX) >> 4;
     const int chunkZ = static_cast<int>(player->mLastSentZ) >> 4;
@@ -457,8 +452,8 @@ void PlayerChunkMap::removeOutsideArea(boost::shared_ptr<ServerPlayer> player,
         }
     }
 
-    player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
-        minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true)));
+    player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(
+        new ChunkVisibilityAreaPacket(minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true)));
 
     PlayerVector::iterator it = std::find(mPlayers.begin(), mPlayers.end(), player);
     if (!mPlayers.empty() && it != mPlayers.end())
@@ -568,8 +563,8 @@ bool PlayerChunkMap::isPlayerIn(boost::shared_ptr<ServerPlayer> player, int x, i
     if (chunk == NULL)
         return false;
 
-    std::list<ChunkPos>::iterator pending =
-        std::find(player->mLoadedChunks.begin(), player->mLoadedChunks.end(), chunk->getPos());
+    std::list<ChunkPos>::iterator pending = std::find(player->mLoadedChunks.begin(), player->mLoadedChunks.end(),
+                                                      chunk->getPos());
     return chunk->hasPlayer(player) && pending == player->mLoadedChunks.end();
 }
 
@@ -620,7 +615,10 @@ void PlayerChunkMap::setRadius(int radius)
 
 void PlayerChunkMap::removeOutsideAreaForAllPlayers(int minX, int minZ, int maxX, int maxZ)
 {
-    (void)minX; (void)minZ; (void)maxX; (void)maxZ;
+    (void)minX;
+    (void)minZ;
+    (void)maxX;
+    (void)maxZ;
 }
 
 void PlayerChunkMap::reloadAllPlayers(int minX, int minZ, int maxX, int maxZ)

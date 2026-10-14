@@ -13,7 +13,8 @@ FjIsFeatureChunk::FjIsFeatureChunk()
     mBiomeRequirements = NULL;
 }
 
-FjIsFeatureChunk::FjIsFeatureChunk(const FjFeatureBiomeRequirements* biomeRequirements, unsigned int maxAttempts, int spacing, int separation)
+FjIsFeatureChunk::FjIsFeatureChunk(const FjFeatureBiomeRequirements* biomeRequirements, unsigned int maxAttempts,
+                                   int spacing, int separation)
 {
     mMaxAttempts = maxAttempts;
     mSpacing = spacing;
@@ -40,16 +41,17 @@ bool FjIsFeatureChunk::couldSpawnInChunk(BiomeSource* biomeSource, int sizeInChu
 {
     int borderInChunks = sizeInChunks / 2 - 3;
 
-    return -borderInChunks <= chunkX && chunkX < borderInChunks &&
-           -borderInChunks <= chunkZ && chunkZ < borderInChunks &&
-           biomeSource->fjCouldSpawn(mBiomeRequirements, chunkX, chunkZ);
+    return -borderInChunks <= chunkX && chunkX < borderInChunks && -borderInChunks <= chunkZ && chunkZ < borderInChunks
+           && biomeSource->fjCouldSpawn(mBiomeRequirements, chunkX, chunkZ);
 }
 
-bool FjIsFeatureChunk::isFeatureChunk(Random& random, BiomeSource* biomeSource, int sizeInChunks, int chunkX, int chunkZ) const
+bool FjIsFeatureChunk::isFeatureChunk(Random& random, BiomeSource* biomeSource, int sizeInChunks, int chunkX,
+                                      int chunkZ) const
 {
     int range = mSpacing - mSeparation;
 
-    unsigned int maxAttempts = mMaxAttempts < (unsigned int)(range * range) ? mMaxAttempts : (unsigned int)(range * range);
+    unsigned int maxAttempts = mMaxAttempts < (unsigned int)(range * range) ? mMaxAttempts
+                                                                            : (unsigned int)(range * range);
 
     if (couldSpawnInChunk(biomeSource, sizeInChunks, chunkX, chunkZ))
     {
@@ -90,5 +92,6 @@ bool FjIsFeatureChunk::UseReducedSpacing(int sizeInChunks, bool isSuperflat)
 
 FjIsFeatureChunk FjIsFeatureChunk::CreateReduced(const FjIsFeatureChunk& featureChunk)
 {
-    return FjIsFeatureChunk(featureChunk.mBiomeRequirements, (int)(featureChunk.mMaxAttempts * 1.5), 32, featureChunk.mSeparation);
+    return FjIsFeatureChunk(featureChunk.mBiomeRequirements, (int)(featureChunk.mMaxAttempts * 1.5), 32,
+                            featureChunk.mSeparation);
 }

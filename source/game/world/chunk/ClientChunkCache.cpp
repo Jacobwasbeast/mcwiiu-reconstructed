@@ -43,7 +43,8 @@ static const long long CHUNK_TICK_BUDGET_MS = 5;
 static const int MAX_LOCAL_PLAYERS = 4;
 
 ClientChunkCache::QueuedAction::QueuedAction(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet)
-    : packet(), pos(packet->getPos().x >> 4, packet->getPos().y >> 4)
+    : packet(),
+      pos(packet->getPos().x >> 4, packet->getPos().y >> 4)
 {
     type = eType_BlockEntityData;
     changes = NULL;
@@ -51,7 +52,8 @@ ClientChunkCache::QueuedAction::QueuedAction(const boost::shared_ptr<Clientbound
 }
 
 ClientChunkCache::QueuedAction::QueuedAction(int x, int z, const std::vector<LevelChunk::BlockChange>* changes)
-    : packet(), pos(x, z)
+    : packet(),
+      pos(x, z)
 {
     this->changes = changes;
     type = eType_ReLoad;
@@ -66,14 +68,12 @@ ClientChunkCache::QueuedAction& ClientChunkCache::QueuedAction::operator=(const 
     return *this;
 }
 
-ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage)
-    : m_reloadPos(0, 0), m_reloadChanges(NULL)
+ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage) : m_reloadPos(0, 0), m_reloadChanges(NULL)
 {
     MultiPlayerChunkCacheInit(level, storage);
 }
 
-ClientChunkCache::ClientChunkCache(Level* level)
-    : m_reloadPos(0, 0), m_reloadChanges(NULL)
+ClientChunkCache::ClientChunkCache(Level* level) : m_reloadPos(0, 0), m_reloadChanges(NULL)
 {
     MultiPlayerChunkCacheInit(level, NULL);
 }
@@ -133,15 +133,15 @@ void ClientChunkCache::reLoad(int x, int z, const std::vector<LevelChunk::BlockC
     if (chunk != NULL)
     {
         if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
-                                              reinterpret_cast<long>(chunk),
-                                              reinterpret_cast<long>(previous)) == reinterpret_cast<long>(previous))
+                                              reinterpret_cast<long>(chunk), reinterpret_cast<long>(previous))
+            == reinterpret_cast<long>(previous))
         {
             if (previous != NULL)
             {
                 previous->unload(true, false);
                 chunk->swapEntities(previous);
-                std::vector<LevelChunk*>::iterator it =
-                    std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), previous);
+                std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(),
+                                                                  previous);
                 if (it != m_loadedChunkList.end())
                 {
                     m_loadedChunkList.erase(it);
@@ -436,9 +436,11 @@ void ClientChunkCache::drop(int x, int z, bool force)
         int idx = ix * m_xzSize + iz;
         EnterCriticalSection(&m_csLoadCreate);
         if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]), 0,
-                                              reinterpret_cast<long>(chunk)) == reinterpret_cast<long>(chunk))
+                                              reinterpret_cast<long>(chunk))
+            == reinterpret_cast<long>(chunk))
         {
-            std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), chunk);
+            std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(),
+                                                              chunk);
             if (it != m_loadedChunkList.end())
             {
                 m_loadedChunkList.erase(it);
@@ -514,8 +516,8 @@ LevelChunk* ClientChunkCache::create(int x, int z)
         }
         chunk->mLoaded = true;
         if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
-                                              reinterpret_cast<long>(chunk),
-                                              reinterpret_cast<long>(previous)) == reinterpret_cast<long>(previous))
+                                              reinterpret_cast<long>(chunk), reinterpret_cast<long>(previous))
+            == reinterpret_cast<long>(previous))
         {
             m_loadedChunkList.push_back(chunk);
             LeaveCriticalSection(&m_csLoadCreate);
@@ -590,11 +592,12 @@ bool ClientChunkCache::tick()
                 int actionDistance = INT_MAX;
                 for (int playerIdx = 0; playerIdx < MAX_LOCAL_PLAYERS; ++playerIdx)
                 {
-                    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIdx];
+                    boost::shared_ptr<MultiplayerLocalPlayer> player =
+                        Minecraft::GetInstance()->mLocalPlayers[playerIdx];
                     if (player != NULL)
                     {
-                        int distance = Mth::abs(Mth::floor(player->mX) - action.pos.x * 16) +
-                                       Mth::abs(Mth::floor(player->mZ) - action.pos.z * 16);
+                        int distance = Mth::abs(Mth::floor(player->mX) - action.pos.x * 16)
+                                       + Mth::abs(Mth::floor(player->mZ) - action.pos.z * 16);
                         if (distance < actionDistance)
                         {
                             actionDistance = distance;

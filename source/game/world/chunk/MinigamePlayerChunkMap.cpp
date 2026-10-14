@@ -62,8 +62,7 @@ void MinigamePlayerChunkMap::move(boost::shared_ptr<ServerPlayer> player)
     player->mLastSentZ = player->mZ;
 }
 
-void MinigamePlayerChunkMap::removeOutsideAreaForAllPlayers(int minX, int minZ,
-                                                              int maxX, int maxZ)
+void MinigamePlayerChunkMap::removeOutsideAreaForAllPlayers(int minX, int minZ, int maxX, int maxZ)
 {
 }
 
@@ -91,8 +90,8 @@ void MinigamePlayerChunkMap::loadPlayerInActiveArea(boost::shared_ptr<ServerPlay
 
     if ((gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->canReceiveAllPackets(player))
     {
-        player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
-            minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false)));
+        player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(
+            new ChunkVisibilityAreaPacket(minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false)));
     }
 }
 
@@ -114,8 +113,8 @@ void MinigamePlayerChunkMap::reloadAllPlayers(int minX, int minZ, int maxX, int 
         boost::shared_ptr<ServerPlayer> player = mPlayers[i];
         if ((gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->canReceiveAllPackets(player))
         {
-            player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
-                minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true)));
+            player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(
+                new ChunkVisibilityAreaPacket(minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true)));
         }
     }
     mShouldDropChunks = false;

@@ -35,8 +35,14 @@ static const unsigned int THREAD_BLOCK_DATA_SIZE = 16 * 16 * 256;
 static const unsigned int THREAD_NIBBLE_DATA_SIZE = THREAD_BLOCK_DATA_SIZE / 2;
 
 OldChunkStorage::ThreadStorage::ThreadStorage()
-    : blockData(NULL), blockDataSize(0), data(NULL), dataSize(0),
-      skyLightData(NULL), skyLightDataSize(0), blockLightData(NULL), blockLightDataSize(0)
+    : blockData(NULL),
+      blockDataSize(0),
+      data(NULL),
+      dataSize(0),
+      skyLightData(NULL),
+      skyLightDataSize(0),
+      blockLightData(NULL),
+      blockLightDataSize(0)
 {
     unsigned char* buffer;
     buffer = new unsigned char[THREAD_BLOCK_DATA_SIZE];
@@ -92,8 +98,7 @@ void OldChunkStorage::ReleaseThreadStorage()
         delete storage;
 }
 
-OldChunkStorage::OldChunkStorage(File file, bool createValue)
-    : directory()
+OldChunkStorage::OldChunkStorage(File file, bool createValue) : directory()
 {
     directory = file;
     create = createValue;
@@ -234,7 +239,8 @@ LevelChunk* OldChunkStorage::load(Level* level, CompoundTag* tag, LevelChunk* ch
     if (!tag->get(L"TerrainPopulated"))
     {
         chunk->mChunkFlags = static_cast<unsigned short>(tag->getShort(L"TerrainPopulatedFlags"));
-        if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS) == LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS)
+        if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS)
+            == LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS)
             chunk->mChunkFlags |= LevelChunk::TERRAIN_POPULATED_FULL;
     }
     else
@@ -288,7 +294,9 @@ LevelChunk* OldChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
                 LevelChunk* result = load(level, root->getCompound(L"Level"), chunk);
                 if (!result->isAt(x, z))
                 {
-                    sprintf(buffer, "Chunk fileat %d, %d is in the wrong location; relocating. Expected %d, %d, got %d, %d\n", x, z, x, z, result->x, result->z);
+                    sprintf(buffer,
+                            "Chunk fileat %d, %d is in the wrong location; relocating. Expected %d, %d, got %d, %d\n",
+                            x, z, x, z, result->x, result->z);
                     root->putInt(L"xPos", x);
                     root->putInt(L"zPos", z);
                     result = load(level, root->getCompound(L"Level"), result);
@@ -399,7 +407,8 @@ void OldChunkStorage::save(LevelChunk* chunk, Level* level, DataOutputStream* st
     PIXEndNamedEvent();
 }
 
-boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* level, double x, double y, double z, bool addToWorld)
+boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* level, double x, double y, double z,
+                                                      bool addToWorld)
 {
     boost::shared_ptr<Entity> entity = loadStaticEntity(tag, level);
     if (entity == NULL)

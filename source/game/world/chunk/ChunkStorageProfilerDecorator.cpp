@@ -3,7 +3,12 @@
 #include "game/core/System.hpp"
 
 ChunkStorageProfilerDecorator::ChunkStorageProfilerDecorator(ChunkStorage* chunkStorage)
-    : mChunkStorage(chunkStorage), mLoadTime(0), mLoadCount(0), mSaveTime(0), mSaveCount(0), mTickCount(0)
+    : mChunkStorage(chunkStorage),
+      mLoadTime(0),
+      mLoadCount(0),
+      mSaveTime(0),
+      mSaveCount(0),
+      mTickCount(0)
 {
 }
 

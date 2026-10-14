@@ -7,8 +7,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 
-WaterLevelChunk::WaterLevelChunk(Level* level, ChunkPrimer* primer, int x, int z)
-    : LevelChunk(level, primer, x, z)
+WaterLevelChunk::WaterLevelChunk(Level* level, ChunkPrimer* primer, int x, int z) : LevelChunk(level, primer, x, z)
 {
     mDontSave = true;
     mChunkFlags = TERRAIN_POPULATED_ALL;
@@ -115,14 +114,12 @@ void WaterLevelChunk::markUnsaved()
 {
 }
 
-void WaterLevelChunk::getEntities(boost::shared_ptr<Entity>, const AABB*,
-                                  std::vector<boost::shared_ptr<Entity> >&,
+void WaterLevelChunk::getEntities(boost::shared_ptr<Entity>, const AABB*, std::vector<boost::shared_ptr<Entity> >&,
                                   const Predicate<boost::shared_ptr<Entity> >*)
 {
 }
 
-void WaterLevelChunk::getEntitiesOfClass(const std::type_info&, const AABB*,
-                                         std::vector<boost::shared_ptr<Entity> >&,
+void WaterLevelChunk::getEntitiesOfClass(const std::type_info&, const AABB*, std::vector<boost::shared_ptr<Entity> >&,
                                          const Predicate<boost::shared_ptr<Entity> >*, bool)
 {
 }
@@ -137,8 +134,8 @@ bool WaterLevelChunk::shouldSave(bool)
     return false;
 }
 
-int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int y, int z,
-                                      int width, int height, int depth, int, bool extra)
+int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int y, int z, int width, int height,
+                                      int depth, int, bool extra)
 {
     int sizeX = width - x;
     int sizeY = height - y;
@@ -151,8 +148,9 @@ int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
 
 Random* WaterLevelChunk::getRandom(long long seed)
 {
-    return new Random(level->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
-                      (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f) ^ seed);
+    return new Random(level->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db)
+                          + (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f)
+                      ^ seed);
 }
 
 Biome* WaterLevelChunk::getBiome(const BlockPos&, BiomeSource*)

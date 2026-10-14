@@ -46,13 +46,12 @@ public:
                              const Predicate<boost::shared_ptr<Entity> >* predicate);
     virtual void getEntitiesOfClass(const std::type_info& type, const AABB* box,
                                     std::vector<boost::shared_ptr<Entity> >& entities,
-                                    const Predicate<boost::shared_ptr<Entity> >* predicate,
-                                    bool exact);
+                                    const Predicate<boost::shared_ptr<Entity> >* predicate, bool exact);
     virtual bool shouldSave(bool force);
-    virtual int getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z,
-                                 int width, int height, int depth, int offset, bool includeLight);
-    virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z,
-                                 int width, int height, int depth, int offset, bool includeLight);
+    virtual int getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width, int height,
+                                 int depth, int offset, bool includeLight);
+    virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z, int width, int height,
+                                 int depth, int offset, bool includeLight);
     virtual Random* getRandom(long long seed);
     virtual bool isEmpty();
     virtual const BlockState* setBlock(const BlockPos& pos, const BlockState* state);

@@ -35,6 +35,7 @@ public:
     virtual void WaitForAll();
     static void WaitForSaves();
     virtual void WaitIfTooManyQueuedChunks();
+
 private:
     DataFixerUpper* mFixer;
     std::wstring mDirectory;
