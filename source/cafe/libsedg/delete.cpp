@@ -1,8 +1,9 @@
 #include <stdlib.h>
 
-void operator delete(void *ptr)
+void operator delete(void* ptr)
 {
-    if (ptr != NULL) {
+    if (ptr != NULL)
+    {
         free(ptr);
     }
 }

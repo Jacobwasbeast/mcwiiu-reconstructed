@@ -4,14 +4,16 @@
 #include <cafe/libsedg/edg_runtime.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-static char *error_text(an_error_code err_code)
+static char* error_text(an_error_code err_code)
 {
-    char *text = NULL;
+    char* text = NULL;
 
-    switch (err_code) {
+    switch (err_code)
+    {
     case ec_abort_header:
         text = "C++ runtime abort";
         break;
