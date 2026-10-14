@@ -5,7 +5,16 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace common { class CallContext; } namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class CallContext;
+}
+namespace nat
+{
 
 class NatDetecter;
 class NatTraverser;
@@ -16,8 +25,7 @@ public:
     NatDetectionJob();
     virtual ~NatDetectionJob();
 
-    Result Startup(common::CallContext* context, NatDetecter* detecter,
-                           NatTraverser* traverser);
+    Result Startup(common::CallContext* context, NatDetecter* detecter, NatTraverser* traverser);
     void Cleanup();
     virtual void CancelCleanup();
     ExecuteResult StepPreTest();
@@ -40,6 +48,8 @@ private:
     bool m_closeSocketFailed;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -1,7 +1,12 @@
 #ifndef SOURCE_NN_PIA_NAT_API_HPP
 #define SOURCE_NN_PIA_NAT_API_HPP
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 struct DebugSetting
 {
@@ -51,6 +56,8 @@ extern int g_natProbeDurationMsec;
 extern unsigned char g_natProbeSprayCount;
 extern int g_natDispatchIntervalMsec;
 
-}}}
+}
+}
+}
 
 #endif

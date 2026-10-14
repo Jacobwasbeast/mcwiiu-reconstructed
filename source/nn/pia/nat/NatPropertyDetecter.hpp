@@ -4,15 +4,19 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/nat/NatDetecter.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatPropertyDetecter : public NatDetecter
 {
 public:
     NatPropertyDetecter();
     virtual ~NatPropertyDetecter();
-    virtual Result Startup(NatTraverser* traverser, common::CallContext* context,
-                           const common::InetAddress& address);
+    virtual Result Startup(NatTraverser* traverser, common::CallContext* context, const common::InetAddress& address);
     virtual void Cleanup();
     void SendNatPropertyDetectionProbes();
     virtual void StartSendingNatCheckProbe();
@@ -26,6 +30,8 @@ private:
     common::Time m_startTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

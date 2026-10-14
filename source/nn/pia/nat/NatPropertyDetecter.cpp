@@ -2,7 +2,12 @@
 
 #include "nn/pia/common/TimeSpan.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 namespace
 {
@@ -26,8 +31,7 @@ enum
 
 unsigned short NatPropertyDetecter::s_lastDetectionMilliseconds;
 
-NatPropertyDetecter::NatPropertyDetecter()
-    : NatDetecter(), m_startTime()
+NatPropertyDetecter::NatPropertyDetecter() : NatDetecter(), m_startTime()
 {
 }
 
@@ -57,8 +61,8 @@ void NatPropertyDetecter::Cleanup()
 {
     common::Time now;
     now.SetNow();
-    s_lastDetectionMilliseconds = static_cast<unsigned short>(
-        (now - m_startTime).m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
+    s_lastDetectionMilliseconds = static_cast<unsigned short>((now - m_startTime).m_tick
+                                                              / common::TimeSpan::GetTicksPerMSec().m_tick);
     NatDetecter::Cleanup();
 }
 
@@ -105,8 +109,7 @@ unsigned int NatPropertyDetecter::HandleResult()
     NatTraverser::NatProperty& property = m_traverser->m_natProperty;
     property.m_privatePort = m_primaryAddress.m_port;
     property.m_publicPort = static_cast<unsigned short>(m_replies[2].body.portWord);
-    property.m_filteringType = m_replies[1].body.portWord == 0 ? cFilteringTypeSilent
-                                                          : cFilteringTypeAnswered;
+    property.m_filteringType = m_replies[1].body.portWord == 0 ? cFilteringTypeSilent : cFilteringTypeAnswered;
     if (m_replies[0].body.portWord == m_replies[2].body.portWord)
     {
         property.m_mappingType = cMappingTypeSame;
@@ -126,8 +129,8 @@ unsigned int NatPropertyDetecter::HandleResult()
 
 unsigned int NatPropertyDetecter::CheckRetry()
 {
-    if ((GetNatCheckReply(0)->body.portWord == 0 || GetNatCheckReply(2)->body.portWord == 0) &&
-        m_retryCount < cMaxRetryCount)
+    if ((GetNatCheckReply(0)->body.portWord == 0 || GetNatCheckReply(2)->body.portWord == 0)
+        && m_retryCount < cMaxRetryCount)
         return 1;
     return 0;
 }
@@ -137,4 +140,6 @@ unsigned int NatPropertyDetecter::GetDetectionTimeout() const
     return cDetectionTimeoutMsec;
 }
 
-}}}
+}
+}
+}

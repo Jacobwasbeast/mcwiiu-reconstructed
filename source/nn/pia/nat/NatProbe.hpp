@@ -5,14 +5,18 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatProbe
 {
 public:
-    NatProbe(const transport::StationLocation& location, const common::Time& start,
-             const common::TimeSpan& duration, unsigned char timeout,
-             unsigned char sprayCount, unsigned char sprayRange);
+    NatProbe(const transport::StationLocation& location, const common::Time& start, const common::TimeSpan& duration,
+             unsigned char timeout, unsigned char sprayCount, unsigned char sprayRange);
     virtual ~NatProbe() {}
 
     bool UpdateTargetAddress(const transport::StationLocation& location);
@@ -23,10 +27,7 @@ public:
     unsigned short GetPortSprayCount();
     virtual void Trace(unsigned long long value) const;
 
-    NatProbe()
-        : m_stationLocation(), m_startTime(), m_deadline(), m_updateInterval(0)
-    {
-    }
+    NatProbe() : m_stationLocation(), m_startTime(), m_deadline(), m_updateInterval(0) {}
 
     transport::StationLocation m_stationLocation;
     common::Time m_startTime;
@@ -43,6 +44,8 @@ public:
     long long m_updateInterval;
 };
 
-}}}
+}
+}
+}
 
 #endif

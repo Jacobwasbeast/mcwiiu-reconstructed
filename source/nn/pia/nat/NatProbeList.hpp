@@ -9,7 +9,12 @@
 #include "nn/pia/nat/NatProbe.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatProbeList : public common::PooledList<NatProbe>
 {
@@ -23,7 +28,8 @@ public:
     void RemoveDifferentConnectionIdAndSameAddressPortProbes(const transport::StationLocation& location);
     static bool IsSameAddressPortAndConnectionId(const transport::StationLocation&, const transport::StationLocation&);
     NatProbe* FindByAddressPortAndConnectionId(const transport::StationLocation&);
-    static bool IsDifferentPortSameAddressAndConnectionId(const transport::StationLocation&, const transport::StationLocation&);
+    static bool IsDifferentPortSameAddressAndConnectionId(const transport::StationLocation&,
+                                                          const transport::StationLocation&);
     NatProbe* FindByAddressAndConnectionId(const transport::StationLocation&);
     void RemoveDifferentPortAndSameAddressAndConnectionIdProbes(const transport::StationLocation&);
     NatProbe* FindByConnectionId(unsigned int connectionId);
@@ -36,25 +42,13 @@ public:
     bool RemoveProbesByConnectionId(unsigned int connectionId);
     virtual void Trace(unsigned long long) const;
 
-    common::ListNode* Begin()
-    {
-        return Sentinel()->next;
-    }
+    common::ListNode* Begin() { return Sentinel()->next; }
 
-    common::ListNode* End()
-    {
-        return Sentinel();
-    }
+    common::ListNode* End() { return Sentinel(); }
 
-    static NatProbe* ProbeOf(common::ListNode* node)
-    {
-        return ProbeList::ValueOf(node);
-    }
+    static NatProbe* ProbeOf(common::ListNode* node) { return ProbeList::ValueOf(node); }
 
-    void Release(NatProbe* probe)
-    {
-        Destroy(probe);
-    }
+    void Release(NatProbe* probe) { Destroy(probe); }
 
     void ReleaseAll()
     {
@@ -66,6 +60,8 @@ private:
     unsigned char* m_allocation;
 };
 
-}}}
+}
+}
+}
 
 #endif

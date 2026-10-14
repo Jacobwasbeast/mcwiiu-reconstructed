@@ -3,7 +3,12 @@
 
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 NatTraversalTime* NatTraversalTimeList::Find(const transport::StationLocation& location)
 {
@@ -13,8 +18,8 @@ NatTraversalTime* NatTraversalTimeList::Find(const transport::StationLocation& l
         NatTraversalTime* value = TimeList::ValueOf(node);
         if (value->m_location.m_field1c == location.m_field1c)
             return value;
-        if (value->m_location.m_field1c != location.m_field1c &&
-            location.m_stationAddress.m_inetAddress == value->m_location.m_stationAddress.m_inetAddress)
+        if (value->m_location.m_field1c != location.m_field1c
+            && location.m_stationAddress.m_inetAddress == value->m_location.m_stationAddress.m_inetAddress)
             return value;
     }
     return 0;
@@ -43,9 +48,9 @@ void NatTraversalTimeList::Remove(const transport::StationLocation& location)
     while (node != sentinel)
     {
         NatTraversalTime* value = TimeList::ValueOf(node);
-        if (value->m_location.m_field1c == location.m_field1c ||
-            (value->m_location.m_field1c != location.m_field1c &&
-             location.m_stationAddress.m_inetAddress == value->m_location.m_stationAddress.m_inetAddress))
+        if (value->m_location.m_field1c == location.m_field1c
+            || (value->m_location.m_field1c != location.m_field1c
+                && location.m_stationAddress.m_inetAddress == value->m_location.m_stationAddress.m_inetAddress))
         {
             value->m_location.Trace(cTraceBrief);
             node = node->next;
@@ -58,4 +63,6 @@ void NatTraversalTimeList::Remove(const transport::StationLocation& location)
     }
 }
 
-}}}
+}
+}
+}

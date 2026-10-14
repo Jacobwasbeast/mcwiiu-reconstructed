@@ -3,10 +3,14 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
-NatProbeData::NatProbeData()
-    : m_connectionId(0), m_type(0), m_time()
+NatProbeData::NatProbeData() : m_connectionId(0), m_type(0), m_time()
 {
 }
 
@@ -58,4 +62,6 @@ void NatProbeData::Trace(uint64_t) const
 {
 }
 
-}}}
+}
+}
+}

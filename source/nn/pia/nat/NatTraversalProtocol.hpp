@@ -12,7 +12,12 @@
 #include "nn/pia/nat/NatTraversalTimeList.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatTraverser;
 class NatProbe;
@@ -21,7 +26,10 @@ class NatProbeRequest;
 class NatTraversalProtocol : public transport::Protocol
 {
 public:
-    enum { cProtocolType = 0x34 };
+    enum
+    {
+        cProtocolType = 0x34
+    };
 
     enum ProbeType
     {
@@ -37,37 +45,28 @@ public:
     void CleanupNatTraversal();
     void AddProbeRequest(const NatProbeRequest& request);
     bool PrepareNatTraversal(const transport::StationLocation& location,
-                             const transport::StationConnectionInfo& connection,
-                             common::CallContext* context,
+                             const transport::StationConnectionInfo& connection, common::CallContext* context,
                              bool passive, bool force);
     bool EraseProbeRequestByConnectionId(unsigned int connectionId);
     void ClearNatTraversal(const transport::StationLocation& location, bool relay);
     void ProcessProbeRequest(const transport::StationLocation& location);
-    Result SendMessage(transport::ProtocolId protocolId,
-                               const common::StationAddress& address,
-                               const void* payload, unsigned int payloadSize,
-                               bool relay, unsigned char type);
-    void SendProbe(ProbeType type, const transport::StationLocation& location,
-                   common::Time time, unsigned char count);
+    Result SendMessage(transport::ProtocolId protocolId, const common::StationAddress& address, const void* payload,
+                       unsigned int payloadSize, bool relay, unsigned char type);
+    void SendProbe(ProbeType type, const transport::StationLocation& location, common::Time time, unsigned char count);
     void ReceiveMessage(const transport::ProtocolMessageReader& reader);
-    void SendDummyPacket(const transport::StationLocation& location,
-                         unsigned char type, unsigned char count);
+    void SendDummyPacket(const transport::StationLocation& location, unsigned char type, unsigned char count);
     NatProbeRequest* FindProbeRequestByConnectionId(unsigned int connectionId);
     unsigned short GetPeer2PeerPort(const transport::StationLocation& location);
     void CompletedNatPortDetection(Result result);
-    void DetectNatPort(const transport::StationLocation& local,
-                       const transport::StationLocation& remote);
-    void RelayProbeRequest(const transport::StationLocation& source,
-                           const transport::StationLocation& destination);
-    void SendProbeRequest(transport::StationLocation location,
-                          const NatProbeRequest& request);
+    void DetectNatPort(const transport::StationLocation& local, const transport::StationLocation& remote);
+    void RelayProbeRequest(const transport::StationLocation& source, const transport::StationLocation& destination);
+    void SendProbeRequest(transport::StationLocation location, const NatProbeRequest& request);
     void ScheduleProbeRequest(const NatProbeRequest& request);
     bool SendProbeRequests();
     void SendProbes();
     Result dispatchProbe(common::Time& now);
     virtual Result Dispatch();
-    bool GetLatestStationLocation(const transport::StationLocation& location,
-                                  transport::StationLocation* latest);
+    bool GetLatestStationLocation(const transport::StationLocation& location, transport::StationLocation* latest);
     void StartServerKeepAlive();
     void StopServerKeepAlive();
     virtual void Trace(unsigned long long value) const;
@@ -104,6 +103,8 @@ private:
     pead::Random m_random;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -5,7 +5,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 namespace
 {
@@ -32,8 +37,13 @@ unsigned short NatDetecter::s_randomPortRange = 0;
 unsigned short NatDetecter::s_reservedPort = 0;
 
 NatDetecter::NatDetecter()
-    : m_socket(), m_primaryAddress(), m_senderAddress(), m_sendMessage(), m_receiveMessage(),
-      m_probes(), m_detectionJob()
+    : m_socket(),
+      m_primaryAddress(),
+      m_senderAddress(),
+      m_sendMessage(),
+      m_receiveMessage(),
+      m_probes(),
+      m_detectionJob()
 {
 }
 
@@ -84,8 +94,7 @@ unsigned int NatDetecter::GetRandomPortNumber()
     return port;
 }
 
-Result NatDetecter::Startup(NatTraverser* traverser, common::CallContext* context,
-                            const common::InetAddress& address)
+Result NatDetecter::Startup(NatTraverser* traverser, common::CallContext* context, const common::InetAddress& address)
 {
     if (traverser == 0)
         return ResultInvalidArgument();
@@ -152,8 +161,7 @@ Result NatDetecter::OpenSocket()
     result = m_socket.Open();
     if (result != 0)
         return result;
-    if ((m_primaryAddress.m_port == 0 || m_socket.Bind(m_primaryAddress, false) != 0) &&
-        BindRandomPort() == 0)
+    if ((m_primaryAddress.m_port == 0 || m_socket.Bind(m_primaryAddress, false) != 0) && BindRandomPort() == 0)
     {
         m_primaryAddress.Trace(cTraceBindFailure);
         m_socket.Close();
@@ -206,9 +214,8 @@ unsigned int NatDetecter::ReceiveNatCheckReply()
 {
     unsigned char ancillary = 0;
     int receivedSize = 0;
-    const int result = m_socket.RecvFrom(
-        reinterpret_cast<unsigned char*>(&m_receiveMessage), cProbeReceiveSize, &m_senderAddress,
-        &ancillary, &receivedSize);
+    const int result = m_socket.RecvFrom(reinterpret_cast<unsigned char*>(&m_receiveMessage), cProbeReceiveSize,
+                                         &m_senderAddress, &ancillary, &receivedSize);
     if (result != 0 || receivedSize != cProbeReceiveSize)
         return 0;
 
@@ -223,8 +230,7 @@ unsigned int NatDetecter::ReceiveNatCheckReply()
 
 void NatDetecter::PredictPort(common::InetAddress* address)
 {
-    common::InetAddress predicted(m_replies[0].body.address,
-                                  static_cast<unsigned short>(m_replies[0].body.portWord));
+    common::InetAddress predicted(m_replies[0].body.address, static_cast<unsigned short>(m_replies[0].body.portWord));
     unsigned short delta = static_cast<unsigned short>(m_traverser->m_natProperty.m_portDelta);
     if (delta > cPortDeltaMax)
         delta = cPortDeltaMax;
@@ -309,4 +315,6 @@ void NatDetecter::CancelDetectionJob()
     m_detectionJob.WaitForCompletion(cDetectionPollMsec);
 }
 
-}}}
+}
+}
+}

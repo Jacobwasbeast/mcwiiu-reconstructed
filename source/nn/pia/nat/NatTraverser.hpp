@@ -6,11 +6,26 @@
 #include "nn/pia/common/InetAddress.hpp"
 #include "nn/pia/common/SimpleContainer.hpp"
 
-namespace nn { namespace pia {
-namespace common { class CallContext; }
-namespace inet { class IFacade; class NexFacade; }
-namespace transport { class StationLocation; class StationConnectionInfo; }
-namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class CallContext;
+}
+namespace inet
+{
+class IFacade;
+class NexFacade;
+}
+namespace transport
+{
+class StationLocation;
+class StationConnectionInfo;
+}
+namespace nat
+{
 class NatDetecter;
 class NatPortDetecter;
 class NatPropertyDetecter;
@@ -34,15 +49,14 @@ public:
     void IncrementNatTraversalFailureCount(unsigned int index);
     void ReportNatTraversalResult(const transport::StationLocation& location, Result result, bool relay);
     bool PrepareNatTraversal(const transport::StationLocation& location,
-                             const transport::StationConnectionInfo& connection,
-                             common::CallContext* context, bool relay, bool passive, bool force);
+                             const transport::StationConnectionInfo& connection, common::CallContext* context,
+                             bool relay, bool passive, bool force);
     void ClearNatTraversal(const transport::StationLocation& location, bool relay);
     bool CheckLatestStationLocation(transport::StationLocation& location);
     Result CreateProtocols();
     void ClearNatMonitoringData(const transport::StationLocation& location);
     bool IsStartupCancelled();
-    void RelayProbeRequest(const transport::StationLocation& source,
-                           const transport::StationLocation& destination,
+    void RelayProbeRequest(const transport::StationLocation& source, const transport::StationLocation& destination,
                            bool relay, unsigned short port);
     void ProcessProbeRequest(const transport::StationLocation& location);
     bool IsTraversed(const transport::StationLocation& location) const;
@@ -67,8 +81,12 @@ private:
     struct NatProperty
     {
         NatProperty()
-            : m_privatePort(0), m_publicPort(0), m_mappingType(0), m_filteringType(0),
-              m_portDelta(0), m_flag(0)
+            : m_privatePort(0),
+              m_publicPort(0),
+              m_mappingType(0),
+              m_filteringType(0),
+              m_portDelta(0),
+              m_flag(0)
         {
         }
 
@@ -94,6 +112,7 @@ private:
     inet::IFacade* m_facade;
 };
 
-}}
+}
+}
 }
 #endif

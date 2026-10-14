@@ -4,7 +4,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 struct NatTraversalTime
 {
@@ -15,6 +20,8 @@ struct NatTraversalTime
     unsigned short m_port;
 };
 
-}}}
+}
+}
+}
 
 #endif

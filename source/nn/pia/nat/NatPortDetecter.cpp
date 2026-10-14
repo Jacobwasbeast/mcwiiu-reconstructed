@@ -3,7 +3,12 @@
 #include "nn/pia/nat/Api.hpp"
 #include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 namespace
 {
@@ -15,8 +20,7 @@ enum
 };
 }
 
-NatPortDetecter::NatPortDetecter()
-    : NatDetecter(), m_primaryStation(), m_secondaryStation(), m_startTime()
+NatPortDetecter::NatPortDetecter() : NatDetecter(), m_primaryStation(), m_secondaryStation(), m_startTime()
 {
 }
 
@@ -32,8 +36,7 @@ Result NatPortDetecter::Startup(NatTraverser* traverser, common::CallContext* co
 }
 
 Result NatPortDetecter::Startup(NatTraverser* traverser, common::CallContext* context,
-                                const common::InetAddress& address,
-                                const transport::StationLocation& primary,
+                                const common::InetAddress& address, const transport::StationLocation& primary,
                                 const transport::StationLocation& secondary, bool relay)
 {
     if (m_detectionJob.IsRunning())
@@ -124,4 +127,6 @@ unsigned int NatPortDetecter::GetDetectionTimeout() const
     return 2000;
 }
 
-}}}
+}
+}
+}

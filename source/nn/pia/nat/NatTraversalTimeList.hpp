@@ -4,7 +4,16 @@
 #include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/nat/NatTraversalTime.hpp"
 
-namespace nn { namespace pia { namespace transport { class StationLocation; } namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
+class StationLocation;
+}
+namespace nat
+{
 
 class NatTraversalTimeList : public common::FixedPooledList<NatTraversalTime, 32>
 {
@@ -18,10 +27,7 @@ public:
     void Add(const NatTraversalTime& time);
     void Remove(const transport::StationLocation& location);
 
-    void Release(NatTraversalTime* time)
-    {
-        Destroy(time);
-    }
+    void Release(NatTraversalTime* time) { Destroy(time); }
 
     void ReleaseAll()
     {
@@ -30,6 +36,8 @@ public:
     }
 };
 
-}}}
+}
+}
+}
 
 #endif

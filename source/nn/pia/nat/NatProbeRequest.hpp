@@ -6,13 +6,17 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatProbeRequest
 {
 public:
-    NatProbeRequest(const transport::StationLocation& location,
-                    const transport::StationConnectionInfo& connectionInfo,
+    NatProbeRequest(const transport::StationLocation& location, const transport::StationConnectionInfo& connectionInfo,
                     bool probeRequested, bool addressValid, common::CallContext* callContext);
     explicit NatProbeRequest(const transport::StationLocation& location);
     NatProbeRequest() : m_stationLocation(), m_stationConnectionInfo(), m_deadline() {}
@@ -28,6 +32,8 @@ public:
     common::CallContext* m_callContext;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -8,9 +8,16 @@
 #include "nn/pia/nat/NatDetectionJob.hpp"
 #include "nn/pia/nat/NatTraverser.hpp"
 
-namespace nn { namespace pia {
-namespace common { class CallContext; }
-namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class CallContext;
+}
+namespace nat
+{
 class NatTraverser;
 class NatDetecter;
 
@@ -26,10 +33,7 @@ struct NatCheckProbe
         message.payload = 0;
     }
 
-    NatCheckProbe(common::InetAddress address, int type) : destination(address), message()
-    {
-        message.type = type;
-    }
+    NatCheckProbe(common::InetAddress address, int type) : destination(address), message() { message.type = type; }
 
     common::InetAddress destination;
     NatCheckReply::Body message;
@@ -51,8 +55,7 @@ public:
     static void SetReservedPort(unsigned int enabled, unsigned short port);
     static void SetRandomPortRange(unsigned short first, unsigned short last);
     static unsigned int GetRandomPortNumber();
-    virtual Result Startup(NatTraverser* traverser, common::CallContext* context,
-                           const common::InetAddress& address);
+    virtual Result Startup(NatTraverser* traverser, common::CallContext* context, const common::InetAddress& address);
     Result CloseSocket();
     virtual void Cleanup();
     virtual void Retry();
@@ -102,6 +105,8 @@ protected:
     NatTraverser* m_traverser;
 };
 
-}}}
+}
+}
+}
 
 #endif

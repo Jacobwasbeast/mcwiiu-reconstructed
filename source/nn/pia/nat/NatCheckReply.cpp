@@ -1,9 +1,13 @@
 #include "nn/pia/nat/NatCheckReply.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
-NatCheckReply::NatCheckReply()
-    : count(0), body()
+NatCheckReply::NatCheckReply() : count(0), body()
 {
     body.type = 0;
     body.portWord = 0;
@@ -11,4 +15,6 @@ NatCheckReply::NatCheckReply()
     body.payload = 0;
 }
 
-}}}
+}
+}
+}

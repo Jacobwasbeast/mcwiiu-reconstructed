@@ -1,11 +1,15 @@
 #include "nn/pia/nat/NatProbeRequest.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 NatProbeRequest::NatProbeRequest(const transport::StationLocation& location,
-                                 const transport::StationConnectionInfo& connectionInfo,
-                                 bool probeRequested, bool addressValid,
-                                 common::CallContext* callContext)
+                                 const transport::StationConnectionInfo& connectionInfo, bool probeRequested,
+                                 bool addressValid, common::CallContext* callContext)
     : m_stationLocation(location),
       m_stationConnectionInfo(connectionInfo),
       m_probeRequested(probeRequested),
@@ -29,4 +33,6 @@ void NatProbeRequest::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

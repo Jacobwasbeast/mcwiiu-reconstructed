@@ -6,7 +6,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatProbeData
 {
@@ -24,6 +29,8 @@ public:
     common::Time m_time;
 };
 
-}}}
+}
+}
+}
 
 #endif

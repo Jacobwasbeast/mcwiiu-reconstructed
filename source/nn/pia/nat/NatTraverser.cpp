@@ -19,7 +19,12 @@
 #include "nn/pia/transport/StationLocation.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 unsigned int g_natLocalConnectionId;
 int g_natClearProbeDelayMsec = 90000;
@@ -31,17 +36,23 @@ static void NatPropertyDetectionCompletionCallback(Result result, void* param);
 static void NatPortDetectionCompletionCallback(Result result, void* param);
 
 NatTraverser::NatTraverser()
-    : m_callContext(0), m_natProperty(), m_servers(), m_state(0), m_publicPort(0),
-      m_protocol(0), m_propertyContext(), m_portContext(), m_facade(0)
+    : m_callContext(0),
+      m_natProperty(),
+      m_servers(),
+      m_state(0),
+      m_publicPort(0),
+      m_protocol(0),
+      m_propertyContext(),
+      m_portContext(),
+      m_facade(0)
 {
-    void* portDetecterMemory =
-        pead::allocateFromSeadHeap(sizeof(NatPortDetecter), common::HeapManager::GetHeap());
+    void* portDetecterMemory = pead::allocateFromSeadHeap(sizeof(NatPortDetecter), common::HeapManager::GetHeap());
     if (portDetecterMemory != 0)
         m_natPortDetecter = new (portDetecterMemory) NatPortDetecter();
     else
         m_natPortDetecter = 0;
-    void* propertyDetecterMemory =
-        pead::allocateFromSeadHeap(sizeof(NatPropertyDetecter), common::HeapManager::GetHeap());
+    void* propertyDetecterMemory = pead::allocateFromSeadHeap(sizeof(NatPropertyDetecter),
+                                                              common::HeapManager::GetHeap());
     if (propertyDetecterMemory != 0)
         m_natPropertyDetecter = new (propertyDetecterMemory) NatPropertyDetecter();
     else
@@ -185,8 +196,7 @@ Result NatTraverser::StartNatPropertyDetection()
     }
 
     common::InetAddress address;
-    NatDetecter::SetRandomPortRange(m_facade->GetRandomPortRangeMin(),
-                                    m_facade->GetRandomPortRangeMax());
+    NatDetecter::SetRandomPortRange(m_facade->GetRandomPortRangeMin(), m_facade->GetRandomPortRangeMax());
     NatDetecter::SetReservedPort(0, m_facade->GetReservedPort());
     address.m_port = NatDetecter::GetRandomPortNumber();
     m_publicPort = address.m_port;
@@ -235,8 +245,7 @@ Result NatTraverser::StartNatPortDetection()
             ++portDetectionCount;
     }
 
-    NatDetecter::SetRandomPortRange(m_facade->GetRandomPortRangeMin(),
-                                    m_facade->GetRandomPortRangeMax());
+    NatDetecter::SetRandomPortRange(m_facade->GetRandomPortRangeMin(), m_facade->GetRandomPortRangeMax());
     NatDetecter::SetReservedPort(0, m_facade->GetReservedPort());
     m_publicPort = NatDetecter::GetRandomPortNumber();
     if (m_natProperty.m_mappingType == 2)
@@ -252,8 +261,7 @@ Result NatTraverser::StartNatPortDetection()
     transport::StationLocation location;
     location.m_stationAddress.Clear();
     common::InetAddress address(0, m_publicPort);
-    Result result =
-        m_natPortDetecter->Startup(this, &m_portContext, address, location, location, false);
+    Result result = m_natPortDetecter->Startup(this, &m_portContext, address, location, location, false);
     if (result != 0)
         return result;
     m_state = 2;
@@ -314,8 +322,7 @@ void NatTraverser::IncrementNatTraversalFailureCount(unsigned int)
     }
 }
 
-void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& location,
-                                            Result result, bool relay)
+void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& location, Result result, bool relay)
 {
     if (location.m_field1c == 0)
     {
@@ -344,8 +351,8 @@ void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& lo
             common::Time now;
             now.SetNow();
             traversalTime->m_count = static_cast<unsigned int>(
-                static_cast<long long>(now.m_tick - traversalTime->m_endTime.m_tick) /
-                common::TimeSpan::GetTicksPerMSec().m_tick);
+                static_cast<long long>(now.m_tick - traversalTime->m_endTime.m_tick)
+                / common::TimeSpan::GetTicksPerMSec().m_tick);
         }
     }
     if (result == 0)
@@ -381,8 +388,8 @@ void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& lo
                 common::Time now;
                 now.SetNow();
                 elapsedTime = static_cast<unsigned int>(
-                    static_cast<long long>(now.m_tick - traversalTime->m_startTime.m_tick) /
-                    common::TimeSpan::GetTicksPerMSec().m_tick);
+                    static_cast<long long>(now.m_tick - traversalTime->m_startTime.m_tick)
+                    / common::TimeSpan::GetTicksPerMSec().m_tick);
                 attemptCount = traversalTime->m_count;
             }
             else
@@ -399,8 +406,7 @@ void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& lo
         common::g_sessionBeginMonitoringContent.m_metric144[index] = probeFlag;
         common::g_sessionBeginMonitoringContent.m_metric145[index] = sprayCount;
         common::g_sessionBeginMonitoringContent.m_metric146[index] = probeTimeout;
-        common::g_sessionBeginMonitoringContent.m_metric155[index] =
-            location.m_inetAddress.m_address != 0 ? 1 : 0;
+        common::g_sessionBeginMonitoringContent.m_metric155[index] = location.m_inetAddress.m_address != 0 ? 1 : 0;
     }
     m_protocol->m_traversalTimes.Remove(location);
     if (m_protocol != 0)
@@ -408,9 +414,8 @@ void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& lo
 }
 
 bool NatTraverser::PrepareNatTraversal(const transport::StationLocation& location,
-                                       const transport::StationConnectionInfo& connection,
-                                       common::CallContext* context, bool relay, bool passive,
-                                       bool force)
+                                       const transport::StationConnectionInfo& connection, common::CallContext* context,
+                                       bool relay, bool passive, bool force)
 {
     bool result = true;
     if (relay)
@@ -509,8 +514,7 @@ bool NatTraverser::IsStartupCancelled()
 }
 
 void NatTraverser::RelayProbeRequest(const transport::StationLocation& source,
-                                     const transport::StationLocation& destination,
-                                     bool relay, unsigned short port)
+                                     const transport::StationLocation& destination, bool relay, unsigned short port)
 {
     m_facade->RelayProbeRequest(source, destination);
     if (!relay)
@@ -622,4 +626,6 @@ static void NatPortDetectionCompletionCallback(Result, void* param)
     static_cast<NatTraverser*>(param)->CompletedNatPortDetection(true);
 }
 
-}}}
+}
+}
+}

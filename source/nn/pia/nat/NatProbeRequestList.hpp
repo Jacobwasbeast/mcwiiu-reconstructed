@@ -19,35 +19,17 @@ public:
     NatProbeRequestList();
     virtual ~NatProbeRequestList();
 
-    unsigned int GetSize() const
-    {
-        return GetNodeNum();
-    }
+    unsigned int GetSize() const { return GetNodeNum(); }
 
-    common::ListNode* Begin()
-    {
-        return Sentinel()->next;
-    }
+    common::ListNode* Begin() { return Sentinel()->next; }
 
-    common::ListNode* End()
-    {
-        return Sentinel();
-    }
+    common::ListNode* End() { return Sentinel(); }
 
-    static NatProbeRequest* RequestOf(common::ListNode* node)
-    {
-        return RequestList::ValueOf(node);
-    }
+    static NatProbeRequest* RequestOf(common::ListNode* node) { return RequestList::ValueOf(node); }
 
-    NatProbeRequest* Allocate()
-    {
-        return Alloc();
-    }
+    NatProbeRequest* Allocate() { return Alloc(); }
 
-    void Release(NatProbeRequest* request)
-    {
-        Destroy(request);
-    }
+    void Release(NatProbeRequest* request) { Destroy(request); }
 
     void ReleaseAll()
     {

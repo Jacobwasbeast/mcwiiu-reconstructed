@@ -5,7 +5,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatPortDetecter : public NatDetecter
 {
@@ -13,12 +18,10 @@ public:
     NatPortDetecter();
     virtual ~NatPortDetecter();
 
-    Result Startup(NatTraverser* traverser, common::CallContext* context,
-                   const common::InetAddress& address);
-    virtual Result Startup(NatTraverser* traverser, common::CallContext* context,
-                           const common::InetAddress& address,
-                           const transport::StationLocation& primary,
-                           const transport::StationLocation& secondary, bool relay);
+    Result Startup(NatTraverser* traverser, common::CallContext* context, const common::InetAddress& address);
+    virtual Result Startup(NatTraverser* traverser, common::CallContext* context, const common::InetAddress& address,
+                           const transport::StationLocation& primary, const transport::StationLocation& secondary,
+                           bool relay);
     void Cleanup();
     void SendNatPortDetectionProbes();
     void StartSendingNatCheckProbe();
@@ -34,6 +37,8 @@ private:
     common::Time m_startTime;
 };
 
-}}}
+}
+}
+}
 
 #endif
