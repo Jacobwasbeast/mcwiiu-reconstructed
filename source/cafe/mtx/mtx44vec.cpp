@@ -4,6 +4,13 @@
 
 #ifdef __ghs__
 #include <ppc_ps.h>
+#elif defined(__powerpc__) || defined(__PPC__)
+static inline f32 MultiplyAdd(f32 a, f32 c, f32 b)
+{
+    f32 result;
+    __asm__("fmadds %0, %1, %2, %3" : "=f"(result) : "f"(a), "f"(c), "f"(b));
+    return result;
+}
 #endif
 
 extern "C"
@@ -28,6 +35,35 @@ void ASM_MTX44MultVec(const Mtx44 m, const Vec* src, Vec* dst)
     vz = __PS_SUM0(vz, vz, vz);
     __PSQ_ST(&dst->x, __PS_MUL(vx, w), 0, 0);
     __PSQ_ST(&dst->z, __PS_MUL(vz, w), 1, 0);
+#elif defined(__powerpc__) || defined(__PPC__)
+    const f32 x = src->x;
+    const f32 y = src->y;
+    const f32 z = src->z;
+    const f32 wx = m[3][0] * x;
+    const f32 wy = m[3][1] * y;
+    const f32 wxz = MultiplyAdd(z, m[3][2], wx);
+    const f32 wyw = m[3][3] + wy;
+    const f32 w = wxz + wyw;
+    const f32 wInverse = 1.0F / w;
+    const f32 xx = m[0][0] * x;
+    const f32 xy = m[0][1] * y;
+    const f32 yx = m[1][0] * x;
+    const f32 yy = m[1][1] * y;
+    const f32 zx = m[2][0] * x;
+    const f32 zy = m[2][1] * y;
+    const f32 xxz = MultiplyAdd(z, m[0][2], xx);
+    const f32 xyw = m[0][3] + xy;
+    const f32 yxz = MultiplyAdd(z, m[1][2], yx);
+    const f32 yyw = m[1][3] + yy;
+    const f32 zxz = MultiplyAdd(z, m[2][2], zx);
+    const f32 zyw = m[2][3] + zy;
+    const f32 vx = xxz + xyw;
+    const f32 vy = yxz + yyw;
+    const f32 vz = zxz + zyw;
+
+    dst->x = vx * wInverse;
+    dst->y = vy * wInverse;
+    dst->z = vz * wInverse;
 #else
     Vec vTmp;
     f32 w;
@@ -98,6 +134,23 @@ void ASM_MTX44MultVecSR(const Mtx44 m, const Vec* src, Vec* dst)
     __PSQ_ST(&dst->x, __PS_MADD(__PSQ_L(&m[0][2], 0, 0), z1, vx), 1, 0);
     __PSQ_ST(&dst->y, __PS_MADD(__PSQ_L(&m[1][2], 0, 0), z1, vy), 1, 0);
     __PSQ_ST(&dst->z, __PS_MADD(__PSQ_L(&m[2][2], 0, 0), z1, vz), 1, 0);
+#elif defined(__powerpc__) || defined(__PPC__)
+    const f32 x = src->x;
+    const f32 y = src->y;
+    const f32 z = src->z;
+    const f32 xx = m[0][0] * x;
+    const f32 xy = m[0][1] * y;
+    const f32 yx = m[1][0] * x;
+    const f32 yy = m[1][1] * y;
+    const f32 zx = m[2][0] * x;
+    const f32 zy = m[2][1] * y;
+    const f32 vx = xx + xy;
+    const f32 vy = yx + yy;
+    const f32 vz = zx + zy;
+
+    dst->x = MultiplyAdd(m[0][2], z, vx);
+    dst->y = MultiplyAdd(m[1][2], z, vy);
+    dst->z = MultiplyAdd(m[2][2], z, vz);
 #else
     Vec vTmp;
 

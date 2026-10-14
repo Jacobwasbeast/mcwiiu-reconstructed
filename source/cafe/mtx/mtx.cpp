@@ -4,6 +4,13 @@
 
 #ifdef __ghs__
 #include <ppc_ps.h>
+#elif defined(__powerpc__) || defined(__PPC__)
+static inline f32 MultiplyAdd(f32 a, f32 c, f32 b)
+{
+    f32 result;
+    __asm__("fmadds %0, %1, %2, %3" : "=f"(result) : "f"(a), "f"(c), "f"(b));
+    return result;
+}
 #endif
 
 extern "C"
@@ -37,6 +44,47 @@ void ASM_MTXConcat(const Mtx a, const Mtx b, Mtx ab)
         m02 = __PS_MADDS1(unit01, a02, m02);
         __PSQ_ST(&ab[i][0], m00, 0, 0);
         __PSQ_ST(&ab[i][2], m02, 0, 0);
+    }
+#elif defined(__powerpc__) || defined(__PPC__)
+    const f32 b00 = b[0][0];
+    const f32 b01 = b[0][1];
+    const f32 b02 = b[0][2];
+    const f32 b03 = b[0][3];
+    const f32 b10 = b[1][0];
+    const f32 b11 = b[1][1];
+    const f32 b12 = b[1][2];
+    const f32 b13 = b[1][3];
+    const f32 b20 = b[2][0];
+    const f32 b21 = b[2][1];
+    const f32 b22 = b[2][2];
+    const f32 b23 = b[2][3];
+    u32 i;
+
+    for (i = 0; i < 3; i++)
+    {
+        const f32 a0 = a[i][0];
+        const f32 a1 = a[i][1];
+        const f32 a2 = a[i][2];
+        const f32 a3 = a[i][3];
+        f32 m0 = b00 * a0;
+        f32 m1 = b01 * a0;
+        f32 m2 = b02 * a0;
+        f32 m3 = b03 * a0;
+
+        m0 = MultiplyAdd(b10, a1, m0);
+        m1 = MultiplyAdd(b11, a1, m1);
+        m2 = MultiplyAdd(b12, a1, m2);
+        m3 = MultiplyAdd(b13, a1, m3);
+        m0 = MultiplyAdd(b20, a2, m0);
+        m1 = MultiplyAdd(b21, a2, m1);
+        m2 = MultiplyAdd(b22, a2, m2);
+        m3 = MultiplyAdd(b23, a2, m3);
+        m2 = MultiplyAdd(0.0F, a3, m2);
+        m3 = a3 + m3;
+        ab[i][0] = m0;
+        ab[i][1] = m1;
+        ab[i][2] = m2;
+        ab[i][3] = m3;
     }
 #else
     Mtx mTmp;

@@ -5,6 +5,34 @@
 #ifdef __ghs__
 #include <ppc_ghs.h>
 #include <ppc_ps.h>
+#elif defined(__powerpc__) || defined(__PPC__)
+static inline f32 MultiplyAdd(f32 a, f32 c, f32 b)
+{
+    f32 result;
+    __asm__("fmadds %0, %1, %2, %3" : "=f"(result) : "f"(a), "f"(c), "f"(b));
+    return result;
+}
+
+static inline f32 MultiplySubtract(f32 a, f32 c, f32 b)
+{
+    f32 result;
+    __asm__("fmsubs %0, %1, %2, %3" : "=f"(result) : "f"(a), "f"(c), "f"(b));
+    return result;
+}
+
+static inline f32 NegativeMultiplySubtract(f32 a, f32 c, f32 b)
+{
+    f32 result;
+    __asm__("fnmsubs %0, %1, %2, %3" : "=f"(result) : "f"(a), "f"(c), "f"(b));
+    return result;
+}
+
+static inline f32 ReciprocalSqrtEstimate(f32 value)
+{
+    f32 estimate;
+    __asm__("frsqrte %0, %1" : "=f"(estimate) : "f"(value));
+    return estimate;
+}
 #endif
 
 extern "C"
@@ -29,6 +57,20 @@ void ASM_VECCrossProduct(const Vec* a, const Vec* b, Vec* axb)
 
     __PSQ_ST(&axb->x, __PS_MERGE11(xz, xz), 1, 0);
     __PSQ_ST(&axb->y, __PS_NEG(__PS_MERGE01(xz, yx)), 0, 0);
+#elif defined(__powerpc__) || defined(__PPC__)
+    const f32 bx = b->x;
+    const f32 by = b->y;
+    const f32 az = a->z;
+    const f32 ax = a->x;
+    const f32 ay = a->y;
+    const f32 bz = b->z;
+    const f32 bxAz = bx * az;
+    const f32 byAz = by * az;
+    const f32 byAx = by * ax;
+
+    axb->x = MultiplySubtract(ay, bz, byAz);
+    axb->y = NegativeMultiplySubtract(ax, bz, bxAz);
+    axb->z = NegativeMultiplySubtract(ay, bx, byAx);
 #else
     Vec vTmp;
 
@@ -71,6 +113,23 @@ void ASM_VECNormalize(const Vec* src, Vec* unit)
     rsqrt = __FNMSUBS(rsqrt * rsqrt, mag[0], 3.0F) * (rsqrt * 0.5F);
     __PSQ_ST(&unit->x, __PS_MULS0F(xy, rsqrt), 0, 0);
     __PSQ_ST(&unit->z, __PS_MULS0F(z1, rsqrt), 1, 0);
+#elif defined(__powerpc__) || defined(__PPC__)
+    const f32 x = src->x;
+    const f32 y = src->y;
+    const f32 z = src->z;
+    const f32 xSq = x * x;
+    const f32 ySq = y * y;
+    const f32 magXz = MultiplyAdd(z, z, xSq);
+    const f32 mag = magXz + ySq;
+    f32 rsqrt = ReciprocalSqrtEstimate(mag);
+    const f32 rsqrtSq = rsqrt * rsqrt;
+    const f32 rsqrtHalf = rsqrt * 0.5F;
+    const f32 refine = NegativeMultiplySubtract(rsqrtSq, mag, 3.0F);
+
+    rsqrt = refine * rsqrtHalf;
+    unit->x = x * rsqrt;
+    unit->y = y * rsqrt;
+    unit->z = z * rsqrt;
 #else
     f32 mag;
 
