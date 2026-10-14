@@ -29,7 +29,7 @@ public:
     virtual int getRequiredControlFlags();
     virtual void setLevel(Level* level);
     virtual std::wstring getName() = 0;
-    void toString();
+    std::wstring toString();
 
 protected:
     int mRequiredControlFlags;

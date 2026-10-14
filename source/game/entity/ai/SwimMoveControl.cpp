@@ -72,7 +72,7 @@ void SwimMoveControl::tick()
         lookControl = static_cast<LookControl*>(mMob->getLookControl());
         mob = mMob;
         Vec3* target = Vec3::newTemp(mob->getPos(0.0f)->x + dx / distance * 2.0,
-                                     mob->getAttachPos(Entity::ENTITY_LOCATION_MOUNT, 0.0f)->y + dy / distance,
+                                     mob->getAttachPos(Entity::ENTITY_LOCATION_HEAD, 0.0f)->y + dy / distance,
                                      mMob->getPos(0.0f)->z + dz / distance * 2.0);
         Vec3* wanted = Vec3::newTemp(lookControl->getWantedX(), lookControl->getWantedY(), lookControl->getWantedZ());
         if (!lookControl->isHasWanted())

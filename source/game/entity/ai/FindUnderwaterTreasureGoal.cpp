@@ -73,10 +73,10 @@ void FindUnderwaterTreasureGoal::start()
             BlockPos(Mth::floor(mMob->mX + mSearchRadius), Mth::floor(mMob->mY + 3.0), Mth::floor(mMob->mZ + mSearchRadius)));
         while (positions->hasNext())
         {
-            MutableBlockPos* current = positions->next();
-            if (Block::getId(level->getBlockState(*current)->getBlock()) == BlockId::CHEST)
+            BlockPos current = *positions->next();
+            if (Block::getId(level->getBlock(current)) == BlockId::CHEST)
             {
-                chest = new BlockPos(*current);
+                chest = new BlockPos(current);
                 break;
             }
         }

@@ -46,7 +46,7 @@ void Goal::setLevel(Level* level)
     (void)level;
 }
 
-void Goal::toString()
+std::wstring Goal::toString()
 {
-    getName();
+    return getName();
 }

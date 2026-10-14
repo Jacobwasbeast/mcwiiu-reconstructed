@@ -117,8 +117,11 @@ void RiverFollowingGoal::determineSteerDirection()
                     candidate->multiply(lookDistance)->add(position), false, true, true, false,
                     NULL, false);
 
-                Material* material =
-                    hit != NULL ? level->getBlock(hit->getBlockPos())->mMaterial : Material::WATER;
+                Material* material;
+                if (hit == NULL)
+                    material = Material::WATER;
+                else
+                    material = level->getBlock(hit->getBlockPos())->mMaterial;
 
                 if ((hit != NULL && hit->mType != HitResult::MISS) || material->blocksMotion())
                 {
