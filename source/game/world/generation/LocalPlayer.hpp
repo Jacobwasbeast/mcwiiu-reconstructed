@@ -122,7 +122,7 @@ public:
     void onUpdateAbilities();
     bool isLocalPlayer();
     void updateDamageIndicator(float, float, bool);
-    double getJumpRidingScale();
+    float getJumpRidingScale();
     void sendRidingJump();
     void sendOpenInventory();
     virtual void setPermissionLevel(int);
@@ -167,6 +167,7 @@ public:
 private:
     friend class Boat;
     friend class ChangeStateConstraint;
+    friend class CGameNetworkManager;
     friend class ClientPacketListener;
     friend class IUIScene_PlayerList;
     friend class ClientMasterGameMode;

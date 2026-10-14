@@ -57,6 +57,7 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemCooldowns.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/ItemId.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/InsomniaComponent.hpp"
@@ -98,7 +99,7 @@
 #include "game/item/ArmorItem.hpp"
 #include "game/world/block/BlockId.hpp"
 #include "game/item/ElytraItem.hpp"
-#include "game/item/ShieldItem.hpp"
+#include "game/item/AxeItem.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/DoorBlock.hpp"
 #include "game/world/block/FenceGateBlock.hpp"
@@ -992,11 +993,24 @@ uint32_t Player::GetModelTypeFromAnimBitmask(uint32_t value)
 
 uint32_t Player::GetModelTypeFromTextureId(int32_t value)
 {
-    if (value == 0x25) return 1;
-    if (value < 0x70) return 0;
-    if (value <= 0x77) return 2;
-    if (value == 0xa9 || value == 0xaa) return 2;
-    return 0;
+    switch (value)
+    {
+    case 0x25:
+    case 0xa9:
+        return 1;
+    case 0x70:
+    case 0x71:
+    case 0x72:
+    case 0x73:
+    case 0x74:
+    case 0x75:
+    case 0x76:
+    case 0x77:
+    case 0xaa:
+        return 2;
+    default:
+        return 0;
+    }
 }
 
 void Player::AdvanceTimerAchievement(TimerAchievements achievement, int32_t ticks)
@@ -1291,8 +1305,7 @@ float Player::getDestroySpeed(const BlockState* state)
 {
     float speed = mInventory->getDestroySpeed(state);
     if (speed > 1.0f) {
-        boost::shared_ptr<LivingEntity> self = boost::dynamic_pointer_cast<LivingEntity>(shared_from_this());
-        int efficiencyLevel = static_cast<int>(EnchantmentHelper::getBlockEfficiency(self));
+        int efficiencyLevel = EnchantmentHelper::getBlockEfficiency(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
         not_null_ptr<ItemInstance> item = getMainHandItem();
         if (efficiencyLevel > 0 && !item->isEmpty()) {
             speed += static_cast<float>(efficiencyLevel * efficiencyLevel + 1);
@@ -1305,7 +1318,7 @@ float Player::getDestroySpeed(const BlockState* state)
     }
     if (hasEffect(MobEffects::CONDUIT_POWER)) {
         int conduitAmplifier = getEffect(MobEffects::CONDUIT_POWER)->getAmplifier();
-        if (digSpeedAmplifier < conduitAmplifier + 1) digSpeedAmplifier = conduitAmplifier + 1;
+        if (conduitAmplifier + 1 > digSpeedAmplifier) digSpeedAmplifier = conduitAmplifier + 1;
     }
     if (digSpeedAmplifier > 0) {
         speed *= static_cast<float>(digSpeedAmplifier + 1) * 0.2f + 1.0f;
@@ -1314,22 +1327,26 @@ float Player::getDestroySpeed(const BlockState* state)
     if (hasEffect(MobEffects::DIG_SLOWDOWN)) {
         int amplifier = getEffect(MobEffects::DIG_SLOWDOWN)->getAmplifier();
         float multiplier;
-        if (amplifier == 0) multiplier = 0.3f;
-        else if (amplifier == 1) multiplier = 0.09f;
-        else if (amplifier == 2) multiplier = 0.0027f;
-        else multiplier = 0.00081000006f;
+        switch (amplifier) {
+        case 0:
+            multiplier = 0.3f;
+            break;
+        case 1:
+            multiplier = 0.09f;
+            break;
+        case 2:
+            multiplier = 0.0027f;
+            break;
+        default:
+            multiplier = 0.00081f;
+            break;
+        }
         speed *= multiplier;
     }
 
-    bool underWater = false;
-    bool noAquaAffinity = false;
-    if (isUnderLiquid(Material::WATER)) {
-        underWater = true;
-        boost::shared_ptr<LivingEntity> self = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-        if (!EnchantmentHelper::hasAquaAffinity(self)) noAquaAffinity = true;
+    if (isUnderLiquid(Material::WATER) && !EnchantmentHelper::hasAquaAffinity(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()))) {
+        speed /= 5.0f;
     }
-    if (underWater && noAquaAffinity) speed /= 5.0f;
-    if (!mOnGround) speed /= 5.0f;
     return speed;
 }
 
@@ -1476,7 +1493,7 @@ bool Player::isInvisibleTo(boost::shared_ptr<Player> player)
 Vec3* Player::getAttachPos(Entity::EEntityLocation location, float partialTicks)
 {
     Vec3* position = Entity::getAttachPos(location, partialTicks);
-    if (location == Entity::ENTITY_LOCATION_CHEST_LEFT && isSwimming()) position->y -= 1.100000023841858;
+    if (location == Entity::ENTITY_LOCATION_BREATHING_POINT && isSwimming()) position->y -= 1.100000023841858;
     return position;
 }
 
@@ -1563,18 +1580,29 @@ int32_t Player::getExperienceReward(boost::shared_ptr<Player>)
 _SkinAdjustments Player::getSkinAdjustmentsById(uint32_t id)
 {
     _SkinAdjustments adjustments;
-    if (static_cast<int32_t>(id) < 0) {
+    if ((id >> 31) != 0) {
         adjustments = gApp.GetSkinAdjustments(id);
         id &= 0x7fffffff;
-    }
-
-    if (id == 3 || id == 200 || id == 201 || id == 404 || id == 405
-        || id == 0x1f8 || id == 0x220 || id == 0x23a || id == 0x23d || id == 0x247) {
-        adjustments.mXMLVersion = 2;
-    } else if (id == 500) {
-        adjustments.mXMLVersion = 5;
-    } else if (id == 0x1fa) {
-        adjustments.mXMLVersion = 6;
+        switch (id) {
+        case 3:
+        case 200:
+        case 201:
+        case 404:
+        case 405:
+        case 0x1f8:
+        case 0x220:
+        case 0x23a:
+        case 0x23d:
+        case 0x247:
+            adjustments.mXMLVersion = 2;
+            break;
+        case 500:
+            adjustments.mXMLVersion = 5;
+            break;
+        case 0x1fa:
+            adjustments.mXMLVersion = 6;
+            break;
+        }
     }
     return adjustments;
 }
@@ -1839,8 +1867,7 @@ void Player::updateFrameTick()
 
     if (isSleeping())
     {
-        if (mSleepCounter < 100)
-            ++mSleepCounter;
+        mSleepCounter = std::min(mSleepCounter + 1, 100);
         if (!mLevel->mIsClientSide)
         {
             if (!checkBedExists())
@@ -1855,8 +1882,8 @@ void Player::updateFrameTick()
             mSleepCounter = 0;
     }
 
-    if (!isAlive() && mDeathFadeTimer < 21)
-        ++mDeathFadeTimer;
+    if (!isAlive())
+        mDeathFadeTimer = std::min(mDeathFadeTimer + 1, 21);
 }
 
 void Player::tickCamera()
@@ -2111,8 +2138,8 @@ void Player::tick()
             float green = Mth::sin(static_cast<float>(mWinnerParticleTicks) + 2.0f);
             float blue = Mth::sin(static_cast<float>(mWinnerParticleTicks) + 4.0f);
             double y = mRandom->nextDouble() * mBbHeight + mY;
-            mLevel->addParticle(PARTICLE_MOB_SPELL, mX, y, mZ, static_cast<float>(red * 127.0 + 128.0) / 255.0f,
-                                static_cast<float>(green * 127.0 + 128.0) / 255.0f, static_cast<float>(blue * 127.0 + 128.0) / 255.0f,
+            mLevel->addParticle(PARTICLE_MOB_SPELL, mX, y, mZ, (red * 127.0f + 128.0f) / 255.0f,
+                                (green * 127.0f + 128.0f) / 255.0f, (blue * 127.0f + 128.0f) / 255.0f,
                                 arrayWithLength<int>());
         }
         return;
@@ -2208,9 +2235,9 @@ void Player::tick()
                 float green = Mth::sin(static_cast<float>(mWinnerParticleTicks) + 2.0f);
                 float blue = Mth::sin(static_cast<float>(mWinnerParticleTicks) + 4.0f);
                 arrayWithLength<int> colourData(4, true);
-                colourData.data[2] = static_cast<int>(blue * 127.0 + 128.0);
-                colourData.data[0] = static_cast<int>(red * 127.0 + 128.0);
-                colourData.data[1] = static_cast<int>(green * 127.0 + 128.0);
+                colourData.data[2] = static_cast<int>(blue * 127.0f + 128.0f);
+                colourData.data[0] = static_cast<int>(red * 127.0f + 128.0f);
+                colourData.data[1] = static_cast<int>(green * 127.0f + 128.0f);
                 colourData.data[3] = 0xff;
                 double xo = mRandom->nextDouble() * 2.0 - 1.0;
                 double yo = mBbHeight * (mRandom->nextDouble() * 2.0 - 1.0);
@@ -2619,10 +2646,9 @@ bool Player::hurt(const DamageSource* source, float damage)
 void Player::blockUsingShield(const boost::shared_ptr<LivingEntity>& attacker)
 {
     LivingEntity::blockUsingShield(attacker);
-    if (attacker) {
-        not_null_ptr<ItemInstance> held = attacker->getMainHandItem();
-        if (!held->isEmpty() && dynamic_cast<ShieldItem*>(held->getItem()) != NULL)
-            disableShield(true);
+    if (dynamic_cast<AxeItem*>(attacker->getMainHandItem()->getItem()) != NULL)
+    {
+        disableShield(true);
     }
 }
 
@@ -2784,9 +2810,9 @@ void Player::causeFallDamage(float distance, float multiplier)
     if (distance >= 2.0f) {
         mFallDistanceCm += static_cast<int>(Math::round(distance * 100.0));
         if (mFallDistanceCm >= 100) {
-            int meters = mFallDistanceCm / 100;
-            mFallDistanceCm %= 100;
-            awardStat(GenericStats::fallOneM(), GenericStats::param_fall(meters));
+            int newDistance = mFallDistanceCm - mFallDistanceCm % 100;
+            mFallDistanceCm -= newDistance;
+            awardStat(GenericStats::fallOneM(), GenericStats::param_fall(newDistance / 100));
         }
     }
     LivingEntity::causeFallDamage(distance, multiplier);
@@ -2867,12 +2893,10 @@ void Player::respawnEntityOnShoulder(CompoundTag* tag)
 
 void Player::removeEntitiesOnShoulder()
 {
-    CompoundTag* left = getShoulderEntityLeft();
-    respawnEntityOnShoulder(left);
-    if (left != NULL && !left->isEmpty()) setShoulderEntityLeft(new CompoundTag());
-    CompoundTag* right = getShoulderEntityRight();
-    respawnEntityOnShoulder(right);
-    if (right != NULL && !right->isEmpty()) setShoulderEntityRight(new CompoundTag());
+    respawnEntityOnShoulder(getShoulderEntityLeft());
+    if (!getShoulderEntityLeft()->isEmpty()) setShoulderEntityLeft(new CompoundTag());
+    respawnEntityOnShoulder(getShoulderEntityRight());
+    if (!getShoulderEntityRight()->isEmpty()) setShoulderEntityRight(new CompoundTag());
 }
 
 void Player::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
@@ -3333,16 +3357,61 @@ uint32_t Player::isAllowedToUse(not_null_ptr<ItemInstance> item)
     unsigned int id = Item::getId(item->getItem());
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         return Minecraft::GetInstance()->GetMiniGame()->MayUse(static_cast<int>(id));
-    if (item->isEmpty() || gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0)
-        return 1;
-    const bool allowedWithoutPrivilege = getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) == 0;
-    const bool restrictedItem = id == 0x104 || id == 0x105 || (id >= 0x107 && id <= 0x10a)
-        || id == 0x10d || id == 0x110 || id == 0x114 || id == 0x11a || id == 0x11b
-        || (id >= 0x129 && id <= 0x13d) || id == 0x13e || id == 0x140 || id == 0x142
-        || id == 0x15d || id == 0x15e || id == 0x165 || id == 0x168
-        || (id >= 0x16b && id <= 0x16f) || id == 0x175 || id == 0x180
-        || id == 0x1b6 || id == 0x1b9;
-    return restrictedItem ? 1 : static_cast<uint32_t>(allowedWithoutPrivilege);
+    bool allowed = true;
+    if (!item->isEmpty() && gApp.GetGameHostOption(eGameHostOption_TrustPlayers) == 0) {
+        if (getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) != 0)
+            allowed = false;
+        switch (id) {
+        case ItemId::APPLE:
+        case ItemId::BOW:
+        case ItemId::IRON_SWORD:
+        case ItemId::WOODEN_SWORD:
+        case ItemId::STONE_SWORD:
+        case ItemId::DIAMOND_SWORD:
+        case ItemId::MUSHROOM_STEW:
+        case ItemId::GOLDEN_SWORD:
+        case ItemId::BREAD:
+        case ItemId::LEATHER_HELMET:
+        case ItemId::LEATHER_CHESTPLATE:
+        case ItemId::LEATHER_LEGGINGS:
+        case ItemId::LEATHER_BOOTS:
+        case ItemId::CHAINMAIL_HELMET:
+        case ItemId::CHAINMAIL_CHESTPLATE:
+        case ItemId::CHAINMAIL_LEGGINGS:
+        case ItemId::CHAINMAIL_BOOTS:
+        case ItemId::IRON_HELMET:
+        case ItemId::IRON_CHESTPLATE:
+        case ItemId::IRON_LEGGINGS:
+        case ItemId::IRON_BOOTS:
+        case ItemId::DIAMOND_HELMET:
+        case ItemId::DIAMOND_CHESTPLATE:
+        case ItemId::DIAMOND_LEGGINGS:
+        case ItemId::DIAMOND_BOOTS:
+        case ItemId::GOLDEN_HELMET:
+        case ItemId::GOLDEN_CHESTPLATE:
+        case ItemId::GOLDEN_LEGGINGS:
+        case ItemId::GOLDEN_BOOTS:
+        case ItemId::PORKCHOP:
+        case ItemId::COOKED_PORKCHOP:
+        case ItemId::GOLDEN_APPLE:
+        case ItemId::FISH:
+        case ItemId::COOKED_FISH:
+        case ItemId::COOKIE:
+        case ItemId::MELON:
+        case ItemId::BEEF:
+        case ItemId::COOKED_BEEF:
+        case ItemId::CHICKEN:
+        case ItemId::COOKED_CHICKEN:
+        case ItemId::ROTTEN_FLESH:
+        case ItemId::POTION:
+        case ItemId::EXPERIENCE_BOTTLE:
+        case ItemId::SPLASH_POTION:
+        case ItemId::LINGERING_POTION:
+            allowed = true;
+            break;
+        }
+    }
+    return allowed;
 }
 
 bool Player::isAllowedToInteract(boost::shared_ptr<Entity> entity)
@@ -3509,20 +3578,17 @@ uint32_t Player::interactOn(boost::shared_ptr<Entity> entity, InteractionHand::E
     not_null_ptr<ItemInstance> beforeItem = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 
     if (entity->interact(self, hand)) {
-        if (mAbilities.mInstabuild) {
-            not_null_ptr<ItemInstance> afterItem = getItemInHand(hand);
-            if (afterItem == item && afterItem->getCount() < beforeItem->getCount()) {
-                afterItem->setCount(beforeItem->getCount());
-            }
+        if (mAbilities.mInstabuild && item == getItemInHand(hand) && item->getCount() < beforeItem->getCount()) {
+            item->setCount(beforeItem->getCount());
         }
         return 1;
     }
 
-    if (item->isEmpty()) return 0;
-
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY) {
-        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-        if (item->interactEnemy(self, living, hand)) {
+    if (!item->isEmpty() && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY) {
+        if (mAbilities.mInstabuild) {
+            item = beforeItem;
+        }
+        if (item->interactEnemy(self, boost::static_pointer_cast<LivingEntity>(entity), hand)) {
             if (item->isEmpty() && !mAbilities.mInstabuild) {
                 setItemInHand(hand, ItemInstance::EMPTY);
             }

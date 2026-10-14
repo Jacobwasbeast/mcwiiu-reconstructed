@@ -80,7 +80,7 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
     for (int step = start; step < length; ++step)
     {
         const float radius = std::sin(static_cast<float>(step) * pi / static_cast<float>(length)) * width + 1.5F;
-        const double radiusY = static_cast<double>(radius * static_cast<float>(scale));
+        const float radiusY = radius * static_cast<float>(scale);
         const float cosPitch = std::cos(pitch);
         const float sinPitch = std::sin(pitch);
         x += std::cos(yaw) * cosPitch;
@@ -143,7 +143,8 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
                 {
                     const float yd = (localY + 0.5F - static_cast<float>(y)) / radiusY;
                     const int index = (localX << 11) | (localZ << 7) | localY;
-                    if (yd <= -0.7 || xd * xd + yd * yd + zd * zd >= 1.0F || localY >= 0x3e || !isDiggable(primer->getBlockId(index)))
+                    const float yd2 = yd * yd;
+                    if (yd <= -0.7 || xd * xd + yd2 + zd * zd >= 1.0F || localY >= 0x3e || !isDiggable(primer->getBlockId(index)))
                         continue;
                     if (!found && level != NULL && level->getBiome(startPos)->getBiomeType() != Biome::eBiomeType_Ocean)
                         return;

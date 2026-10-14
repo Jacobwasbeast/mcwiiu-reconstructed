@@ -300,6 +300,9 @@ void PlayerList::remove(boost::shared_ptr<ServerPlayer> player)
     else
         save(player);
 
+    if (player->mIsGuest)
+        mPlayerIO->deleteMapFilesForPlayer(player);
+
     ServerLevel* level = player->getLevel();
     if (player->isPassenger())
     {
@@ -968,7 +971,7 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
         delete effects;
 
         boost::shared_ptr<SynchedEntityData> entityData = replacement->getEntityData();
-        entityData->markDirty(Entity::DATA_SHARED_FLAGS_ID);
+        entityData->markDirty(LivingEntity::DATA_EFFECT_COLOR_ID);
     }
 
     sendLevelInfo(replacement, newLevel);
@@ -1083,7 +1086,7 @@ void PlayerList::repositionAcrossDimension(boost::shared_ptr<Entity> entity, int
 
 void PlayerList::sendAllPlayerInfo(boost::shared_ptr<ServerPlayer> player)
 {
-    player->refreshContainer(player->mContainerMenu);
+    player->refreshContainer(player->mInventoryMenu);
     player->resetSentInfo();
     player->mConnection->send(boost::shared_ptr<Packet>(
         new ClientboundSetCarriedItemPacket(player->mInventory->m_selected)));

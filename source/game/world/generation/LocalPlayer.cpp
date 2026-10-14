@@ -949,7 +949,7 @@ void LocalPlayer::aiStep()
             if (!mInput->mJumping)
             {
                 mRideJumpTicks = -10;
-                rideable->onPlayerJump(Mth::floor(static_cast<float>(getJumpRidingScale() * 100.0f)));
+                rideable->onPlayerJump(Mth::floor(getJumpRidingScale() * 100.0f));
                 sendRidingJump();
             }
             else
@@ -1062,7 +1062,7 @@ void LocalPlayer::aiStep()
         Vec3* look = getViewVector(0.0f);
         const double horizontalMotion = mXd * mXd + mZd * mZd;
         const double horizontalLook = look->x * look->x + look->z * look->z;
-        if (horizontalMotion > 0.01 && horizontalLook > 0.01)
+        if (horizontalMotion > 0.01f && horizontalLook > 0.01f)
         {
             const double motionLength = Mth::sqrt(horizontalMotion);
             const double lookLength = Mth::sqrt(horizontalLook);
@@ -1716,7 +1716,7 @@ unsigned char LocalPlayer::handleMouseClick(int button)
                                     if (heldItem->getCount() == 0)
                                         mMinecraft->mPlayer->setItemInHand(useHand, ItemInstance::EMPTY);
                                     else if (heldItem->getCount() != oldCount || gameMode->hasInfiniteItems())
-                                        mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(useHand);
+                                        mMinecraft->mGameRenderer->mItemInHandRenderer->itemUsed(useHand);
                                 }
                                 return used;
                             }
@@ -1732,7 +1732,7 @@ unsigned char LocalPlayer::handleMouseClick(int button)
                     if (gameMode->useItem(player, mLevel, useHand, false) ==
                         InteractionResult::eInteractionResult_Success)
                     {
-                        mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(useHand);
+                        mMinecraft->mGameRenderer->mItemInHandRenderer->itemUsed(useHand);
                         return 0;
                     }
                 }
@@ -2292,17 +2292,15 @@ void LocalPlayer::updateDamageIndicator(float x, float z, bool allDirections)
     mDamageIndicatorSegments[segment] = true;
 }
 
-double LocalPlayer::getJumpRidingScale()
+float LocalPlayer::getJumpRidingScale()
 {
     return mRideJumpScale;
 }
 
 void LocalPlayer::sendRidingJump()
 {
-    boost::shared_ptr<Entity> entity = shared_from_this();
-    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
-        entity, ServerboundPlayerCommandPacket::RIDING_JUMP, static_cast<int>(getJumpRidingScale() * 100.0f)));
-    mPacketListener->send(packet);
+    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+        shared_from_this(), ServerboundPlayerCommandPacket::RIDING_JUMP, static_cast<int>(getJumpRidingScale() * 100.0f))));
 }
 
 void LocalPlayer::sendOpenInventory()

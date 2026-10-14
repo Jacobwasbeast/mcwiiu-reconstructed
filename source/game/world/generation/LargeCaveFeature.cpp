@@ -121,17 +121,22 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
         x += Mth::cos(yaw) * horizontal;
         y += vertical;
         z += Mth::sin(yaw) * horizontal;
-        pitch *= gentlePitch ? 0.92f : 0.7f;
+        if (gentlePitch)
+            pitch *= 0.92f;
+        else
+            pitch *= 0.7f;
         pitch += pitchVariance * 0.1f;
         yaw += yawVariance * 0.1f;
+        pitchVariance *= 0.9f;
+        yawVariance *= 0.75f;
         float first = tunnelRandom.nextFloat();
         float second = tunnelRandom.nextFloat();
         float strength = tunnelRandom.nextFloat();
-        pitchVariance = pitchVariance * 0.9f + (first - second) * strength * 2.0f;
+        pitchVariance += (first - second) * strength * 2.0f;
         first = tunnelRandom.nextFloat();
         second = tunnelRandom.nextFloat();
         strength = tunnelRandom.nextFloat();
-        yawVariance = yawVariance * 0.75f + (first - second) * strength * 4.0f;
+        yawVariance += (first - second) * strength * 4.0f;
         if (!room && step == branchPoint && width > 1.0f)
         {
             long long branchSeed = tunnelRandom.nextLong();

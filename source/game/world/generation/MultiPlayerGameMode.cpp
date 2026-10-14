@@ -88,11 +88,11 @@ MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* con
 
 MultiPlayerGameMode::~MultiPlayerGameMode()
 {
+    delete mTutorial;
+    delete mGameModeConstraints;
     std::vector<TeamInvite*>::iterator it = mTeamInvites.begin();
     for (; it != mTeamInvites.end(); ++it)
         delete *it;
-    delete mTutorial;
-    delete mGameModeConstraints;
 }
 
 GameModeConstraints* MultiPlayerGameMode::getGameModeConstraints() { return mGameModeConstraints; }
@@ -315,7 +315,7 @@ void MultiPlayerGameMode::handlePickItem(const boost::shared_ptr<ItemInstance>& 
 bool MultiPlayerGameMode::isInputAllowed(int mapping)
 {
     bool allowed = true;
-    if (GetTutorialsEnabled() && !mTutorial->tasksChecked
+    if (GetTutorialsEnabled() && !mTutorial->tasksChecked && !mTutorial->popupPending
         && !mGameModeConstraints->isInputAllowed(mapping))
         allowed = false;
 
@@ -323,27 +323,22 @@ bool MultiPlayerGameMode::isInputAllowed(int mapping)
     switch (mapping)
     {
     case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x20:
-        if (mMinecraft->mPlayer->PositionLocked())
+        if (mMinecraft->mLocalPlayers[mPlayerId]->PositionLocked())
         {
             positionOk = false;
+            break;
         }
-        else
-        {
-            if (mMinecraft->mPlayer->IsSpectatingOtherPlayer())
-                positionOk = false;
-            if (mMinecraft->mPlayer->GetThirdPersonView(false) == 3)
-                positionOk = false;
-        }
-        break;
-
+    case 0x27: case 0x29:
+        if (mMinecraft->mLocalPlayers[mPlayerId]->IsSpectatingOtherPlayer())
+            positionOk = false;
     case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-        if (mMinecraft->mPlayer->GetThirdPersonView(false) == 3)
+        if (mMinecraft->mLocalPlayers[mPlayerId]->GetThirdPersonView(false) == 3)
             positionOk = false;
         break;
 
     case 0x21:
         if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-            && mMinecraft->mPlayer->PositionLocked())
+            && mMinecraft->mLocalPlayers[mPlayerId]->PositionLocked())
             positionOk = false;
         break;
 
@@ -353,19 +348,12 @@ bool MultiPlayerGameMode::isInputAllowed(int mapping)
     case 0x23: case 0x24: case 0x25: case 0x26: case 0x28:
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         {
-            const bool positionLocked = mMinecraft->mPlayer->PositionLocked();
+            const bool positionLocked = mMinecraft->mLocalPlayers[mPlayerId]->PositionLocked();
             const bool lockedInventory = Minecraft::GetInstance()->GetMiniGame()->LockedInventory();
             const bool inScoringState = Minecraft::GetInstance()->GetClientMasterGameMode()->IsInScoringState();
             if (positionLocked || lockedInventory || inScoringState)
                 positionOk = false;
         }
-        break;
-
-    case 0x27: case 0x29:
-        if (mMinecraft->mPlayer->IsSpectatingOtherPlayer())
-            positionOk = false;
-        if (mMinecraft->mPlayer->GetThirdPersonView(false) == 3)
-            positionOk = false;
         break;
 
     default:
@@ -678,24 +666,26 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::useItem(
     if (isSpectator())
         return InteractionResult::eInteractionResult_Pass;
 
-    if (!player->isAllowedToUse(item))
+    if (player->isAllowedToUse(item) != true)
         return InteractionResult::eInteractionResult_Pass;
 
-    InteractionResult::EInteractionResult result;
     if (!simulate)
-    {
         ensureHasSentCarriedItem();
 
-        if (player->getCooldowns()->isOnCooldown(item->getItem()))
-            return InteractionResult::eInteractionResult_Pass;
+    InteractionResult::EInteractionResult result = InteractionResult::eInteractionResult_Pass;
+    if (!simulate)
+    {
+        if (!player->getCooldowns()->isOnCooldown(item->getItem()))
+        {
+            int savedCount = item->getCount();
+            InteractionResultHolder holder = item->use(level, player, hand);
+            not_null_ptr<ItemInstance> resultItem = holder.getObject();
 
-        int savedCount = item->getCount();
-        item->use(level, player, hand);
+            if (resultItem != item || resultItem->getCount() != savedCount)
+                player->setItemInHand(hand, resultItem);
 
-        if (item->getCount() != savedCount)
-            player->setItemInHand(hand, item);
-
-        result = InteractionResult::eInteractionResult_Success;
+            result = holder.getResult();
+        }
     }
     else
     {
