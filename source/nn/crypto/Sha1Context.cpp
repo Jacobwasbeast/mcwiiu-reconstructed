@@ -103,7 +103,8 @@ void Sha1Context::ProcessBlock()
     {
         if (t >= 16)
         {
-            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15] ^ words[(t - 3) & 15];
+            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15]
+                                   ^ words[(t - 3) & 15];
             words[t & 15] = RotateLeft(x, 1);
         }
         const unsigned int temp = ((b & c) | (~b & d)) + RoundConstant0 + words[t & 15] + RotateLeft(a, 5) + e;
@@ -117,7 +118,8 @@ void Sha1Context::ProcessBlock()
     {
         if (t >= 16)
         {
-            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15] ^ words[(t - 3) & 15];
+            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15]
+                                   ^ words[(t - 3) & 15];
             words[t & 15] = RotateLeft(x, 1);
         }
         const unsigned int temp = (b ^ c ^ d) + RoundConstant1 + words[t & 15] + RotateLeft(a, 5) + e;
@@ -131,7 +133,8 @@ void Sha1Context::ProcessBlock()
     {
         if (t >= 16)
         {
-            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15] ^ words[(t - 3) & 15];
+            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15]
+                                   ^ words[(t - 3) & 15];
             words[t & 15] = RotateLeft(x, 1);
         }
         const unsigned int temp = ((b & (c | d)) | (c & d)) + RoundConstant2 + words[t & 15] + RotateLeft(a, 5) + e;
@@ -145,7 +148,8 @@ void Sha1Context::ProcessBlock()
     {
         if (t >= 16)
         {
-            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15] ^ words[(t - 3) & 15];
+            const unsigned int x = words[(t - 16) & 15] ^ words[(t - 14) & 15] ^ words[(t - 8) & 15]
+                                   ^ words[(t - 3) & 15];
             words[t & 15] = RotateLeft(x, 1);
         }
         const unsigned int temp = (b ^ c ^ d) + RoundConstant3 + words[t & 15] + RotateLeft(a, 5) + e;

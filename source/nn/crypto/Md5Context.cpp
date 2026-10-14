@@ -23,21 +23,17 @@ const unsigned int RoundConstants[64] = {
     0xFFFA3942, 0x8771F681, 0x6D9D6122, 0xFDE5380C, 0xA4BEEA44, 0x4BDECFA9, 0xF6BB4B60, 0xBEBFBC70,
     0x289B7EC6, 0xEAA127FA, 0xD4EF3085, 0x04881D05, 0xD9D4D039, 0xE6DB99E5, 0x1FA27CF8, 0xC4AC5665,
     0xF4292244, 0x432AFF97, 0xAB9423A7, 0xFC93A039, 0x655B59C3, 0x8F0CCC92, 0xFFEFF47D, 0x85845DD1,
-    0x6FA87E4F, 0xFE2CE6E0, 0xA3014314, 0x4E0811A1, 0xF7537E82, 0xBD3AF235, 0x2AD7D2BB, 0xEB86D391
-};
+    0x6FA87E4F, 0xFE2CE6E0, 0xA3014314, 0x4E0811A1, 0xF7537E82, 0xBD3AF235, 0x2AD7D2BB, 0xEB86D391};
 
-const unsigned int WordOrder[48] = {
-    1, 6, 11, 0, 5, 10, 15, 4, 9, 14, 3, 8, 13, 2, 7, 12,
-    5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2,
-    0, 7, 14, 5, 12, 3, 10, 1, 8, 15, 6, 13, 4, 11, 2, 9
-};
+const unsigned int WordOrder[48] = {1, 6, 11, 0,  5,  10, 15, 4,  9,  14, 3, 8,  13, 2,  7,  12,
+                                    5, 8, 11, 14, 1,  4,  7,  10, 13, 0,  3, 6,  9,  12, 15, 2,
+                                    0, 7, 14, 5,  12, 3,  10, 1,  8,  15, 6, 13, 4,  11, 2,  9};
 
 const unsigned char PaddingByte = 0x80;
 
 inline unsigned int SwapBytes(unsigned int uiValue)
 {
-    return (uiValue << 24) | ((uiValue & 0x0000FF00) << 8) | (uiValue >> 24) |
-        ((uiValue >> 8) & 0x0000FF00);
+    return (uiValue << 24) | ((uiValue & 0x0000FF00) << 8) | (uiValue >> 24) | ((uiValue >> 8) & 0x0000FF00);
 }
 
 inline unsigned int RotateLeft(unsigned int uiValue, unsigned int uiShift)
@@ -45,8 +41,8 @@ inline unsigned int RotateLeft(unsigned int uiValue, unsigned int uiShift)
     return (uiValue << uiShift) | (uiValue >> (32 - uiShift));
 }
 
-inline unsigned int CalcRound3(unsigned int a, unsigned int b, unsigned int c, unsigned int d,
-    unsigned int uiWord, unsigned int uiShift, unsigned int uiConstant)
+inline unsigned int CalcRound3(unsigned int a, unsigned int b, unsigned int c, unsigned int d, unsigned int uiWord,
+                               unsigned int uiShift, unsigned int uiConstant)
 {
     return b + RotateLeft(a + (b ^ c ^ d) + SwapBytes(uiWord) + uiConstant, uiShift);
 }
@@ -176,18 +172,25 @@ void Md5Context::ProcessBlock()
     for (unsigned int group = 0; group < 4; ++group)
     {
         a = __N_14_crypto_Md5_cpp_c46079df::CalcRound1(a, b, c, d, m_block.words[group * 4], 7, RoundConstants[uiStep]);
-        d = __N_14_crypto_Md5_cpp_c46079df::CalcRound1(d, a, b, c, m_block.words[group * 4 + 1], 12, RoundConstants[uiStep + 1]);
-        c = __N_14_crypto_Md5_cpp_c46079df::CalcRound1(c, d, a, b, m_block.words[group * 4 + 2], 17, RoundConstants[uiStep + 2]);
-        b = __N_14_crypto_Md5_cpp_c46079df::CalcRound1(b, c, d, a, m_block.words[group * 4 + 3], 22, RoundConstants[uiStep + 3]);
+        d = __N_14_crypto_Md5_cpp_c46079df::CalcRound1(d, a, b, c, m_block.words[group * 4 + 1], 12,
+                                                       RoundConstants[uiStep + 1]);
+        c = __N_14_crypto_Md5_cpp_c46079df::CalcRound1(c, d, a, b, m_block.words[group * 4 + 2], 17,
+                                                       RoundConstants[uiStep + 2]);
+        b = __N_14_crypto_Md5_cpp_c46079df::CalcRound1(b, c, d, a, m_block.words[group * 4 + 3], 22,
+                                                       RoundConstants[uiStep + 3]);
         uiStep += 4;
     }
 
     for (unsigned int group = 0; group < 4; ++group)
     {
-        a = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(a, b, c, d, m_block.words[WordOrder[group * 4]], 5, RoundConstants[uiStep]);
-        d = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(d, a, b, c, m_block.words[WordOrder[group * 4 + 1]], 9, RoundConstants[uiStep + 1]);
-        c = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(c, d, a, b, m_block.words[WordOrder[group * 4 + 2]], 14, RoundConstants[uiStep + 2]);
-        b = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(b, c, d, a, m_block.words[WordOrder[group * 4 + 3]], 20, RoundConstants[uiStep + 3]);
+        a = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(a, b, c, d, m_block.words[WordOrder[group * 4]], 5,
+                                                       RoundConstants[uiStep]);
+        d = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(d, a, b, c, m_block.words[WordOrder[group * 4 + 1]], 9,
+                                                       RoundConstants[uiStep + 1]);
+        c = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(c, d, a, b, m_block.words[WordOrder[group * 4 + 2]], 14,
+                                                       RoundConstants[uiStep + 2]);
+        b = __N_14_crypto_Md5_cpp_c46079df::CalcRound2(b, c, d, a, m_block.words[WordOrder[group * 4 + 3]], 20,
+                                                       RoundConstants[uiStep + 3]);
         uiStep += 4;
     }
 
@@ -202,10 +205,14 @@ void Md5Context::ProcessBlock()
 
     for (unsigned int group = 8; group < 12; ++group)
     {
-        a = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(a, b, c, d, m_block.words[WordOrder[group * 4]], 6, RoundConstants[uiStep]);
-        d = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(d, a, b, c, m_block.words[WordOrder[group * 4 + 1]], 10, RoundConstants[uiStep + 1]);
-        c = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(c, d, a, b, m_block.words[WordOrder[group * 4 + 2]], 15, RoundConstants[uiStep + 2]);
-        b = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(b, c, d, a, m_block.words[WordOrder[group * 4 + 3]], 21, RoundConstants[uiStep + 3]);
+        a = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(a, b, c, d, m_block.words[WordOrder[group * 4]], 6,
+                                                       RoundConstants[uiStep]);
+        d = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(d, a, b, c, m_block.words[WordOrder[group * 4 + 1]], 10,
+                                                       RoundConstants[uiStep + 1]);
+        c = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(c, d, a, b, m_block.words[WordOrder[group * 4 + 2]], 15,
+                                                       RoundConstants[uiStep + 2]);
+        b = __N_14_crypto_Md5_cpp_c46079df::CalcRound4(b, c, d, a, m_block.words[WordOrder[group * 4 + 3]], 21,
+                                                       RoundConstants[uiStep + 3]);
         uiStep += 4;
     }
 

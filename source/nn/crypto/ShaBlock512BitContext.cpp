@@ -8,7 +8,7 @@ namespace crypto
 namespace
 {
 
-unsigned char s_padding[64] = { 0x80 };
+unsigned char s_padding[64] = {0x80};
 
 }
 
