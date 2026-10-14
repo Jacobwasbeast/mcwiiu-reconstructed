@@ -1130,13 +1130,11 @@ void Block::popResource(Level* level, const BlockPos& pos, not_null_ptr<ItemInst
     }
 
     float spread = 0.5f;
-    float offset = 0.25f;
+    double xo = level->mRandom->nextFloat() * spread + (1.0f - spread) * 0.5;
+    double yo = level->mRandom->nextFloat() * spread + (1.0f - spread) * 0.5;
+    double zo = level->mRandom->nextFloat() * spread + (1.0f - spread) * 0.5;
 
-    double x = (double)pos.x + (double)(level->mRandom->nextFloat() * spread) + (double)offset;
-    double y = (double)pos.y + (double)(level->mRandom->nextFloat() * spread) + (double)offset;
-    double z = (double)pos.z + (double)(level->mRandom->nextFloat() * spread) + (double)offset;
-
-    boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(level, x, y, z, itemInstance));
+    boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(level, pos.x + xo, pos.y + yo, pos.z + zo, itemInstance));
     itemEntity->setDefaultPickUpDelay();
 
     level->addEntity(itemEntity);
@@ -1370,15 +1368,30 @@ bool Block::waterSpreadCausesSpawn()
 
 void Block::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool)
 {
-    Block* minedBlock = state->getBlock();
-
-    if (minedBlock != Blocks::wheat && minedBlock != Blocks::carrots && minedBlock != Blocks::potatoes)
+    if (state->getBlock() == Blocks::wheat)
     {
-        player->awardStat(Stats::blockMinedStats[getId(this)], GenericStats::param_blocksMined(state, 1));
+        if (Blocks::wheat->getResource(state, NULL, 0) != NULL)
+        {
+            player->awardStat(GenericStats::blocksMined(this), GenericStats::param_blocksMined(state, 1));
+        }
     }
-    else if (minedBlock->getResource(state, NULL, 0) != NULL)
+    else if (state->getBlock() == Blocks::potatoes)
     {
-        player->awardStat(Stats::blockMinedStats[getId(this)], GenericStats::param_blocksMined(state, 1));
+        if (Blocks::potatoes->getResource(state, NULL, 0) != NULL)
+        {
+            player->awardStat(GenericStats::blocksMined(this), GenericStats::param_blocksMined(state, 1));
+        }
+    }
+    else if (state->getBlock() == Blocks::carrots)
+    {
+        if (Blocks::carrots->getResource(state, NULL, 0) != NULL)
+        {
+            player->awardStat(GenericStats::blocksMined(this), GenericStats::param_blocksMined(state, 1));
+        }
+    }
+    else
+    {
+        player->awardStat(GenericStats::blocksMined(this), GenericStats::param_blocksMined(state, 1));
     }
 
     player->awardStat(GenericStats::mineBlock(), GenericStats::param_noArgs());
@@ -1392,7 +1405,8 @@ void Block::playerDestroy(Level* level, boost::shared_ptr<Player> player, const 
     if (isSilkTouchable()
         && EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, tool) > 0)
     {
-        popResource(level, pos, getSilkTouchItemInstance(state));
+        not_null_ptr<ItemInstance> item = getSilkTouchItemInstance(state);
+        popResource(level, pos, item);
         return;
     }
 
@@ -2222,10 +2236,10 @@ void Block::staticCtor()
         (new CauldronBlock())->setIconName(L"cauldron")->setDestroyTime(2.0f)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CAULDRON, IDS_DESC_CAULDRON));
 
     registerBlock(119, L"end_portal",
-        (new EndPortalBlock(Material::PORTAL))->setDestroyTime(0.0f)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_END_PORTAL, IDS_DESC_END_PORTAL));
+        (new EndPortalBlock(Material::PORTAL))->setDestroyTime(INDESTRUCTIBLE)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_END_PORTAL, IDS_DESC_END_PORTAL));
 
     registerBlock(120, L"end_portal_frame",
-        (new EndPortalFrameBlock())->setIconName(L"endframe")->setSoundType(SoundType::GLASS)->setLightEmission(0.125f)->setDestroyTime(0.0f)->sendBlockData(15)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_ENDPORTALFRAME, IDS_DESC_ENDPORTALFRAME));
+        (new EndPortalFrameBlock())->setIconName(L"endframe")->setSoundType(SoundType::GLASS)->setLightEmission(0.125f)->setDestroyTime(INDESTRUCTIBLE)->sendBlockData(15)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_ENDPORTALFRAME, IDS_DESC_ENDPORTALFRAME));
 
     registerBlock(121, L"end_stone",
         (new BlockImpl(Material::STONE, MaterialColor::SAND))->setIconName(L"end_stone")->setDestroyTime(3.0f)->setExplodeable(15.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_WHITESTONE, IDS_DESC_WHITESTONE));
@@ -2492,7 +2506,7 @@ void Block::staticCtor()
     registerBlock(208, L"grass_path", grassPath);
 
     registerBlock(209, L"end_gateway",
-        (new EndGatewayBlock(Material::PORTAL))->setIconName(L"stone")->setDestroyTime(0.0f)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_END_GATEWAY, IDS_DESC_END_GATEWAY));
+        (new EndGatewayBlock(Material::PORTAL))->setIconName(L"stone")->setDestroyTime(INDESTRUCTIBLE)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_END_GATEWAY, IDS_DESC_END_GATEWAY));
 
     registerBlock(210, L"repeating_command_block",
         (new CommandBlock(MaterialColor::COLOR_PURPLE, CommandBlock::REPEAT))->setIconName(L"repeating_command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_COMMAND_BLOCK, IDS_DESC_COMMAND_BLOCK));

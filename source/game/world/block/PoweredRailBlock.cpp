@@ -138,12 +138,12 @@ bool PoweredRailBlock::isSameRailWithPower(Level* level, const BlockPos& pos, bo
     {
         BaseRailBlock::RailShape* otherShape = state->getValue(PoweredRailBlock::SHAPE);
         if (shape == RailShape::EAST_WEST &&
-            (otherShape == RailShape::NORTH_SOUTH || otherShape == RailShape::ASCENDING_EAST ||
-             otherShape == RailShape::ASCENDING_NORTH))
+            (otherShape == RailShape::NORTH_SOUTH || otherShape == RailShape::ASCENDING_NORTH ||
+             otherShape == RailShape::ASCENDING_SOUTH))
             return false;
         if (shape == RailShape::NORTH_SOUTH &&
-            (otherShape == RailShape::EAST_WEST || otherShape == RailShape::ASCENDING_WEST ||
-             otherShape == RailShape::ASCENDING_SOUTH))
+            (otherShape == RailShape::EAST_WEST || otherShape == RailShape::ASCENDING_EAST ||
+             otherShape == RailShape::ASCENDING_WEST))
             return false;
         if (state->getValue(PoweredRailBlock::POWERED))
         {

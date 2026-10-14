@@ -240,11 +240,8 @@ int DoublePlantBlock::getColor(LevelSource* levelSource, const BlockPos& pos, co
 }
 void DoublePlantBlock::placeAt(Level* level, const BlockPos& pos, Variant* variant, int flags)
 {
-    TypedBoxed<Variant*> value(variant);
-    TypedBoxed<Half*> lower(LOWER_HALF);
-    level->setBlock(pos, defaultBlockState()->setBoxedValue(VARIANT, &value)->setBoxedValue(HALF, &lower), flags, false);
-    TypedBoxed<Half*> upper(UPPER_HALF);
-    level->setBlock(pos.above(), defaultBlockState()->setBoxedValue(VARIANT, &value)->setBoxedValue(HALF, &upper), flags, false);
+    level->setBlock(pos, defaultBlockState()->setValue(HALF, LOWER_HALF)->setValue(VARIANT, variant), flags, false);
+    level->setBlock(pos.above(), defaultBlockState()->setValue(HALF, UPPER_HALF), flags, false);
 }
 void DoublePlantBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>)
 {

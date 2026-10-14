@@ -77,8 +77,7 @@ void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockS
     Random* random = level->mRandom;
     const float spread = 0.7f;
     double xOffset = (double)(random->nextFloat() * spread) + (double)(1.0f - spread) * 0.5;
-    double yOffset = (double)(random->nextFloat() * spread) + 0.06f;
-    yOffset += 0.6;
+    double yOffset = (double)(random->nextFloat() * spread) + (1.0f - spread) * 0.2f + 0.6;
     double zOffset = (double)(random->nextFloat() * spread) + (double)(1.0f - spread) * 0.5;
 
     boost::shared_ptr<ItemEntity> item(
