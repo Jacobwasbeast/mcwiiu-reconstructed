@@ -79,7 +79,8 @@ void BiomeCache::update()
             if (age > 30000)
             {
                 it = mAreaList.erase(it);
-                long long key = (static_cast<long long>(area->mX) & 0xFFFFFFFFLL) | ((static_cast<long long>(area->mZ) & 0xFFFFFFFFLL) << 32);
+                long long key = (static_cast<long long>(area->mX) & 0xFFFFFFFFLL)
+                                | ((static_cast<long long>(area->mZ) & 0xFFFFFFFFLL) << 32);
                 mAreas.erase(key);
                 delete area;
             }

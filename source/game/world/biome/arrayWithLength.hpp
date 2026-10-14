@@ -17,10 +17,7 @@ public:
         length = 0;
     }
 
-    T& operator[](unsigned int index)
-    {
-        return data[index];
-    }
+    T& operator[](unsigned int index) { return data[index]; }
 
     static void zero(T* values, unsigned int count)
     {

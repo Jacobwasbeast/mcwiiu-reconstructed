@@ -20,8 +20,7 @@ MutatedSavannaBiome::MutatedSavannaBiome(EBiomeIDs biomeId, BiomeProperties* pro
     mDecorator->grassPerChunk = 5;
 }
 
-void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer,
-                                          int x, int z, double noise)
+void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise)
 {
     mTopBlock = BlockPair(2, 0);
     mFillerBlock = BlockPair(3, 0);
@@ -33,8 +32,9 @@ void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrim
     }
     else if (noise > -0.5)
     {
-        mTopBlock = BlockPair(3, Blocks::dirt->convertBlockStateToLegacyData(
-            Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
+        mTopBlock = BlockPair(
+            3, Blocks::dirt->convertBlockStateToLegacyData(
+                   Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
     }
 
     buildSurfaceAtDefault(level, random, primer, x, z, noise);

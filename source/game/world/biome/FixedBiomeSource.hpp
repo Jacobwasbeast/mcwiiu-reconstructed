@@ -18,8 +18,10 @@ public:
 
     virtual Biome* getBiome(const BlockPos& pos);
     virtual void getRawBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height) const;
-    virtual void getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height, bool useCache) const;
-    virtual void getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices, int x, int z, int width, int height, bool useCache) const;
+    virtual void getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height,
+                               bool useCache) const;
+    virtual void getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices, int x, int z, int width, int height,
+                                    bool useCache) const;
     virtual bool containsOnly(int x, int z, int radius, const std::vector<Biome*>& biomes);
     virtual BlockPos* findBiome(int x, int z, int radius, std::vector<Biome*> biomes, Random* random);
     virtual bool isFixedBiome();

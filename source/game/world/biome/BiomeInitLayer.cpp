@@ -6,9 +6,7 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-BiomeInitLayer::BiomeInitLayer(long long seed,
-                               boost::shared_ptr<Layer> parent,
-                               LevelType* levelType,
+BiomeInitLayer::BiomeInitLayer(long long seed, boost::shared_ptr<Layer> parent, LevelType* levelType,
                                SuperflatConfig* levelTypeOptions)
     : Layer(seed)
 {

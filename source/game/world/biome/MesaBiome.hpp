@@ -27,6 +27,7 @@ public:
     virtual EBiomeBaseClass getBaseClass();
     BlockPair getBand(int x, int y, int z);
     void generateBands(long long seed);
+
 private:
     BlockPair* mClayBands;
     long long mSeed;

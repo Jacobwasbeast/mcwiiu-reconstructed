@@ -8,8 +8,7 @@
 #include "game/world/biome/TheEndBiomeDecorator.hpp"
 #include "game/world/block/Blocks.hpp"
 
-TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_TheEnd, properties)
+TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties) : Biome(biomeId, eBiomeType_TheEnd, properties)
 {
     mMonsters.clear();
     mCreatures.clear();
@@ -20,8 +19,10 @@ TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 
     mMonsters.push_back(new MobSpawnerData(10, EntityType::ENDER_MAN, 4, 4));
 
-    mTopBlock = BlockPair(BlockId::DIRT, Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()));
-    mFillerBlock = BlockPair(BlockId::DIRT, Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()));
+    mTopBlock = BlockPair(BlockId::DIRT,
+                          Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()));
+    mFillerBlock = BlockPair(BlockId::DIRT,
+                             Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()));
 
     mDecorator = new TheEndBiomeDecorator();
 }

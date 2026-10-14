@@ -98,13 +98,8 @@ public:
 
         arrayWithLength<unsigned char> CreateZoomedImage(unsigned int* biomeMapPixels, int& zoomLevel);
         arrayWithLength<unsigned char> GetBiomeMapPixels(bool& missingBiomes, bool wholeMap);
-        void UpdateBiomeMapPixelsInRegion(unsigned int* biomeMapPixels,
-                                          unsigned int x,
-                                          unsigned int z,
-                                          unsigned int width,
-                                          unsigned int height,
-                                          bool& missingBiomes,
-                                          bool wholeMap);
+        void UpdateBiomeMapPixelsInRegion(unsigned int* biomeMapPixels, unsigned int x, unsigned int z,
+                                          unsigned int width, unsigned int height, bool& missingBiomes, bool wholeMap);
 
         Random* mRandom;
         long long mSeed;
@@ -127,8 +122,8 @@ public:
         OSFastMutex mBiomesCriticalSection;
     };
 
-    class CouldSpawnCache
-        : public boost::unordered_map<ChunkPos, bool, ChunkPosKeyHash, ChunkPosKeyEq, std::allocator<std::pair<const ChunkPos, bool> > >
+    class CouldSpawnCache : public boost::unordered_map<ChunkPos, bool, ChunkPosKeyHash, ChunkPosKeyEq,
+                                                        std::allocator<std::pair<const ChunkPos, bool> > >
     {
     public:
         CouldSpawnCache(BiomeSource* biomeSource, const FjFeatureBiomeRequirements* requirements);
@@ -148,7 +143,8 @@ public:
     static long long findSeed(LevelType* levelType);
 
     BiomeSource();
-    BiomeSource(long long seed, LevelType* levelType, SuperflatConfig* levelTypeOptions, LayerOverrideSettings* overrideSettings);
+    BiomeSource(long long seed, LevelType* levelType, SuperflatConfig* levelTypeOptions,
+                LayerOverrideSettings* overrideSettings);
     BiomeSource(LevelData* levelData);
 
     virtual ~BiomeSource();
@@ -157,9 +153,11 @@ public:
     virtual Biome* getBiome(const BlockPos& pos, Biome* fallback);
     virtual void getRawBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height) const;
     virtual void getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, int z, int width, int height) const;
-    virtual void getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height, bool useCache) const;
+    virtual void getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height,
+                               bool useCache) const;
     virtual unsigned char* getBiomeIndexBlock(int x, int z, int width, int height) const;
-    virtual void getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices, int x, int z, int width, int height, bool useCache) const;
+    virtual void getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices, int x, int z, int width, int height,
+                                    bool useCache) const;
     virtual bool containsOnly(int x, int z, int radius, const std::vector<Biome*>& biomes);
     virtual BlockPos* findBiome(int x, int z, int radius, std::vector<Biome*> biomes, Random* random);
     std::vector<Biome*> getPlayerSpawnBiomes() { return mPlayerSpawnBiomes; }
@@ -176,10 +174,7 @@ public:
 
 protected:
     void _init();
-    void _init(long long seed,
-               LevelType* levelType,
-               SuperflatConfig* levelTypeOptions,
-               LevelData* levelData,
+    void _init(long long seed, LevelType* levelType, SuperflatConfig* levelTypeOptions, LevelData* levelData,
                LayerOverrideSettings* overrideSettings);
 
     boost::shared_ptr<Layer> mRawBiomeLayer;

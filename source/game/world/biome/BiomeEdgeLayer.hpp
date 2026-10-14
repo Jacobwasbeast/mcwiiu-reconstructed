@@ -12,22 +12,10 @@ public:
     virtual ~BiomeEdgeLayer();
 
     bool isValidTemperatureEdge(int firstBiomeId, int secondBiomeId);
-    bool checkEdge(arrayWithLength<int> parentArea,
-                   arrayWithLength<int> area,
-                   int x,
-                   int z,
-                   int width,
-                   int centre,
-                   int edge,
-                   int replacement);
-    bool checkEdgeStrict(arrayWithLength<int> parentArea,
-                         arrayWithLength<int> area,
-                         int x,
-                         int z,
-                         int width,
-                         int centre,
-                         int edge,
-                         int replacement);
+    bool checkEdge(arrayWithLength<int> parentArea, arrayWithLength<int> area, int x, int z, int width, int centre,
+                   int edge, int replacement);
+    bool checkEdgeStrict(arrayWithLength<int> parentArea, arrayWithLength<int> area, int x, int z, int width,
+                         int centre, int edge, int replacement);
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };
 

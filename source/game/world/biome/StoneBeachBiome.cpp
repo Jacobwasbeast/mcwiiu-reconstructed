@@ -10,8 +10,10 @@ StoneBeachBiome::StoneBeachBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 {
     mCreatures.clear();
 
-    mTopBlock = BlockPair(BlockId::STONE, Blocks::stone->convertBlockStateToLegacyData(Blocks::stone->defaultBlockState()));
-    mFillerBlock = BlockPair(BlockId::STONE, Blocks::stone->convertBlockStateToLegacyData(Blocks::stone->defaultBlockState()));
+    mTopBlock = BlockPair(BlockId::STONE,
+                          Blocks::stone->convertBlockStateToLegacyData(Blocks::stone->defaultBlockState()));
+    mFillerBlock = BlockPair(BlockId::STONE,
+                             Blocks::stone->convertBlockStateToLegacyData(Blocks::stone->defaultBlockState()));
 
     mDecorator->treesPerChunk = -999;
     mDecorator->deadBushPerChunk = 0;

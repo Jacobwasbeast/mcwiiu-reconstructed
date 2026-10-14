@@ -2,8 +2,7 @@
 
 #include "game/world/biome/VoidBiomeDecorator.hpp"
 
-VoidBiome::VoidBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_Void, properties)
+VoidBiome::VoidBiome(EBiomeIDs biomeId, BiomeProperties* properties) : Biome(biomeId, eBiomeType_Void, properties)
 {
     mMonsters.clear();
     mSlimes.clear();

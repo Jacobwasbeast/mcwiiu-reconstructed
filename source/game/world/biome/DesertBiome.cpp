@@ -13,24 +13,24 @@
 #include "game/world/generation/DesertWellFeature.hpp"
 #include "game/world/generation/FossilFeature.hpp"
 
-DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_Desert, properties)
+DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties) : Biome(biomeId, eBiomeType_Desert, properties)
 {
     mCreatures.clear();
     mCreatures.push_back(new MobSpawnerData(4, EntityType::RABBIT, 2, 3));
     mChickens.clear();
     mWolves.clear();
 
-    mTopBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
-    mFillerBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
+    mTopBlock = BlockPair(BlockId::SAND,
+                          Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
+    mFillerBlock = BlockPair(BlockId::SAND,
+                             Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
 
     mDecorator->treesPerChunk = -999;
     mDecorator->deadBushPerChunk = 2;
     mDecorator->reedsPerChunk = 50;
     mDecorator->cactiPerChunk = 10;
 
-    for (std::vector<MobSpawnerData*>::iterator iterator = mMonsters.begin();
-         iterator != mMonsters.end(); ++iterator)
+    for (std::vector<MobSpawnerData*>::iterator iterator = mMonsters.begin(); iterator != mMonsters.end(); ++iterator)
     {
         MobSpawnerData* data = *iterator;
         if (data->mEntityBaseClass == EntityType::ZOMBIE || data->mEntityBaseClass == EntityType::ZOMBIE_VILLAGER)

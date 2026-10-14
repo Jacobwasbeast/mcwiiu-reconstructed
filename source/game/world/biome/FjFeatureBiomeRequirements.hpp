@@ -10,7 +10,8 @@ class FjFeatureBiomeRequirements
 {
 public:
     FjFeatureBiomeRequirements();
-    FjFeatureBiomeRequirements(const std::vector<Biome*>* spawnBiomes, unsigned int spawnRadius, const std::vector<Biome*>* allowedBiomes, unsigned int allowedRadius);
+    FjFeatureBiomeRequirements(const std::vector<Biome*>* spawnBiomes, unsigned int spawnRadius,
+                               const std::vector<Biome*>* allowedBiomes, unsigned int allowedRadius);
 
     const std::vector<Biome*>* spawnBiomes;
     unsigned int spawnRadius;

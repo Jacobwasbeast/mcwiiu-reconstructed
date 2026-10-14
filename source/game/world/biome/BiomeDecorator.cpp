@@ -56,8 +56,7 @@ BiomeDecorator::BiomeDecorator()
     redstoneGen = NULL;
     diamondGen = NULL;
     lapisGen = NULL;
-    flowerGen = new FlowerFeature(static_cast<FlowerBlock*>(Blocks::yellow_flower),
-                                   FlowerBlock::Flower::DANDELION);
+    flowerGen = new FlowerFeature(static_cast<FlowerBlock*>(Blocks::yellow_flower), FlowerBlock::Flower::DANDELION);
     brownMushroomGen = new BushFeature(static_cast<Bush*>(Blocks::brown_mushroom));
     redMushroomGen = new BushFeature(static_cast<Bush*>(Blocks::red_mushroom));
     bigMushroomGen = new HugeMushroomFeature();
@@ -133,8 +132,8 @@ void BiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const 
 {
     if (settings != NULL)
         delete settings;
-    CustomizableSourceSettings::Builder* builder =
-        CustomizableSourceSettings::Builder::fromString(level->getLevelData()->getGeneratorOptions());
+    CustomizableSourceSettings::Builder* builder = CustomizableSourceSettings::Builder::fromString(
+        level->getLevelData()->getGeneratorOptions());
     settings = builder->build();
     position = origin;
 
@@ -152,12 +151,15 @@ void BiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const 
 
     dirtGen = new OreFeature(Blocks::dirt->defaultBlockState(), settings->dirtCount);
     gravelGen = new OreFeature(Blocks::gravel->defaultBlockState(), settings->gravelCount);
-    graniteGen = new OreFeature(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::GRANITE),
-                                settings->dioriteCount);
-    dioriteGen = new OreFeature(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::DIORITE),
-                                settings->graniteCount);
-    andesiteGen = new OreFeature(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::ANDESITE),
-                                settings->andesiteCount);
+    graniteGen = new OreFeature(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::GRANITE),
+        settings->dioriteCount);
+    dioriteGen = new OreFeature(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::DIORITE),
+        settings->graniteCount);
+    andesiteGen = new OreFeature(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::ANDESITE),
+        settings->andesiteCount);
     coalGen = new OreFeature(Blocks::coal_ore->defaultBlockState(), settings->coalCount);
     ironGen = new OreFeature(Blocks::iron_ore->defaultBlockState(), settings->ironCount);
     goldGen = new OreFeature(Blocks::gold_ore->defaultBlockState(), settings->goldCount);
@@ -170,8 +172,7 @@ void BiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const 
     delete builder;
 }
 
-void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, Feature* feature,
-                                       int minY, int maxY)
+void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, Feature* feature, int minY, int maxY)
 {
     if (maxY < minY)
     {
@@ -201,8 +202,8 @@ void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, 
     }
 }
 
-void BiomeDecorator::decorateDepthAverage(Level* level, Random* random, int count, Feature* feature,
-                                          int centreY, int radius)
+void BiomeDecorator::decorateDepthAverage(Level* level, Random* random, int count, Feature* feature, int centreY,
+                                          int radius)
 {
     const int originX = position.x;
     const int originZ = position.z;
@@ -219,16 +220,23 @@ void BiomeDecorator::decorateOres(Level* level, Random* random)
 {
     Level::setInstaTick(true);
     decorateDepthSpan(level, random, settings->dirtSize, dirtGen, settings->dirtMinHeight, settings->dirtMaxHeight);
-    decorateDepthSpan(level, random, settings->gravelSize, gravelGen, settings->gravelMinHeight, settings->gravelMaxHeight);
-    decorateDepthSpan(level, random, settings->graniteSize, dioriteGen, settings->graniteMinHeight, settings->graniteMaxHeight);
-    decorateDepthSpan(level, random, settings->dioriteSize, graniteGen, settings->dioriteMinHeight, settings->dioriteMaxHeight);
-    decorateDepthSpan(level, random, settings->andesiteSize, andesiteGen, settings->andesiteMinHeight, settings->andesiteMaxHeight);
+    decorateDepthSpan(level, random, settings->gravelSize, gravelGen, settings->gravelMinHeight,
+                      settings->gravelMaxHeight);
+    decorateDepthSpan(level, random, settings->graniteSize, dioriteGen, settings->graniteMinHeight,
+                      settings->graniteMaxHeight);
+    decorateDepthSpan(level, random, settings->dioriteSize, graniteGen, settings->dioriteMinHeight,
+                      settings->dioriteMaxHeight);
+    decorateDepthSpan(level, random, settings->andesiteSize, andesiteGen, settings->andesiteMinHeight,
+                      settings->andesiteMaxHeight);
     decorateDepthSpan(level, random, settings->coalSize, coalGen, settings->coalMinHeight, settings->coalMaxHeight);
     decorateDepthSpan(level, random, settings->ironSize, ironGen, settings->ironMinHeight, settings->ironMaxHeight);
     decorateDepthSpan(level, random, settings->goldSize, goldGen, settings->goldMinHeight, settings->goldMaxHeight);
-    decorateDepthSpan(level, random, settings->redstoneSize, redstoneGen, settings->redstoneMinHeight, settings->redstoneMaxHeight);
-    decorateDepthSpan(level, random, settings->diamondSize, diamondGen, settings->diamondMinHeight, settings->diamondMaxHeight);
-    decorateDepthAverage(level, random, settings->lapisSize, lapisGen, settings->lapisMinHeight, settings->lapisMaxHeight);
+    decorateDepthSpan(level, random, settings->redstoneSize, redstoneGen, settings->redstoneMinHeight,
+                      settings->redstoneMaxHeight);
+    decorateDepthSpan(level, random, settings->diamondSize, diamondGen, settings->diamondMinHeight,
+                      settings->diamondMaxHeight);
+    decorateDepthAverage(level, random, settings->lapisSize, lapisGen, settings->lapisMinHeight,
+                         settings->lapisMaxHeight);
     Level::setInstaTick(false);
 }
 

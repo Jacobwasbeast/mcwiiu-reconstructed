@@ -131,8 +131,7 @@ void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer*
     int snowCount = 0;
     int snowLimit = random.nextInt(4) + 2;
     int snowStart = seaLevel + 18 + random.nextInt(10);
-    int packedIceData =
-        Blocks::packed_ice->convertBlockStateToLegacyData(Blocks::packed_ice->defaultBlockState());
+    int packedIceData = Blocks::packed_ice->convertBlockStateToLegacyData(Blocks::packed_ice->defaultBlockState());
     int snowData = Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState());
     int localX = x & 15;
     int localZ = z & 15;
@@ -150,10 +149,9 @@ void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer*
         {
             const BlockState* state = primer->getState(localX, y, localZ);
 
-            if ((state->getMaterial() == Material::AIR && y < (int)icebergTop
-                 && random.nextFloat() > 0.01F)
-                || (state->getMaterial() == Material::WATER && y > (int)icebergBottom
-                    && y < seaLevel && icebergBottom != 0.0F && random.nextFloat() > 0.15F))
+            if ((state->getMaterial() == Material::AIR && y < (int)icebergTop && random.nextFloat() > 0.01F)
+                || (state->getMaterial() == Material::WATER && y > (int)icebergBottom && y < seaLevel
+                    && icebergBottom != 0.0F && random.nextFloat() > 0.15F))
             {
                 primer->setBlockAndData(index, PACKED_ICE_BLOCK_ID, packedIceData);
                 state = Blocks::packed_ice->defaultBlockState();
@@ -189,8 +187,7 @@ float OceanFrozenBiome::getTemperature(const BlockPos& pos)
 
     if (pos.y > 64)
     {
-        float heightNoise =
-            (float)(TEMPERATURE_NOISE->getValue(pos.x * 0.125F, pos.z * 0.125F) * 4.0);
+        float heightNoise = (float)(TEMPERATURE_NOISE->getValue(pos.x * 0.125F, pos.z * 0.125F) * 4.0);
 
         return temperature - (heightNoise + pos.y - 64.0F) * 0.05F / 30.0F;
     }

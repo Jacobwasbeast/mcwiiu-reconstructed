@@ -14,9 +14,7 @@ class SuperflatConfig;
 class BiomeInitLayer : public Layer
 {
 public:
-    BiomeInitLayer(long long seed,
-                   boost::shared_ptr<Layer> parent,
-                   LevelType* levelType,
+    BiomeInitLayer(long long seed, boost::shared_ptr<Layer> parent, LevelType* levelType,
                    SuperflatConfig* levelTypeOptions);
     virtual ~BiomeInitLayer();
 

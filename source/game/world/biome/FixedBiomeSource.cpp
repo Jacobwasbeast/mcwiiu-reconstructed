@@ -7,9 +7,7 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-FixedBiomeSource::FixedBiomeSource(Biome* biome, float rainfall)
-    : BiomeSource(),
-      mBiome(biome)
+FixedBiomeSource::FixedBiomeSource(Biome* biome, float rainfall) : BiomeSource(), mBiome(biome)
 {
 }
 
@@ -18,11 +16,7 @@ Biome* FixedBiomeSource::getBiome(const BlockPos& pos)
     return mBiome;
 }
 
-void FixedBiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes,
-                                     int x,
-                                     int z,
-                                     int width,
-                                     int height,
+void FixedBiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height,
                                      bool useCache) const
 {
     int count = width * height;
@@ -37,12 +31,8 @@ void FixedBiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes,
     }
 }
 
-void FixedBiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices,
-                                          int x,
-                                          int z,
-                                          int width,
-                                          int height,
-                                          bool useCache) const
+void FixedBiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices, int x, int z, int width,
+                                          int height, bool useCache) const
 {
     int count = width * height;
 
@@ -59,11 +49,7 @@ void FixedBiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeI
     }
 }
 
-void FixedBiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes,
-                                        int x,
-                                        int z,
-                                        int width,
-                                        int height) const
+void FixedBiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height) const
 {
     int count = width * height;
 
@@ -77,11 +63,7 @@ void FixedBiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes,
     }
 }
 
-BlockPos* FixedBiomeSource::findBiome(int x,
-                                      int z,
-                                      int radius,
-                                      std::vector<Biome*> biomes,
-                                      Random* random)
+BlockPos* FixedBiomeSource::findBiome(int x, int z, int radius, std::vector<Biome*> biomes, Random* random)
 {
     BlockPos* result = NULL;
 
@@ -96,10 +78,7 @@ BlockPos* FixedBiomeSource::findBiome(int x,
     return result;
 }
 
-bool FixedBiomeSource::containsOnly(int x,
-                                    int z,
-                                    int radius,
-                                    const std::vector<Biome*>& biomes)
+bool FixedBiomeSource::containsOnly(int x, int z, int radius, const std::vector<Biome*>& biomes)
 {
     return std::find(biomes.begin(), biomes.end(), mBiome) != biomes.end();
 }

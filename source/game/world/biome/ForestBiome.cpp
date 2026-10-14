@@ -17,7 +17,8 @@
 #include "game/world/generation/TreeFeature.hpp"
 
 ForestBiome::ForestBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_Forest, properties), mType(type)
+    : Biome(biomeId, eBiomeType_Forest, properties),
+      mType(type)
 {
     if (type != eType_Flower)
     {

@@ -4,8 +4,7 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-BiomeEdgeLayer::BiomeEdgeLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+BiomeEdgeLayer::BiomeEdgeLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }
@@ -29,22 +28,15 @@ bool BiomeEdgeLayer::isValidTemperatureEdge(int firstBiomeId, int secondBiomeId)
         Biome::TemperatureCategory firstCategory = firstBiome->getTemperatureCategory();
         Biome::TemperatureCategory secondCategory = secondBiome->getTemperatureCategory();
 
-        return firstCategory == secondCategory
-            || firstCategory == Biome::eTemperatureCategory_Medium
-            || secondCategory == Biome::eTemperatureCategory_Medium;
+        return firstCategory == secondCategory || firstCategory == Biome::eTemperatureCategory_Medium
+               || secondCategory == Biome::eTemperatureCategory_Medium;
     }
 
     return false;
 }
 
-bool BiomeEdgeLayer::checkEdge(arrayWithLength<int> parentArea,
-                               arrayWithLength<int> area,
-                               int x,
-                               int z,
-                               int width,
-                               int centre,
-                               int edge,
-                               int replacement)
+bool BiomeEdgeLayer::checkEdge(arrayWithLength<int> parentArea, arrayWithLength<int> area, int x, int z, int width,
+                               int centre, int edge, int replacement)
 {
     if (Layer::isSame(centre, edge))
     {
@@ -53,7 +45,8 @@ bool BiomeEdgeLayer::checkEdge(arrayWithLength<int> parentArea,
         int west = parentArea[x + 1 - 1 + (z + 1) * (width + 2)];
         int south = parentArea[x + 1 + (z + 1 + 1) * (width + 2)];
 
-        if (isValidTemperatureEdge(north, edge) && isValidTemperatureEdge(east, edge) && isValidTemperatureEdge(west, edge) && isValidTemperatureEdge(south, edge))
+        if (isValidTemperatureEdge(north, edge) && isValidTemperatureEdge(east, edge)
+            && isValidTemperatureEdge(west, edge) && isValidTemperatureEdge(south, edge))
         {
             area[x + z * width] = centre;
         }
@@ -68,14 +61,8 @@ bool BiomeEdgeLayer::checkEdge(arrayWithLength<int> parentArea,
     return false;
 }
 
-bool BiomeEdgeLayer::checkEdgeStrict(arrayWithLength<int> parentArea,
-                                     arrayWithLength<int> area,
-                                     int x,
-                                     int z,
-                                     int width,
-                                     int centre,
-                                     int edge,
-                                     int replacement)
+bool BiomeEdgeLayer::checkEdgeStrict(arrayWithLength<int> parentArea, arrayWithLength<int> area, int x, int z,
+                                     int width, int centre, int edge, int replacement)
 {
     if (centre == edge)
     {
@@ -84,7 +71,8 @@ bool BiomeEdgeLayer::checkEdgeStrict(arrayWithLength<int> parentArea,
         int west = parentArea[x + 1 - 1 + (z + 1) * (width + 2)];
         int south = parentArea[x + 1 + (z + 1 + 1) * (width + 2)];
 
-        if (Layer::isSame(north, edge) && Layer::isSame(east, edge) && Layer::isSame(west, edge) && Layer::isSame(south, edge))
+        if (Layer::isSame(north, edge) && Layer::isSame(east, edge) && Layer::isSame(west, edge)
+            && Layer::isSame(south, edge))
         {
             area[x + z * width] = centre;
         }
@@ -131,8 +119,8 @@ arrayWithLength<int> BiomeEdgeLayer::getArea(int x, int z, int width, int height
                     int west = parentArea[localX + 1 - 1 + (localZ + 1) * (width + 2)];
                     int south = parentArea[localX + 1 + (localZ + 1 + 1) * (width + 2)];
 
-                    if (north != Biome::ICE_PLAINS->id && east != Biome::ICE_PLAINS->id
-                        && west != Biome::ICE_PLAINS->id && south != Biome::ICE_PLAINS->id)
+                    if (north != Biome::ICE_PLAINS->id && east != Biome::ICE_PLAINS->id && west != Biome::ICE_PLAINS->id
+                        && south != Biome::ICE_PLAINS->id)
                     {
                         area[localX + localZ * width] = centre;
                     }
@@ -148,15 +136,14 @@ arrayWithLength<int> BiomeEdgeLayer::getArea(int x, int z, int width, int height
                     int west = parentArea[localX + 1 - 1 + (localZ + 1) * (width + 2)];
                     int south = parentArea[localX + 1 + (localZ + 1 + 1) * (width + 2)];
 
-                    if (north != Biome::DESERT->id && east != Biome::DESERT->id
-                        && west != Biome::DESERT->id && south != Biome::DESERT->id
-                        && north != Biome::COLD_TAIGA->id && east != Biome::COLD_TAIGA->id
+                    if (north != Biome::DESERT->id && east != Biome::DESERT->id && west != Biome::DESERT->id
+                        && south != Biome::DESERT->id && north != Biome::COLD_TAIGA->id && east != Biome::COLD_TAIGA->id
                         && west != Biome::COLD_TAIGA->id && south != Biome::COLD_TAIGA->id
                         && north != Biome::ICE_PLAINS->id && east != Biome::ICE_PLAINS->id
                         && west != Biome::ICE_PLAINS->id && south != Biome::ICE_PLAINS->id)
                     {
-                        if (north != Biome::JUNGLE->id && south != Biome::JUNGLE->id
-                            && east != Biome::JUNGLE->id && west != Biome::JUNGLE->id)
+                        if (north != Biome::JUNGLE->id && south != Biome::JUNGLE->id && east != Biome::JUNGLE->id
+                            && west != Biome::JUNGLE->id)
                         {
                             area[localX + localZ * width] = centre;
                         }

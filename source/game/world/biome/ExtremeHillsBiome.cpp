@@ -27,10 +27,9 @@ ExtremeHillsBiome::ExtremeHillsBiome(EBiomeIDs biomeId, EType type, BiomePropert
     mCreatures.push_back(new MobSpawnerData(5, EntityType::LLAMA, 4, 6));
     mType = type;
 
-    mMonsterEggFeature = new OreFeature(
-        Blocks::monster_egg->defaultBlockState()->setValue<MonsterEggBlock::Variant*>(
-            MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE),
-        9);
+    mMonsterEggFeature = new OreFeature(Blocks::monster_egg->defaultBlockState()->setValue<MonsterEggBlock::Variant*>(
+                                            MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE),
+                                        9);
 }
 
 ExtremeHillsBiome::~ExtremeHillsBiome()

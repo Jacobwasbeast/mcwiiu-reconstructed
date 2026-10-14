@@ -4,8 +4,7 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-RareBiomeSpotLayer::RareBiomeSpotLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+RareBiomeSpotLayer::RareBiomeSpotLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }

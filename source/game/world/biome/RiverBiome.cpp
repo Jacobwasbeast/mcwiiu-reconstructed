@@ -5,8 +5,7 @@
 
 static const int RIVER_SEAGRASS_PER_CHUNK = 12;
 
-RiverBiome::RiverBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_River, properties)
+RiverBiome::RiverBiome(EBiomeIDs biomeId, BiomeProperties* properties) : Biome(biomeId, eBiomeType_River, properties)
 {
     mCreatures.clear();
     mChickens.clear();

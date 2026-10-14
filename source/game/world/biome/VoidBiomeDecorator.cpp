@@ -26,7 +26,8 @@ void VoidBiomeDecorator::decorate(Level* level, Random* random, Biome* biome, co
                     position.set(x, position.getY(), z);
                     if (spawn.x == x && spawn.z == z)
                     {
-                        level->setBlock(position, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                        level->setBlock(position, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                        false);
                     }
                     else
                     {

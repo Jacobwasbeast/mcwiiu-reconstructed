@@ -101,8 +101,7 @@ void TaigaBiome::decorate(Level* level, Random& random, const BlockPos& pos)
     Biome::decorate(level, random, pos);
 }
 
-void TaigaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer,
-                                int x, int z, double noise)
+void TaigaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise)
 {
     PIXBeginNamedEvent(0.0F, "TaigaBiome::buildSurfaceAtDefault");
 
@@ -113,8 +112,9 @@ void TaigaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
 
         if (noise > 1.75)
         {
-            mTopBlock = BlockPair(3, Blocks::dirt->convertBlockStateToLegacyData(
-                Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
+            mTopBlock = BlockPair(
+                3, Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()->setValue(
+                       DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
         }
         else if (noise > -0.95)
         {

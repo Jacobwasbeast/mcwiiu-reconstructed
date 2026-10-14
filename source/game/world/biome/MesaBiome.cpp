@@ -67,16 +67,23 @@ MesaBiome::~MesaBiome()
 
 void MesaBiome::staticCtor()
 {
-    sCoarseDirt = BlockPair(BlockId::DIRT, Blocks::dirt->convertBlockStateToLegacyData(
-        Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
-    sGrass = BlockPair(BlockId::GRASS, Blocks::grass->convertBlockStateToLegacyData(Blocks::grass->defaultBlockState()));
-    sClay = BlockPair(BlockId::HARDENED_CLAY, Blocks::hardened_clay->convertBlockStateToLegacyData(Blocks::hardened_clay->defaultBlockState()));
-    sStainedClay = BlockPair(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()));
-    sOrange = BlockPair(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::ORANGE)));
-    sRedSand = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(
-        Blocks::sand->defaultBlockState()->setValue(SandBlock::TYPE, SandBlock::Variant::RED_SAND)));
+    sCoarseDirt = BlockPair(BlockId::DIRT,
+                            Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()->setValue(
+                                DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
+    sGrass = BlockPair(BlockId::GRASS,
+                       Blocks::grass->convertBlockStateToLegacyData(Blocks::grass->defaultBlockState()));
+    sClay = BlockPair(BlockId::HARDENED_CLAY,
+                      Blocks::hardened_clay->convertBlockStateToLegacyData(Blocks::hardened_clay->defaultBlockState()));
+    sStainedClay = BlockPair(BlockId::STAINED_HARDENED_CLAY,
+                             Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+                                 Blocks::stained_hardened_clay->defaultBlockState()));
+    sOrange = BlockPair(
+        BlockId::STAINED_HARDENED_CLAY,
+        Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+            Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::ORANGE)));
+    sRedSand = BlockPair(
+        BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(
+                           Blocks::sand->defaultBlockState()->setValue(SandBlock::TYPE, SandBlock::Variant::RED_SAND)));
 }
 
 AbstractTreeFeature* MesaBiome::getTreeFeature(Random& random)
@@ -122,8 +129,10 @@ void MesaBiome::generateBands(long long seed)
         }
     }
 
-    BlockPair yellowBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::YELLOW)));
+    BlockPair yellowBand(
+        BlockId::STAINED_HARDENED_CLAY,
+        Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+            Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::YELLOW)));
     int yellowCount = random.nextInt(4) + 2;
     for (int i = 0; i < yellowCount; ++i)
     {
@@ -135,8 +144,10 @@ void MesaBiome::generateBands(long long seed)
         }
     }
 
-    BlockPair brownBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::BROWN)));
+    BlockPair brownBand(
+        BlockId::STAINED_HARDENED_CLAY,
+        Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+            Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::BROWN)));
     int brownCount = random.nextInt(4) + 2;
     for (int i = 0; i < brownCount; ++i)
     {
@@ -149,7 +160,8 @@ void MesaBiome::generateBands(long long seed)
     }
 
     BlockPair redBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::RED)));
+                                                          Blocks::stained_hardened_clay->defaultBlockState()->setValue(
+                                                              ColoredBlock::COLOR, DyeColor::RED)));
     int redCount = random.nextInt(4) + 2;
     for (int i = 0; i < redCount; ++i)
     {
@@ -161,10 +173,14 @@ void MesaBiome::generateBands(long long seed)
         }
     }
 
-    BlockPair silverBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::SILVER)));
-    BlockPair whiteBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::WHITE)));
+    BlockPair silverBand(
+        BlockId::STAINED_HARDENED_CLAY,
+        Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+            Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::SILVER)));
+    BlockPair whiteBand(
+        BlockId::STAINED_HARDENED_CLAY,
+        Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+            Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::WHITE)));
     int whiteCount = random.nextInt(3) + 3;
     int band = 0;
     for (int i = 0; i < whiteCount; ++i)
@@ -209,12 +225,13 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
     {
         int pillarX = (x & -16) + (z & 15);
         int pillarZ = (z & -16) + (x & 15);
-        double pillar = std::min(std::fabs(noise), mPillarNoise->getValue((double)pillarX * 0.25, (double)pillarZ * 0.25));
+        double pillar = std::min(std::fabs(noise),
+                                 mPillarNoise->getValue((double)pillarX * 0.25, (double)pillarZ * 0.25));
 
         if (pillar > 0.0)
         {
-            double roof = std::fabs(mPillarRoofNoise->getValue((double)pillarX * 0.001953125,
-                                                               (double)pillarZ * 0.001953125));
+            double roof = std::fabs(
+                mPillarRoofNoise->getValue((double)pillarX * 0.001953125, (double)pillarZ * 0.001953125));
             pillarHeight = pillar * pillar * 2.5;
             double cap = std::ceil(roof * 50.0) + 14.0;
             if (pillarHeight > cap)

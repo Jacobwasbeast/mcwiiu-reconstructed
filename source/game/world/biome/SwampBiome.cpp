@@ -19,8 +19,7 @@
 
 static const Biome::BlockPair WATERLILY_BLOCK(111, 0);
 
-SwampBiome::SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_Swamp, properties)
+SwampBiome::SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties) : Biome(biomeId, eBiomeType_Swamp, properties)
 {
     mDecorator->treesPerChunk = 2;
     mDecorator->flowersPerChunk = 1;

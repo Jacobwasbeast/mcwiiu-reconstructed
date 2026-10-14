@@ -8,14 +8,15 @@
 
 static const float TURTLE_MIN_TEMPERATURE = 0.5F;
 
-BeachBiome::BeachBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_Beach, properties)
+BeachBiome::BeachBiome(EBiomeIDs biomeId, BiomeProperties* properties) : Biome(biomeId, eBiomeType_Beach, properties)
 {
     mCreatures.clear();
     mChickens.clear();
 
-    mTopBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
-    mFillerBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
+    mTopBlock = BlockPair(BlockId::SAND,
+                          Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
+    mFillerBlock = BlockPair(BlockId::SAND,
+                             Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
 
     if (getTemperature() > TURTLE_MIN_TEMPERATURE)
     {

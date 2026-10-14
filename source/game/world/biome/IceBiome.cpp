@@ -21,7 +21,8 @@ IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* proper
 
     if (hasIceSpikes)
     {
-        mTopBlock = BlockPair(BlockId::SNOW, Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState()));
+        mTopBlock = BlockPair(BlockId::SNOW,
+                              Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState()));
     }
 
     mCreatures.clear();

@@ -6,8 +6,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/biome/HellBiomeDecorator.hpp"
 
-HellBiome::HellBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_Hell, properties)
+HellBiome::HellBiome(EBiomeIDs biomeId, BiomeProperties* properties) : Biome(biomeId, eBiomeType_Hell, properties)
 {
     mMonsters.clear();
     mCreatures.clear();
@@ -28,11 +27,9 @@ HellBiome::HellBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 
 Vec3* HellBiome::getFogColor(float celestialAngle, float partialTicks) const
 {
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
-        eMinecraftColour_Nether_Fog_Colour);
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Nether_Fog_Colour);
     return Vec3::newTemp((double)(((colour >> 16) & 0xFF) * 0.00390625F),
-                         (double)(((colour >> 8) & 0xFF) * 0.00390625F),
-                         (double)((colour & 0xFF) * 0.00390625F));
+                         (double)(((colour >> 8) & 0xFF) * 0.00390625F), (double)((colour & 0xFF) * 0.00390625F));
 }
 
 bool HellBiome::isFoggy()

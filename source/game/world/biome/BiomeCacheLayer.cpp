@@ -5,12 +5,8 @@
 
 #include "game/core/IntCache.hpp"
 
-BiomeCacheLayer::BiomeCacheLayer(int seed,
-                                 boost::shared_ptr<Layer> parent,
-                                 unsigned int xzSize,
-                                 unsigned char biomeScale,
-                                 int centreXChunk,
-                                 int centreZChunk)
+BiomeCacheLayer::BiomeCacheLayer(int seed, boost::shared_ptr<Layer> parent, unsigned int xzSize,
+                                 unsigned char biomeScale, int centreXChunk, int centreZChunk)
     : Layer(seed)
 {
     this->parent = parent;

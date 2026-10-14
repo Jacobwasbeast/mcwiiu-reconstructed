@@ -27,18 +27,15 @@ BiomeSource::BiomeSource()
     _init();
 }
 
-BiomeSource::BiomeSource(long long seed, LevelType* levelType, SuperflatConfig* levelTypeOptions, LayerOverrideSettings* overrideSettings)
+BiomeSource::BiomeSource(long long seed, LevelType* levelType, SuperflatConfig* levelTypeOptions,
+                         LayerOverrideSettings* overrideSettings)
 {
     _init(seed, levelType, levelTypeOptions, NULL, overrideSettings);
 }
 
 BiomeSource::BiomeSource(LevelData* levelData)
 {
-    _init(levelData->getSeed(),
-          levelData->getGeneratorType(),
-          levelData->getGeneratorOptions(),
-          levelData,
-          NULL);
+    _init(levelData->getSeed(), levelData->getGeneratorType(), levelData->getGeneratorOptions(), levelData, NULL);
 }
 
 BiomeSource::~BiomeSource()
@@ -66,16 +63,13 @@ void BiomeSource::_init()
     mPlayerSpawnBiomes.push_back(Biome::JUNGLE_HILLS);
 }
 
-void BiomeSource::_init(long long seed,
-                        LevelType* levelType,
-                        SuperflatConfig* levelTypeOptions,
-                        LevelData* levelData,
+void BiomeSource::_init(long long seed, LevelType* levelType, SuperflatConfig* levelTypeOptions, LevelData* levelData,
                         LayerOverrideSettings* overrideSettings)
 {
     _init();
 
-    arrayWithLength<boost::shared_ptr<Layer> > layers =
-        Layer::getDefaultLayers(seed, levelType, levelTypeOptions, levelData, overrideSettings);
+    arrayWithLength<boost::shared_ptr<Layer> > layers = Layer::getDefaultLayers(seed, levelType, levelTypeOptions,
+                                                                                levelData, overrideSettings);
 
     mRawBiomeLayer = layers.data[0];
     mBiomeLayer = layers.data[1];
@@ -325,8 +319,7 @@ long long BiomeSource::findSeed(LevelType* levelType)
 
         attempts++;
         progressListener->progressStagePercentage(attempts % 100);
-    }
-    while (GetTickCount() - startTime <= 10000 && !matched);
+    } while (GetTickCount() - startTime <= 10000 && !matched);
 
     delete[] biomeIndices.data;
 
@@ -384,7 +377,8 @@ void BiomeSource::getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, 
     }
 }
 
-void BiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height, bool useCache) const
+void BiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height,
+                                bool useCache) const
 {
     PIXBeginNamedEvent(0.0f, "Setup");
     IntCache::releaseAll();
@@ -430,11 +424,7 @@ unsigned char* BiomeSource::getBiomeIndexBlock(int x, int z, int width, int heig
     return biomeIndices.data;
 }
 
-void BiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices,
-                                     int x,
-                                     int z,
-                                     int width,
-                                     int height,
+void BiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices, int x, int z, int width, int height,
                                      bool useCache) const
 {
     IntCache::releaseAll();
@@ -1243,12 +1233,8 @@ void BiomeSource::LayerOverrideSettings::RegenerateAllBiomes()
         mBiomes.length = 0;
     }
 
-    biomeSource.getBiomeBlock(mBiomes,
-                              scale * centreXChunk * 16 - mHalfImageWidth,
-                              scale * centreZChunk * 16 - mHalfImageWidth,
-                              mImageWidth,
-                              mImageWidth,
-                              true);
+    biomeSource.getBiomeBlock(mBiomes, scale * centreXChunk * 16 - mHalfImageWidth,
+                              scale * centreZChunk * 16 - mHalfImageWidth, mImageWidth, mImageWidth, true);
 
     LeaveCriticalSection(&mBiomesCriticalSection);
 }
@@ -1272,12 +1258,8 @@ void BiomeSource::LayerOverrideSettings::RegenerateBiomeSection(int x, int width
 
     int scale = (int)pow(2.0, (double)mGenerationScale);
 
-    biomeSource.getBiomeBlock(sectionBiomes,
-                              (scale * mCentreXChunk * 16 - mHalfImageWidth) + x,
-                              (scale * mCentreZChunk * 16 - mHalfImageWidth) + z,
-                              width,
-                              height,
-                              true);
+    biomeSource.getBiomeBlock(sectionBiomes, (scale * mCentreXChunk * 16 - mHalfImageWidth) + x,
+                              (scale * mCentreZChunk * 16 - mHalfImageWidth) + z, width, height, true);
 
     int source = 0;
 
@@ -1364,10 +1346,8 @@ bool BiomeSource::LayerOverrideSettings::CheckAndRegenerate(int x, int z, bool n
     return true;
 }
 
-bool BiomeSource::LayerOverrideSettings::RegenerateNearestBiomeSection(int& sectionX,
-                                                                      int& sectionZ,
-                                                                      bool& atVerticalEdge,
-                                                                      bool& atHorizontalEdge)
+bool BiomeSource::LayerOverrideSettings::RegenerateNearestBiomeSection(int& sectionX, int& sectionZ,
+                                                                       bool& atVerticalEdge, bool& atHorizontalEdge)
 {
     int x = mHalfImageWidth;
     int z = mHalfImageWidth;
@@ -1527,9 +1507,9 @@ BlockPos BiomeSource::LayerOverrideSettings::GetCursorBlockPos(float xFraction, 
         centreX = (mHalfImageWidth * mZoomedCentreX) / zoomScale;
     }
 
-    return BlockPos(Mth::clampedLerp((double)(centreX - halfVisibleWidth), (double)(centreX + halfVisibleWidth), xFraction),
-                    64.0,
-                    Mth::clampedLerp((double)(centreZ - halfVisibleWidth), (double)(centreZ + halfVisibleWidth), zFraction));
+    return BlockPos(
+        Mth::clampedLerp((double)(centreX - halfVisibleWidth), (double)(centreX + halfVisibleWidth), xFraction), 64.0,
+        Mth::clampedLerp((double)(centreZ - halfVisibleWidth), (double)(centreZ + halfVisibleWidth), zFraction));
 }
 
 Biome* BiomeSource::LayerOverrideSettings::GetBiomeAt(float xFraction, float zFraction)
@@ -1555,7 +1535,8 @@ Biome* BiomeSource::LayerOverrideSettings::GetBiomeAt(float xFraction, float zFr
     return mBiomes.data[getBiomeIndex(x, z)];
 }
 
-arrayWithLength<unsigned char> BiomeSource::LayerOverrideSettings::CreateZoomedImage(unsigned int* biomeMapPixels, int& zoomLevel)
+arrayWithLength<unsigned char> BiomeSource::LayerOverrideSettings::CreateZoomedImage(unsigned int* biomeMapPixels,
+                                                                                     int& zoomLevel)
 {
     if (!isZoomed())
     {
@@ -1595,13 +1576,10 @@ arrayWithLength<unsigned char> BiomeSource::LayerOverrideSettings::CreateZoomedI
     return zoomedImage;
 }
 
-void BiomeSource::LayerOverrideSettings::UpdateBiomeMapPixelsInRegion(unsigned int* biomeMapPixels,
-                                                                     unsigned int x,
-                                                                     unsigned int z,
-                                                                     unsigned int width,
-                                                                     unsigned int height,
-                                                                     bool& missingBiomes,
-                                                                     bool wholeMap)
+void BiomeSource::LayerOverrideSettings::UpdateBiomeMapPixelsInRegion(unsigned int* biomeMapPixels, unsigned int x,
+                                                                      unsigned int z, unsigned int width,
+                                                                      unsigned int height, bool& missingBiomes,
+                                                                      bool wholeMap)
 {
     int scale = 1;
 

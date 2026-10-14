@@ -72,8 +72,9 @@ AbstractTreeFeature* JungleBiome::getTreeFeature(Random& random)
     }
 
     return !mIsEdge && random.nextInt(3) == 0
-        ? (AbstractTreeFeature*)new MegaJungleTreeFeature(false, 10, 20, sJungleTrunkState, sJungleLeafState)
-        : (AbstractTreeFeature*)new TreeFeature(false, 4 + random.nextInt(7), sJungleTrunkState, sJungleLeafState, true);
+               ? (AbstractTreeFeature*)new MegaJungleTreeFeature(false, 10, 20, sJungleTrunkState, sJungleLeafState)
+               : (AbstractTreeFeature*)new TreeFeature(false, 4 + random.nextInt(7), sJungleTrunkState,
+                                                       sJungleLeafState, true);
 }
 
 Feature* JungleBiome::getGrassFeature(Random& random)

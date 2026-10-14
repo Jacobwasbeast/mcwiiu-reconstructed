@@ -17,7 +17,8 @@ MushroomIslandBiome::MushroomIslandBiome(EBiomeIDs biomeId, BiomeProperties* pro
     mDecorator->mushroomsPerChunk = 1;
     mDecorator->bigMushroomsPerChunk = 1;
 
-    mTopBlock = BlockPair(BlockId::MYCELIUM, Blocks::mycelium->convertBlockStateToLegacyData(Blocks::mycelium->defaultBlockState()));
+    mTopBlock = BlockPair(BlockId::MYCELIUM,
+                          Blocks::mycelium->convertBlockStateToLegacyData(Blocks::mycelium->defaultBlockState()));
 
     mMonsters.clear();
     mCreatures.clear();

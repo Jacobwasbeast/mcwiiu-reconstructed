@@ -4,10 +4,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 
-BiomeOverride::BiomeOverride()
-    : mFillerBlock(0),
-      mTopBlock(0),
-      mBiomeId(0)
+BiomeOverride::BiomeOverride() : mFillerBlock(0), mTopBlock(0), mBiomeId(0)
 {
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_biomeId, &mBiomeId);
     addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mTopBlock);
