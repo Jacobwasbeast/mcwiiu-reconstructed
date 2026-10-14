@@ -2,9 +2,10 @@
 
 #include "game/world/generation/Player.hpp"
 
-FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> player, const SoundEvent* sound, float volume, float pitch, bool looping)
-    : AbstractTickableSoundInstance(sound, SoundSource::eSoundSource_Players)
-    , player()
+FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> player, const SoundEvent* sound,
+                                                     float volume, float pitch, bool looping)
+    : AbstractTickableSoundInstance(sound, SoundSource::eSoundSource_Players),
+      player()
 {
     this->player = player;
     this->looping = looping;
@@ -14,9 +15,9 @@ FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> p
 }
 
 FollowPlayerSoundInstance::FollowPlayerSoundInstance(const FollowPlayerSoundInstance& other)
-    : SoundInstance(other)
-    , AbstractTickableSoundInstance(other)
-    , player(other.player)
+    : SoundInstance(other),
+      AbstractTickableSoundInstance(other),
+      player(other.player)
 {
 }
 

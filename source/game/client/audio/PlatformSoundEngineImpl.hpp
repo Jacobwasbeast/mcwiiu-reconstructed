@@ -15,7 +15,9 @@ public:
     virtual ~PlatformSoundEngineImpl();
 
     virtual void init(char* pSoundBankPath, SoundBankLoadedCallback pSoundBankLoaded);
-    virtual void tick(void* pUserData, float fListenerX, float fListenerY, float fListenerZ, float fListenerForwardX, float fListenerForwardY, float fListenerForwardZ, ConfigureSoundCallback pConfigureSound, UpdateSoundCallback pUpdateSound, RouteToDRCCallback pRouteToDRC, bool* pbSystemMusicPlaying);
+    virtual void tick(void* pUserData, float fListenerX, float fListenerY, float fListenerZ, float fListenerForwardX,
+                      float fListenerForwardY, float fListenerForwardZ, ConfigureSoundCallback pConfigureSound,
+                      UpdateSoundCallback pUpdateSound, RouteToDRCCallback pRouteToDRC, bool* pbSystemMusicPlaying);
     virtual void startSound(void* pSoundData, int iSoundDataSize, char* pEventName);
     virtual bool openStream(char* pFileName);
     virtual void startStream(void* pUserData, ConfigureSoundCallback pConfigureSound);
@@ -28,7 +30,8 @@ public:
 private:
     static int initAX(void* pArg);
     static void ErrorCallback(long long iErrorCode, const char* pErrorText);
-    static float custom_falloff_function(_SAMPLE* pSample, float fDistance, float fRolloffFactor, float fMinDistance, float fMaxDistance);
+    static float custom_falloff_function(_SAMPLE* pSample, float fDistance, float fRolloffFactor, float fMinDistance,
+                                         float fMaxDistance);
 
     SoundBank* m_pSoundBank;
     _DIG_DRIVER* m_pDigitalDriver;

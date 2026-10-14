@@ -10,7 +10,10 @@
 extern "C" void AXInit();
 extern "C" void MIXInit();
 
-extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, RIB_ALLOC_PROVIDER_HANDLE_CALLBACK pAllocProviderHandle, RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface, RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface);
+extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown,
+                                 RIB_ALLOC_PROVIDER_HANDLE_CALLBACK pAllocProviderHandle,
+                                 RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface,
+                                 RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface);
 
 #include "platform/wiiu/WiiUMilesFileSystem.hpp"
 #include "game/client/audio/FalloffGraph.hpp"
@@ -63,7 +66,8 @@ void PlatformSoundEngineImpl::ErrorCallback(long long iErrorCode, const char* pE
     AIL_last_error();
 }
 
-float PlatformSoundEngineImpl::custom_falloff_function(_SAMPLE* pSample, float fDistance, float fRolloffFactor, float fMinDistance, float fMaxDistance)
+float PlatformSoundEngineImpl::custom_falloff_function(_SAMPLE* pSample, float fDistance, float fRolloffFactor,
+                                                       float fMinDistance, float fMaxDistance)
 {
     if (fMaxDistance == 10000.0f)
     {
@@ -139,7 +143,10 @@ void PlatformSoundEngineImpl::init(char* pSoundBankPath, SoundBankLoadedCallback
     MilesEnqueueEventByName("Minecraft/CacheSounds");
 }
 
-void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fListenerY, float fListenerZ, float fListenerForwardX, float fListenerForwardY, float fListenerForwardZ, ConfigureSoundCallback pConfigureSound, UpdateSoundCallback pUpdateSound, RouteToDRCCallback pRouteToDRC, bool* pbSystemMusicPlaying)
+void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fListenerY, float fListenerZ,
+                                   float fListenerForwardX, float fListenerForwardY, float fListenerForwardZ,
+                                   ConfigureSoundCallback pConfigureSound, UpdateSoundCallback pUpdateSound,
+                                   RouteToDRCCallback pRouteToDRC, bool* pbSystemMusicPlaying)
 {
     SoundInstanceInfo info;
     unsigned int uiNext;
@@ -147,7 +154,8 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
     *pbSystemMusicPlaying = false;
 
     AIL_set_listener_3D_position(m_pDigitalDriver, fListenerX, fListenerY, fListenerZ);
-    AIL_set_listener_3D_orientation(m_pDigitalDriver, fListenerForwardX, fListenerForwardY, fListenerForwardZ, 0.0f, 1.0f, 0.0f);
+    AIL_set_listener_3D_orientation(m_pDigitalDriver, fListenerForwardX, fListenerForwardY, fListenerForwardZ, 0.0f,
+                                    1.0f, 0.0f);
 
     MilesBeginEventQueueProcessing();
 
@@ -169,7 +177,8 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
             float fZ;
             float fVolume;
 
-            pConfigureSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, &fMinDistance, &fPlaybackRate, &fX, &fY, &fZ, &fVolume);
+            pConfigureSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, &fMinDistance, &fPlaybackRate,
+                            &fX, &fY, &fZ, &fVolume);
 
             AIL_register_falloff_function_callback(info.m_sample, custom_falloff_function);
 

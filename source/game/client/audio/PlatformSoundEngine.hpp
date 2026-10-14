@@ -5,14 +5,18 @@ class PlatformSoundEngine
 {
 public:
     typedef void (*SoundBankLoadedCallback)();
-    typedef void (*ConfigureSoundCallback)(void* userData, void* soundInstance, bool* is3D, float* minDistance, float* playbackRate, float* x, float* y, float* z, float* volume);
-    typedef void (*UpdateSoundCallback)(void* userData, void* soundInstance, bool* is3D, int soundType, float* x, float* y, float* z, float* volume);
+    typedef void (*ConfigureSoundCallback)(void* userData, void* soundInstance, bool* is3D, float* minDistance,
+                                           float* playbackRate, float* x, float* y, float* z, float* volume);
+    typedef void (*UpdateSoundCallback)(void* userData, void* soundInstance, bool* is3D, int soundType, float* x,
+                                        float* y, float* z, float* volume);
     typedef bool (*RouteToDRCCallback)(void* userData, void* soundInstance);
 
     virtual ~PlatformSoundEngine() {}
 
     virtual void init(char* soundBankPath, SoundBankLoadedCallback soundBankLoaded) = 0;
-    virtual void tick(void* userData, float listenerX, float listenerY, float listenerZ, float listenerForwardX, float listenerForwardY, float listenerForwardZ, ConfigureSoundCallback configureSound, UpdateSoundCallback updateSound, RouteToDRCCallback routeToDRC, bool* systemMusicPlaying) = 0;
+    virtual void tick(void* userData, float listenerX, float listenerY, float listenerZ, float listenerForwardX,
+                      float listenerForwardY, float listenerForwardZ, ConfigureSoundCallback configureSound,
+                      UpdateSoundCallback updateSound, RouteToDRCCallback routeToDRC, bool* systemMusicPlaying) = 0;
     virtual void startSound(void* soundData, int soundDataSize, char* eventName) = 0;
     virtual bool openStream(char* fileName) = 0;
     virtual void startStream(void* userData, ConfigureSoundCallback configureSound) = 0;

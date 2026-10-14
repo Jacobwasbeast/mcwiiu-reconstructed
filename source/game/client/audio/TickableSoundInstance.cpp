@@ -4,8 +4,6 @@ TickableSoundInstance::TickableSoundInstance()
 {
 }
 
-TickableSoundInstance::TickableSoundInstance(const TickableSoundInstance& other)
-    : SoundInstance(other)
+TickableSoundInstance::TickableSoundInstance(const TickableSoundInstance& other) : SoundInstance(other)
 {
 }
-

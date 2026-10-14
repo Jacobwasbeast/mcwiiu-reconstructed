@@ -9,8 +9,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Material.hpp"
 
-MusicBlockEntity::MusicBlockEntity()
-    : BlockEntity(), mNote(0), mPowered(false)
+MusicBlockEntity::MusicBlockEntity() : BlockEntity(), mNote(0), mPowered(false)
 {
 }
 

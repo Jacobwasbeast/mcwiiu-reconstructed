@@ -13,12 +13,11 @@ GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(boost::sh
     this->delay = 0;
 }
 
-GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(
-    const GlideProximityWarningSoundInstance& other)
-    : SoundInstance(other)
-    , AbstractTickableSoundInstance(other)
-    , player(other.player)
-    , ticks(other.ticks)
+GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(const GlideProximityWarningSoundInstance& other)
+    : SoundInstance(other),
+      AbstractTickableSoundInstance(other),
+      player(other.player),
+      ticks(other.ticks)
 {
 }
 

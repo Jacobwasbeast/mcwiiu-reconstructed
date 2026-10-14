@@ -1,17 +1,17 @@
 #include "game/client/audio/AbstractTickableSoundInstance.hpp"
 
 AbstractTickableSoundInstance::AbstractTickableSoundInstance(const SoundEvent* sound, SoundSource::ESoundSource source)
-    : AbstractSoundInstance(sound, source)
-    , TickableSoundInstance()
-    , stopped(false)
+    : AbstractSoundInstance(sound, source),
+      TickableSoundInstance(),
+      stopped(false)
 {
 }
 
 AbstractTickableSoundInstance::AbstractTickableSoundInstance(const AbstractTickableSoundInstance& other)
-    : SoundInstance(other)
-    , AbstractSoundInstance(other)
-    , TickableSoundInstance(other)
-    , stopped(other.stopped)
+    : SoundInstance(other),
+      AbstractSoundInstance(other),
+      TickableSoundInstance(other),
+      stopped(other.stopped)
 {
 }
 

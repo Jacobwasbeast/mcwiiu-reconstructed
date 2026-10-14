@@ -7,14 +7,9 @@
 #include "game/core/DLCPack.hpp"
 #include "game/core/StringConversion.hpp"
 
-static const wchar_t* s_audioParameterNames[] =
-{
-    L"CUENAME",
-    L"CREDIT"
-};
+static const wchar_t* s_audioParameterNames[] = {L"CUENAME", L"CREDIT"};
 
-DLCAudioFile::DLCAudioFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Audio, path)
+DLCAudioFile::DLCAudioFile(const std::wstring& path) : DLCFile(DLCManager::eDLCType_Audio, path)
 {
     m_pData = NULL;
     m_dataSize = 0;

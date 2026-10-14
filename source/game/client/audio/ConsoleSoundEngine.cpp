@@ -311,8 +311,8 @@ ConsoleSoundEngine::ScheduledSound::ScheduledSound(const SoundEvent* sound, Soun
 }
 
 ConsoleSoundEngine::ScheduledSound::ScheduledSound(const ScheduledSound& other)
-    : SoundInstance(other)
-    , AbstractSoundInstance(other)
+    : SoundInstance(other),
+      AbstractSoundInstance(other)
 {
 }
 

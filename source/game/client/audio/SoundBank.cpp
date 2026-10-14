@@ -11,8 +11,7 @@ static char ourtoupper(char value)
     return value;
 }
 
-int32_t FindAsset(
-    SoundBank* soundBank, const char* name, SoundBank::AssetEntry* entries, int32_t count)
+int32_t FindAsset(SoundBank* soundBank, const char* name, SoundBank::AssetEntry* entries, int32_t count)
 {
     for (;;)
     {

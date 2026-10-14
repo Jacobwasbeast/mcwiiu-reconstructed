@@ -76,8 +76,8 @@ public:
     SoundEngine();
     static int TracksSortFunction(const void*, const void*);
     void BuildTrackList(int, int, bool);
-    void SetStreamingSounds(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int,
-                            int, int, int);
+    void SetStreamingSounds(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int,
+                            int);
     int GetNextTrack(int, int);
     void SetMusicID(eMusicType);
     virtual void destroy();

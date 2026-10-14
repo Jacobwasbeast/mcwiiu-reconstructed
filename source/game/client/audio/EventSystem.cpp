@@ -125,8 +125,7 @@ int strtoi(const char* value, const char** end)
     return result;
 }
 
-int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* name, int flags,
-                          void* value)
+int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* name, int flags, void* value)
 {
     Handle context = handle;
     for (;;)
@@ -166,8 +165,8 @@ int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* n
             variable = static_cast<EventSystemVariable*>(Handle_Get(variable->m_next));
         }
 
-        if (context.index == eventSystem->m_variables.index &&
-            context.generation == eventSystem->m_variables.generation)
+        if (context.index == eventSystem->m_variables.index
+            && context.generation == eventSystem->m_variables.generation)
         {
             break;
         }
@@ -179,8 +178,8 @@ int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* n
     return 0;
 }
 
-int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, const MilesMarkerList* markerList, const char* markerName,
-               int* markerIndex, int* markerType)
+int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, const MilesMarkerList* markerList,
+               const char* markerName, int* markerIndex, int* markerType)
 {
     if (AIL_stricmp(markerName, "SampleStart") == 0)
     {
@@ -488,10 +487,10 @@ int Persist_Create(EventSystem* eventSystem, unsigned long long eventId, const E
         Handle_Free(node->m_labels);
         node->m_active = step->m_data.m_persist.m_active;
         existing = true;
-        node->m_preset =
-            Handle_AllocateInfo(step->m_data.m_persist.m_presetLength + 1, MILES_EVENT_SUPPORT_FILE, 0x4b2);
-        node->m_labels =
-            Handle_AllocateInfo(step->m_data.m_persist.m_labelsLength + 1, MILES_EVENT_SUPPORT_FILE, 0x4b3);
+        node->m_preset = Handle_AllocateInfo(step->m_data.m_persist.m_presetLength + 1, MILES_EVENT_SUPPORT_FILE,
+                                             0x4b2);
+        node->m_labels = Handle_AllocateInfo(step->m_data.m_persist.m_labelsLength + 1, MILES_EVENT_SUPPORT_FILE,
+                                             0x4b3);
     }
     else
     {
@@ -507,10 +506,10 @@ int Persist_Create(EventSystem* eventSystem, unsigned long long eventId, const E
         node->m_self = self;
         strcpy(node->m_name, step->m_data.m_persist.m_name);
         node->m_active = step->m_data.m_persist.m_active;
-        node->m_preset =
-            Handle_AllocateInfo(step->m_data.m_persist.m_presetLength + 1, MILES_EVENT_SUPPORT_FILE, 0x4b2);
-        node->m_labels =
-            Handle_AllocateInfo(step->m_data.m_persist.m_labelsLength + 1, MILES_EVENT_SUPPORT_FILE, 0x4b3);
+        node->m_preset = Handle_AllocateInfo(step->m_data.m_persist.m_presetLength + 1, MILES_EVENT_SUPPORT_FILE,
+                                             0x4b2);
+        node->m_labels = Handle_AllocateInfo(step->m_data.m_persist.m_labelsLength + 1, MILES_EVENT_SUPPORT_FILE,
+                                             0x4b3);
     }
 
     char* presetText = static_cast<char*>(Handle_Get(node->m_preset));
@@ -535,8 +534,7 @@ int Persist_Create(EventSystem* eventSystem, unsigned long long eventId, const E
         int count = eventSystem->m_instances.Count();
         for (int i = 0; i < count; ++i, --count)
         {
-            SoundInstanceData* instance =
-                static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[i]));
+            SoundInstanceData* instance = static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[i]));
             const char* instanceLabels = static_cast<const char*>(Handle_Get(instance->m_labels));
             if (DoLabelsMatchQuery(instanceLabels, step->m_data.m_persist.m_labels))
             {
@@ -562,8 +560,8 @@ int Persist_Create(EventSystem* eventSystem, unsigned long long eventId, const E
     return 0;
 }
 
-void Persist_Apply(EventSystem* eventSystem, SoundInstance* soundInstance, _SAMPLE* sample,
-                   const char* labels, int unusedArgument, int onlyActive)
+void Persist_Apply(EventSystem* eventSystem, SoundInstance* soundInstance, _SAMPLE* sample, const char* labels,
+                   int unusedArgument, int onlyActive)
 {
     PersistNode* node = static_cast<PersistNode*>(Handle_Get(eventSystem->m_persists));
     while (node != NULL)
@@ -618,8 +616,7 @@ int Limit_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step, long long e
 
         int count = strtoi(digits, &digits);
         int length = static_cast<int>(separator - cursor);
-        Handle entryHandle = Handle_AllocateInfo(length + LIMIT_ENTRY_HEADER_SIZE,
-                                                 MILES_EVENT_SUPPORT_FILE, 0x576);
+        Handle entryHandle = Handle_AllocateInfo(length + LIMIT_ENTRY_HEADER_SIZE, MILES_EVENT_SUPPORT_FILE, 0x576);
         LimitEntry* entry = static_cast<LimitEntry*>(Handle_Get(entryHandle));
         if (entry == NULL)
         {
@@ -665,8 +662,7 @@ int LFO_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step)
     }
     else
     {
-        lfo->m_centerText =
-            Handle_AllocateInfo(step->m_data.m_lfo.m_centerLength + 1, MILES_EVENT_SUPPORT_FILE, 0x1de);
+        lfo->m_centerText = Handle_AllocateInfo(step->m_data.m_lfo.m_centerLength + 1, MILES_EVENT_SUPPORT_FILE, 0x1de);
         char* text = static_cast<char*>(Handle_Get(lfo->m_centerText));
         if (text != NULL)
         {
@@ -680,8 +676,8 @@ int LFO_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step)
     }
     else
     {
-        lfo->m_amplitudeText =
-            Handle_AllocateInfo(step->m_data.m_lfo.m_amplitudeLength + 1, MILES_EVENT_SUPPORT_FILE, 0x1ea);
+        lfo->m_amplitudeText = Handle_AllocateInfo(step->m_data.m_lfo.m_amplitudeLength + 1, MILES_EVENT_SUPPORT_FILE,
+                                                   0x1ea);
         char* text = static_cast<char*>(Handle_Get(lfo->m_amplitudeText));
         if (text != NULL)
         {
@@ -695,8 +691,8 @@ int LFO_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step)
     }
     else
     {
-        lfo->m_frequencyText =
-            Handle_AllocateInfo(step->m_data.m_lfo.m_frequencyLength + 1, MILES_EVENT_SUPPORT_FILE, 0x1f6);
+        lfo->m_frequencyText = Handle_AllocateInfo(step->m_data.m_lfo.m_frequencyLength + 1, MILES_EVENT_SUPPORT_FILE,
+                                                   0x1f6);
         char* text = static_cast<char*>(Handle_Get(lfo->m_frequencyText));
         if (text != NULL)
         {
@@ -800,9 +796,9 @@ float Ramp_GetCurrentValue(EventSystem* eventSystem, Ramp* ramp, int applyCurve)
         case RAMP_CURVE_SMOOTH:
         {
             float centered = progress - RAMP_SMOOTH_CENTER;
-            result = (result - ramp->m_startValue) *
-                        (centered * centered * centered * RAMP_SMOOTH_SCALE + RAMP_SMOOTH_CENTER) +
-                    ramp->m_startValue;
+            result = (result - ramp->m_startValue)
+                         * (centered * centered * centered * RAMP_SMOOTH_SCALE + RAMP_SMOOTH_CENTER)
+                     + ramp->m_startValue;
             break;
         }
         default:
@@ -862,8 +858,8 @@ int Ramp_Add(Handle* ramps, EventSystem* eventSystem, const EVENT_STEP_INFO* ste
             return 0;
         }
 
-        if (step->m_data.m_ramp.m_nameLength < RAMP_NAME_SIZE && step->m_data.m_ramp.m_labelsLength < RAMP_LABELS_SIZE &&
-            step->m_data.m_ramp.m_valueLength < RAMP_VALUE_SIZE)
+        if (step->m_data.m_ramp.m_nameLength < RAMP_NAME_SIZE && step->m_data.m_ramp.m_labelsLength < RAMP_LABELS_SIZE
+            && step->m_data.m_ramp.m_valueLength < RAMP_VALUE_SIZE)
         {
             ramp->m_self = self;
             memcpy(ramp->m_name, step->m_data.m_ramp.m_name, step->m_data.m_ramp.m_nameLength + 1);
@@ -889,7 +885,8 @@ int Ramp_Add(Handle* ramps, EventSystem* eventSystem, const EVENT_STEP_INFO* ste
                 startValue = RAMP_ZERO_VALUE;
             }
 
-            if (step->m_data.m_ramp.m_target == RAMP_TARGET_LEVEL_A || step->m_data.m_ramp.m_target == RAMP_TARGET_LEVEL_B)
+            if (step->m_data.m_ramp.m_target == RAMP_TARGET_LEVEL_A
+                || step->m_data.m_ramp.m_target == RAMP_TARGET_LEVEL_B)
             {
                 if (startValue > RAMP_SILENCE_DECIBELS)
                 {
@@ -1004,8 +1001,8 @@ void Ramp_ApplyAll(EventSystem* eventSystem, SoundInstance* soundInstance, float
         ramp = static_cast<Ramp*>(Handle_Get(ramp->m_next));
     }
 
-    if (fabs(instance->m_sample->levelC - levelC) > SAMPLE_CHANGE_EPSILON ||
-        fabs(instance->m_sample->rate - rate) > SAMPLE_CHANGE_EPSILON)
+    if (fabs(instance->m_sample->levelC - levelC) > SAMPLE_CHANGE_EPSILON
+        || fabs(instance->m_sample->rate - rate) > SAMPLE_CHANGE_EPSILON)
     {
         instance->m_sample->cacheState = SAMPLE_UNCHANGED;
     }

@@ -1,16 +1,13 @@
 #include "game/client/audio/SoundEvent.hpp"
 
-SoundEvent::SoundEvent(std::wstring name, EType type, float distanceScalar)
-    : index(-1)
+SoundEvent::SoundEvent(std::wstring name, EType type, float distanceScalar) : index(-1)
 {
     this->name = name;
     this->type = type;
     this->distanceScalar = distanceScalar;
 }
 
-SoundEvent::SoundEvent(std::wstring name, float distanceScalar)
-    : index(-1)
-    , type(eType_Sound)
+SoundEvent::SoundEvent(std::wstring name, float distanceScalar) : index(-1), type(eType_Sound)
 {
     this->name = name;
     this->distanceScalar = distanceScalar;

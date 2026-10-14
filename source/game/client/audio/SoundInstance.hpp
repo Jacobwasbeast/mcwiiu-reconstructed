@@ -25,12 +25,7 @@ public:
 
     static const EAttenuation DEFAULT_ATTENUATION;
 
-    SoundInstance()
-        : drcClone(false)
-        , state(eSoundState_None)
-        , pendingTicks(0)
-    {
-    }
+    SoundInstance() : drcClone(false), state(eSoundState_None), pendingTicks(0) {}
 
     virtual ~SoundInstance() {}
 

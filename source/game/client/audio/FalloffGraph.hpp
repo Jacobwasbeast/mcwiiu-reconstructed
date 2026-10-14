@@ -52,48 +52,42 @@ const int SAMPLE_PATH_POINT_COUNT = 10;
 const int SAMPLE_FALLOFF_POINT_COUNT = 5;
 const int SAMPLE_FALLOFF_GRAPH_COUNT = 4;
 
-typedef int (*FilterPropertyFunc)(unsigned int property, void* before, const void* newValue,
-                                  void* after);
+typedef int (*FilterPropertyFunc)(unsigned int property, void* before, const void* newValue, void* after);
 typedef int (*FilterStartupFunc)();
 typedef const char* (*FilterErrorFunc)();
 typedef void (*FilterShutdownFunc)();
 typedef void* (*MssAllocFunc)(unsigned int size, unsigned int user, const char* file, int line);
 typedef void (*MssFreeFunc)(void* block);
-typedef void* (*FilterOpenDriverFunc)(MssAllocFunc allocator, MssFreeFunc deallocator,
-                                      unsigned int reserved, _DIG_DRIVER* driver, void* state);
+typedef void* (*FilterOpenDriverFunc)(MssAllocFunc allocator, MssFreeFunc deallocator, unsigned int reserved,
+                                      _DIG_DRIVER* driver, void* state);
 typedef void (*FilterCloseDriverFunc)(void* driverState);
 typedef void (*FilterPremixFunc)(void* driverState);
 typedef int (*FilterPostmixFunc)(void* driverState, void* buffer);
 typedef void* (*FilterOpenSampleFunc)(void* driverState, _SAMPLE* sample, void* state);
 typedef void (*FilterCloseSampleFunc)(void* handle);
-typedef int (*FilterSampleProcessFunc)(void* handle, void* source, void* destination,
-                                       unsigned int count, int channel);
-typedef int (*FilterSamplePropertyFunc)(void* handle, unsigned int property, void* before,
-                                        const void* newValue, void* after);
+typedef int (*FilterSampleProcessFunc)(void* handle, void* source, void* destination, unsigned int count, int channel);
+typedef int (*FilterSamplePropertyFunc)(void* handle, unsigned int property, void* before, const void* newValue,
+                                        void* after);
 typedef int (*AsiStreamCallback)(unsigned int user, void* destination, int count, int offset);
-typedef void* (*AsiStreamOpenFunc)(MssAllocFunc allocator, MssFreeFunc deallocator,
-                                   unsigned int user, AsiStreamCallback callback,
-                                   unsigned int totalSize);
+typedef void* (*AsiStreamOpenFunc)(MssAllocFunc allocator, MssFreeFunc deallocator, unsigned int user,
+                                   AsiStreamCallback callback, unsigned int totalSize);
 typedef int (*AsiStreamProcessFunc)(void* stream, void* destination, int size);
 typedef void (*AsiStreamSeekFunc)(void* stream, int offset);
 typedef void (*AsiStreamCloseFunc)(void* stream);
-typedef int (*AsiStreamPropertyFunc)(void* stream, unsigned int property, void* before,
-                                     const void* newValue, void* after);
-typedef void (*MixerMergeFunc)(void* source, unsigned int* fraction, void* sourceEnd,
-                               void** destination, void* destinationEnd, int* left, int* right,
-                               unsigned int step, int leftVolume, int rightVolume,
-                               unsigned int flags);
+typedef int (*AsiStreamPropertyFunc)(void* stream, unsigned int property, void* before, const void* newValue,
+                                     void* after);
+typedef void (*MixerMergeFunc)(void* source, unsigned int* fraction, void* sourceEnd, void** destination,
+                               void* destinationEnd, int* left, int* right, unsigned int step, int leftVolume,
+                               int rightVolume, unsigned int flags);
 typedef void (*DriverFlushFunc)(void* buffer, unsigned int length);
-typedef void (*DriverCopyFunc)(void* source, unsigned int length, void* destination,
-                               unsigned int flags, int suppressSwap);
-typedef void (*DriverMultiChannelCopyFunc)(void* channels, int channelCount, void* destination,
-                                           unsigned int flags, unsigned int frames,
-                                           int stride);
-typedef int (*DriverAdpcmDecodeFunc)(void** source, void** destination, int sourceBytes,
-                                     int destinationBytes, unsigned int flags, void* state);
+typedef void (*DriverCopyFunc)(void* source, unsigned int length, void* destination, unsigned int flags,
+                               int suppressSwap);
+typedef void (*DriverMultiChannelCopyFunc)(void* channels, int channelCount, void* destination, unsigned int flags,
+                                           unsigned int frames, int stride);
+typedef int (*DriverAdpcmDecodeFunc)(void** source, void** destination, int sourceBytes, int destinationBytes,
+                                     unsigned int flags, void* state);
 typedef void (*DriverFillCallback)(_DIG_DRIVER* driver);
-typedef float (*FalloffFunc)(_SAMPLE* sample, float distance, float rolloff, float minimum,
-                             float maximum);
+typedef float (*FalloffFunc)(_SAMPLE* sample, float distance, float rolloff, float minimum, float maximum);
 
 struct FLT_INSTANCE
 {
@@ -545,8 +539,8 @@ int Blend_Exists(EventSystem* eventSystem, const char* name);
 int Blend_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step);
 void Blend_Apply(SoundInstance* instance, float* volume, float* pitch);
 void DestroySoundInstance(EventSystem* eventSystem, SoundInstance* instance);
-int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned char policy,
-               int priority, SoundLimitEntry* limit, SoundSource* source, const char* name);
+int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned char policy, int priority,
+               SoundLimitEntry* limit, SoundSource* source, const char* name);
 
 void Queue_SetMem(int capacity, Handle storage);
 unsigned long long Queue_EnumCreate();

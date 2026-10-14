@@ -18,10 +18,10 @@ RidingMinecartSoundInstance::RidingMinecartSoundInstance(boost::shared_ptr<Playe
 }
 
 RidingMinecartSoundInstance::RidingMinecartSoundInstance(const RidingMinecartSoundInstance& other)
-    : SoundInstance(other)
-    , AbstractTickableSoundInstance(other)
-    , player(other.player)
-    , minecart(other.minecart)
+    : SoundInstance(other),
+      AbstractTickableSoundInstance(other),
+      player(other.player),
+      minecart(other.minecart)
 {
 }
 
@@ -41,8 +41,7 @@ void RidingMinecartSoundInstance::tick()
 {
     if (GameSettings::GetGameSettings(eGameSetting_MinecartSounds) != 0)
     {
-        if (this->minecart->mRemoved
-            || !this->player->isPassenger()
+        if (this->minecart->mRemoved || !this->player->isPassenger()
             || this->player->getVehicle().get() != this->minecart.get())
         {
             this->stopped = true;

@@ -271,18 +271,17 @@ struct EVENT_STEP_INFO
 
 struct Ramp;
 
-int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* name, int flags,
-                          void* value);
+int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* name, int flags, void* value);
 
-int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, const MilesMarkerList* markerList, const char* markerName,
-               int* markerIndex, int* markerType);
+int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, const MilesMarkerList* markerList,
+               const char* markerName, int* markerIndex, int* markerType);
 
 Handle Sound_Load(EventSystem* eventSystem, unsigned long long eventId, const char* name);
 void Sound_Free(EventSystem* eventSystem, Handle sound);
 int Persist_Create(EventSystem* eventSystem, unsigned long long eventId, const EVENT_STEP_INFO* step);
 void Persist_Free(EventSystem* eventSystem, unsigned long long eventId, const char* name);
-void Persist_Apply(EventSystem* eventSystem, SoundInstance* soundInstance, _SAMPLE* sample,
-                   const char* labels, int unusedArgument, int onlyActive);
+void Persist_Apply(EventSystem* eventSystem, SoundInstance* soundInstance, _SAMPLE* sample, const char* labels,
+                   int unusedArgument, int onlyActive);
 int Limit_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step, long long eventId);
 int LFO_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step);
 int Ramp_Add(Handle* ramps, EventSystem* eventSystem, const EVENT_STEP_INFO* step);

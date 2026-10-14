@@ -7,8 +7,8 @@ static const float MAX_ATTACK_VOLUME = 1.0f;
 static const float ATTACK_VOLUME_SCALE = MAX_ATTACK_VOLUME;
 
 GuardianAttackSoundInstance::GuardianAttackSoundInstance(boost::shared_ptr<Guardian> guardian)
-    : AbstractTickableSoundInstance(SoundEvents::GUARDIAN_ATTACK, SoundSource::eSoundSource_Hostile)
-    , guardian(guardian)
+    : AbstractTickableSoundInstance(SoundEvents::GUARDIAN_ATTACK, SoundSource::eSoundSource_Hostile),
+      guardian(guardian)
 {
     this->attenuation = SoundInstance::DEFAULT_ATTENUATION;
     this->looping = true;
@@ -16,9 +16,9 @@ GuardianAttackSoundInstance::GuardianAttackSoundInstance(boost::shared_ptr<Guard
 }
 
 GuardianAttackSoundInstance::GuardianAttackSoundInstance(const GuardianAttackSoundInstance& other)
-    : SoundInstance(other)
-    , AbstractTickableSoundInstance(other)
-    , guardian(other.guardian)
+    : SoundInstance(other),
+      AbstractTickableSoundInstance(other),
+      guardian(other.guardian)
 {
 }
 

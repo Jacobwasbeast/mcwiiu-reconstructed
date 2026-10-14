@@ -28,7 +28,8 @@
 
 extern void SetSpecialThreadIDForFS_MilesStreamThread();
 
-namespace {
+namespace
+{
 
 const int DIMENSION_NETHER = -1;
 const int DIMENSION_END = 1;
@@ -202,10 +203,9 @@ void SoundEngine::BuildTrackList(int first, int last, bool keepFirstTrack)
 }
 
 void SoundEngine::SetStreamingSounds(int overworldFirst, int overworldLast, int netherFirst, int netherLast,
-                                     int endFirst, int endLast, int creativeFirst, int creativeLast,
-                                     int menuFirst, int menuLast, int battleFirst, int battleLast,
-                                     int tumbleFirst, int tumbleLast, int glideFirst, int glideLast,
-                                     int buildFirst, int buildLast, int firstCDTrack)
+                                     int endFirst, int endLast, int creativeFirst, int creativeLast, int menuFirst,
+                                     int menuLast, int battleFirst, int battleLast, int tumbleFirst, int tumbleLast,
+                                     int glideFirst, int glideLast, int buildFirst, int buildLast, int firstCDTrack)
 {
     m_overworldFirst = overworldFirst;
     m_overworldLast = overworldLast;
@@ -601,8 +601,8 @@ float SoundEngine::getDistanceScaler(AudioInfo* info)
     return scaler;
 }
 
-void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3D, int soundState, float* x, float* y,
-                              float* z, float* volume)
+void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3D, int soundState, float* x, float* y, float* z,
+                              float* volume)
 {
     SoundEngine* engine = static_cast<SoundEngine*>(userData);
     AudioInfo* info = static_cast<AudioInfo*>(soundData);
@@ -774,8 +774,8 @@ void SoundEngine::playMusicUpdate()
 
             if (Minecraft::GetInstance()->mTexturePackRepository->getSelected()->hasAudio())
             {
-                DLCTexturePack* pack =
-                    static_cast<DLCTexturePack*>(Minecraft::GetInstance()->mTexturePackRepository->getSelected());
+                DLCTexturePack* pack = static_cast<DLCTexturePack*>(
+                    Minecraft::GetInstance()->mTexturePackRepository->getSelected());
                 DLCAudioFile* audioFile = static_cast<DLCAudioFile*>(
                     pack->getDLCInfoParentPack()->getFile(DLCManager::eDLCType_Audio, 0, true, true));
 

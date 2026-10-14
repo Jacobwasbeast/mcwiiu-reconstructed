@@ -10,7 +10,8 @@ class Player;
 class FollowPlayerSoundInstance : public AbstractTickableSoundInstance
 {
 public:
-    FollowPlayerSoundInstance(boost::shared_ptr<Player> player, const SoundEvent* sound, float volume, float pitch, bool looping);
+    FollowPlayerSoundInstance(boost::shared_ptr<Player> player, const SoundEvent* sound, float volume, float pitch,
+                              bool looping);
     FollowPlayerSoundInstance(const FollowPlayerSoundInstance& other);
     virtual ~FollowPlayerSoundInstance();
 

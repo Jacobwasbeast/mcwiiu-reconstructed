@@ -6,7 +6,6 @@
 class SoundType
 {
 public:
-
     static const SoundType* WOOD;
     static const SoundType* GRAVEL;
     static const SoundType* GRASS;

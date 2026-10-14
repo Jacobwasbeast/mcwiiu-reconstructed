@@ -215,8 +215,7 @@ void Queue_EnumClose(unsigned long long start, unsigned long long end)
     {
         snapshot = previous;
         previous = rrAtomicCmpXchg64(&sQueueRange,
-                                     ((end >> 32) << 32) | (static_cast<unsigned int>(snapshot) - consumed),
-                                     snapshot);
+                                     ((end >> 32) << 32) | (static_cast<unsigned int>(snapshot) - consumed), snapshot);
     } while (previous != snapshot);
 }
 
@@ -271,9 +270,8 @@ QueuedEvent* Queue_Add(int size)
 
 void Queue_Commit(QueuedEvent* event)
 {
-    rrAtomicStoreRelease32(&event->committedSize,
-                           (event->size + QUEUED_EVENT_HEADER_SIZE + QUEUED_EVENT_PADDING) &
-                               ~QUEUE_RECORD_ALIGNMENT_MASK);
+    rrAtomicStoreRelease32(&event->committedSize, (event->size + QUEUED_EVENT_HEADER_SIZE + QUEUED_EVENT_PADDING)
+                                                      & ~QUEUE_RECORD_ALIGNMENT_MASK);
 }
 
 extern "C" unsigned int AIL_enqueue_event_start()
@@ -321,8 +319,7 @@ void ClearQueueToken(int token)
     }
 }
 
-extern "C" unsigned int AIL_enqueue_event_buffer(unsigned int* puiQueue, void* pData, int iDataSize,
-                                                 int iFlags)
+extern "C" unsigned int AIL_enqueue_event_buffer(unsigned int* puiQueue, void* pData, int iDataSize, int iFlags)
 {
     int size = iDataSize;
     if (iFlags != 0)
@@ -344,8 +341,8 @@ extern "C" unsigned int AIL_enqueue_event_buffer(unsigned int* puiQueue, void* p
 
         QueueBuffer& buffer = sQueueBuffers[token];
         QueueBufferRecord* record = reinterpret_cast<QueueBufferRecord*>(buffer.bytes + offset);
-        const unsigned int recordSize =
-            (size + QUEUE_BUFFER_RECORD_HEADER_SIZE + QUEUE_RECORD_ALIGNMENT_MASK) & ~QUEUE_RECORD_ALIGNMENT_MASK;
+        const unsigned int recordSize = (size + QUEUE_BUFFER_RECORD_HEADER_SIZE + QUEUE_RECORD_ALIGNMENT_MASK)
+                                        & ~QUEUE_RECORD_ALIGNMENT_MASK;
         if (reinterpret_cast<unsigned char*>(record) + recordSize + 4 >= buffer.bytes + QUEUE_BUFFER_SIZE)
         {
             ErrorHandler(ERROR_TYPE_ENQUEUE_BUFFER_FULL, 0, 0);
@@ -367,8 +364,7 @@ extern "C" unsigned int AIL_enqueue_event_buffer(unsigned int* puiQueue, void* p
         {
             memcpy(record->data, pData, size);
         }
-        *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(record) + recordSize) =
-            QUEUE_RECORD_END;
+        *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(record) + recordSize) = QUEUE_RECORD_END;
         result = 1;
         *puiQueue = (token + 1) | (offset + recordSize) << QUEUE_HANDLE_SHIFT;
     }
@@ -417,8 +413,8 @@ unsigned long long AIL_enqueue_event_from_init_block(const char* name, void* blo
     }
 
     const int prefixSize = reinterpret_cast<unsigned char*>(nameRecord) - static_cast<unsigned char*>(block);
-    const unsigned int nameRecordSize =
-        (sizeof(QueueRecord) + strlen(name) + 1 + QUEUE_RECORD_ALIGNMENT_MASK) & ~QUEUE_RECORD_ALIGNMENT_MASK;
+    const unsigned int nameRecordSize = (sizeof(QueueRecord) + strlen(name) + 1 + QUEUE_RECORD_ALIGNMENT_MASK)
+                                        & ~QUEUE_RECORD_ALIGNMENT_MASK;
     QueuedEvent* queued = Queue_Add(nameRecordSize + prefixSize);
     if (queued == NULL)
     {
@@ -457,10 +453,10 @@ unsigned long long AIL_enqueue_event_end(int queue, void* event, int named, int 
             --token;
             QueueBuffer& buffer = sQueueBuffers[token];
             QueueNameRecord* record = reinterpret_cast<QueueNameRecord*>(buffer.bytes + offset);
-            const unsigned int recordSize =
-                (sizeof(QueueRecord) + length + 1 + QUEUE_RECORD_ALIGNMENT_MASK) & ~QUEUE_RECORD_ALIGNMENT_MASK;
-            if (reinterpret_cast<unsigned char*>(record) + recordSize + sizeof(unsigned int) >=
-                buffer.bytes + QUEUE_BUFFER_SIZE)
+            const unsigned int recordSize = (sizeof(QueueRecord) + length + 1 + QUEUE_RECORD_ALIGNMENT_MASK)
+                                            & ~QUEUE_RECORD_ALIGNMENT_MASK;
+            if (reinterpret_cast<unsigned char*>(record) + recordSize + sizeof(unsigned int)
+                >= buffer.bytes + QUEUE_BUFFER_SIZE)
             {
                 ErrorHandler(ERROR_TYPE_ENQUEUE_BUFFER_FULL, 0, 0);
                 ClearQueueToken(token);
@@ -473,8 +469,8 @@ unsigned long long AIL_enqueue_event_end(int queue, void* event, int named, int 
                 memset(record->name, 0, recordSize - sizeof(QueueRecord));
                 strcpy(record->name, static_cast<const char*>(event));
                 queue = (token + 1) | (offset + recordSize) << QUEUE_HANDLE_SHIFT;
-                *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(record) + recordSize) =
-                    QUEUE_RECORD_END;
+                *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(record)
+                                                 + recordSize) = QUEUE_RECORD_END;
             }
         }
     }
@@ -493,8 +489,8 @@ unsigned long long AIL_enqueue_event_end(int queue, void* event, int named, int 
             --token;
             QueueBuffer& buffer = sQueueBuffers[token];
             QueueEventRecord* record = reinterpret_cast<QueueEventRecord*>(buffer.bytes + offset);
-            if (reinterpret_cast<unsigned char*>(record) + sizeof(QueueEventRecord) + sizeof(unsigned int) >=
-                buffer.bytes + QUEUE_BUFFER_SIZE)
+            if (reinterpret_cast<unsigned char*>(record) + sizeof(QueueEventRecord) + sizeof(unsigned int)
+                >= buffer.bytes + QUEUE_BUFFER_SIZE)
             {
                 ErrorHandler(ERROR_TYPE_ENQUEUE_BUFFER_FULL, 0, 0);
                 ClearQueueToken(token);
@@ -579,8 +575,7 @@ unsigned long long AIL_enqueue_event_end(int queue, void* event, int named, int 
             }
             else
             {
-                const QueueEventRecord* record =
-                    reinterpret_cast<const QueueEventRecord*>(buffer.bytes + offset);
+                const QueueEventRecord* record = reinterpret_cast<const QueueEventRecord*>(buffer.bytes + offset);
                 queued->event = record->event;
                 queued->flags |= record->ownsEvent ? QUEUE_FLAG_EVENT_OWNED : 0;
                 Queue_Commit(queued);
@@ -697,8 +692,8 @@ void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
     float value = 0.0f;
     Var_LookupWithContext(sound->m_eventSystem, sound->m_context, blend->name, 1, &value);
 
-    if (fabs(static_cast<double>(blend->rangeEnd[sound->m_blendIndex] -
-                                 blend->rangeStart[sound->m_blendIndex])) <= SOUND_VALUE_EPSILON)
+    if (fabs(static_cast<double>(blend->rangeEnd[sound->m_blendIndex] - blend->rangeStart[sound->m_blendIndex]))
+        <= SOUND_VALUE_EPSILON)
     {
         return;
     }
@@ -706,8 +701,8 @@ void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
     float level;
     if (value < blend->fadeInEnd[sound->m_blendIndex])
     {
-        level = (value - blend->rangeStart[sound->m_blendIndex]) /
-                (blend->fadeInEnd[sound->m_blendIndex] - blend->rangeStart[sound->m_blendIndex]);
+        level = (value - blend->rangeStart[sound->m_blendIndex])
+                / (blend->fadeInEnd[sound->m_blendIndex] - blend->rangeStart[sound->m_blendIndex]);
         if (level >= 0.0f)
         {
             if (1.0f < level)
@@ -722,8 +717,9 @@ void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
     }
     else if (value > blend->fadeOutStart[sound->m_blendIndex])
     {
-        level = 1.0f - (value - blend->fadeOutStart[sound->m_blendIndex]) /
-                           (blend->rangeEnd[sound->m_blendIndex] - blend->fadeOutStart[sound->m_blendIndex]);
+        level = 1.0f
+                - (value - blend->fadeOutStart[sound->m_blendIndex])
+                      / (blend->rangeEnd[sound->m_blendIndex] - blend->fadeOutStart[sound->m_blendIndex]);
         if (level >= 0.0f)
         {
             if (1.0f < level)
@@ -747,17 +743,17 @@ void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
 
     if (attenuation > 0.0f)
     {
-        if (fabs(static_cast<double>(blend->pitchAtStart[sound->m_blendIndex] -
-                                     blend->pitchAtEnd[sound->m_blendIndex])) > SOUND_VALUE_EPSILON)
+        if (fabs(static_cast<double>(blend->pitchAtStart[sound->m_blendIndex] - blend->pitchAtEnd[sound->m_blendIndex]))
+            > SOUND_VALUE_EPSILON)
         {
-            const float lower =
-                static_cast<float>(pow(2.0, blend->pitchAtStart[sound->m_blendIndex] / SEMITONES_PER_OCTAVE));
-            const float upper =
-                static_cast<float>(pow(2.0, blend->pitchAtEnd[sound->m_blendIndex] / SEMITONES_PER_OCTAVE));
-            *pitch = ((value - blend->rangeStart[sound->m_blendIndex]) /
-                      (blend->rangeEnd[sound->m_blendIndex] - blend->rangeStart[sound->m_blendIndex])) *
-                         (upper - lower) +
-                     lower;
+            const float lower = static_cast<float>(
+                pow(2.0, blend->pitchAtStart[sound->m_blendIndex] / SEMITONES_PER_OCTAVE));
+            const float upper = static_cast<float>(
+                pow(2.0, blend->pitchAtEnd[sound->m_blendIndex] / SEMITONES_PER_OCTAVE));
+            *pitch = ((value - blend->rangeStart[sound->m_blendIndex])
+                      / (blend->rangeEnd[sound->m_blendIndex] - blend->rangeStart[sound->m_blendIndex]))
+                         * (upper - lower)
+                     + lower;
             AIL_set_sample_playback_rate_factor(sound->m_sample, *pitch);
         }
     }
@@ -939,8 +935,8 @@ void DestroySoundInstance(EventSystem* eventSystem, SoundInstance* instance)
     }
 }
 
-int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned char policy,
-               int priority, SoundLimitEntry* limit, SoundSource* source, const char* name)
+int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned char policy, int priority,
+               SoundLimitEntry* limit, SoundSource* source, const char* name)
 {
     int bestIndex = -1;
 
@@ -957,8 +953,7 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
     const int count = eventSystem->m_instances.Count();
     for (int index = 0; index < count; ++index)
     {
-        SoundInstanceData* sound =
-            reinterpret_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
+        SoundInstanceData* sound = reinterpret_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
         if (sound->m_state == SOUND_STATE_DESTROYED)
         {
             continue;
@@ -975,8 +970,8 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
         {
             continue;
         }
-        if (limit != NULL &&
-            DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(sound->m_labels)), limit->query) == 0)
+        if (limit != NULL
+            && DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(sound->m_labels)), limit->query) == 0)
         {
             continue;
         }
@@ -1025,9 +1020,8 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
             float y;
             float z;
             AIL_sample_3D_position(sound->m_sample, &x, &y, &z);
-            const float distance = (x - listenerX) * (x - listenerX) +
-                                   (y - listenerY) * (y - listenerY) +
-                                   (z - listenerZ) * (z - listenerZ);
+            const float distance = (x - listenerX) * (x - listenerX) + (y - listenerY) * (y - listenerY)
+                                   + (z - listenerZ) * (z - listenerZ);
             if (distance > farthestDistance)
             {
                 farthestDistance = distance;
@@ -1043,8 +1037,7 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
         return 0;
     }
 
-    SoundInstanceData* sound =
-        reinterpret_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[bestIndex]));
+    SoundInstanceData* sound = reinterpret_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[bestIndex]));
     Handle_Free(sound->m_self);
     sound->m_flags |= SOUND_FLAG_EVICTED;
     DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(sound));
@@ -1105,14 +1098,12 @@ void FalloffGraph_Set(_SAMPLE* sample, int flags, FalloffGraph* graph)
     }
     if ((flags & 2) != 0)
     {
-        AIL_set_sample_3D_lowpass_falloff(sample, graph->points + graph->volumePointCount,
-                                          graph->lowpassPointCount);
+        AIL_set_sample_3D_lowpass_falloff(sample, graph->points + graph->volumePointCount, graph->lowpassPointCount);
     }
     if ((flags & 4) != 0)
     {
-        AIL_set_sample_3D_exclusion_falloff(
-            sample, graph->points + graph->volumePointCount + graph->lowpassPointCount,
-            graph->exclusionPointCount);
+        AIL_set_sample_3D_exclusion_falloff(sample, graph->points + graph->volumePointCount + graph->lowpassPointCount,
+                                            graph->exclusionPointCount);
     }
 
     sample->is3D = 1;

@@ -23,12 +23,12 @@ ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(boost::shared_ptr<Playe
 }
 
 ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(const ElytraOnPlayerSoundInstance& other)
-    : SoundInstance(other)
-    , AbstractTickableSoundInstance(other)
-    , ticks(other.ticks)
-    , player(other.player)
-    , warningSoundDelay(other.warningSoundDelay)
-    , warning(other.warning)
+    : SoundInstance(other),
+      AbstractTickableSoundInstance(other),
+      ticks(other.ticks),
+      player(other.player),
+      warningSoundDelay(other.warningSoundDelay),
+      warning(other.warning)
 {
 }
 
@@ -67,9 +67,8 @@ void ElytraOnPlayerSoundInstance::tick()
     float speed = 0.0f;
     if (!this->player->PositionLocked())
     {
-        speed = Mth::sqrt(this->player->mXd * this->player->mXd +
-                          this->player->mZd * this->player->mZd +
-                          this->player->mYd * this->player->mYd);
+        speed = Mth::sqrt(this->player->mXd * this->player->mXd + this->player->mZd * this->player->mZd
+                          + this->player->mYd * this->player->mYd);
     }
 
     float scaledSpeed = speed * 0.5f;
