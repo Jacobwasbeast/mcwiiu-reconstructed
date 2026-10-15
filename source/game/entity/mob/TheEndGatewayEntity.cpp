@@ -138,7 +138,7 @@ void TheEndGatewayEntity::findExitPortal()
     ChunkPos chunkPos(0, 0);
     for (unsigned int attempt = 0; mExitPortal == NULL && attempt < 1000; ++attempt)
     {
-        chunkPos = TheEndDimension::AREAS[portalNumber];
+        chunkPos = TheEndDimension::AREAS[portalNumber + 1];
         int xOffset = random.nextInt(2) + 3;
         if (!random.nextBoolean())
             xOffset = -xOffset;
