@@ -166,8 +166,7 @@ void ItemEntity::mergeWithNeighbours()
     for (it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<ItemEntity> item = boost::dynamic_pointer_cast<ItemEntity>(*it);
-        if (item)
-            merge(item);
+        merge(item);
     }
     delete entities;
 }

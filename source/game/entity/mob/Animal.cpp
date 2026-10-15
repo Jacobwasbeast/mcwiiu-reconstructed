@@ -302,15 +302,16 @@ bool Animal::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
                     }
                     break;
                 default:
-                    if ((GetType() & EntityType::CREATURE_CATEGORY) != 0)
+                {
+                    const bool isCreature = (GetType() & EntityType::CREATURE_CATEGORY) != 0;
+                    const unsigned long long type = GetType();
+                    if (isCreature && !mLevel->canCreateMore(type, Level::eSpawnType_Breed))
                     {
-                        if (!mLevel->canCreateMore(GetType(), Level::eSpawnType_Breed))
-                        {
-                            player->displayClientMessage(MESSAGE_MOB_LIMIT, true);
-                            return false;
-                        }
+                        player->displayClientMessage(MESSAGE_MOB_LIMIT, true);
+                        return false;
                     }
                     break;
+                }
                 }
 
                 usePlayerItem(player, itemInstance);

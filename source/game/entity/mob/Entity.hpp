@@ -524,8 +524,8 @@ public:
     bool mCollision;
     bool mHurtMarked;
     int mRemainingFireTicks;
-    float mEyeHeight;
     float mEyeHeightO;
+    float mEyeHeight;
     float mSwimAmount;
     float mSwimAmountO;
     bool mReserved0x178;

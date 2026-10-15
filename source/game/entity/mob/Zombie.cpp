@@ -435,7 +435,7 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
             zombieVillager->copyPosition(villager);
             mLevel->removeEntity(villager);
 
-            zombieVillager->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(villager)),
+            zombieVillager->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombieVillager)),
                                              new ZombieGroupData(false, false, true), std::wstring(L""));
 
             zombieVillager->setProfession(villager->getProfession());

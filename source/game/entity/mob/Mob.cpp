@@ -98,11 +98,17 @@ Mob::Mob(Level* level)
 Mob::~Mob()
 {
     delete mLookControl;
+    mLookControl = NULL;
     delete mMoveControl;
+    mMoveControl = NULL;
     delete mJumpControl;
+    mJumpControl = NULL;
     delete mBodyControl;
+    mBodyControl = NULL;
     delete mNavigation;
+    mNavigation = NULL;
     delete mSensing;
+    mSensing = NULL;
     delete[] mAdditionalItems.items.data;
     delete[] mAdditionalDropChances;
     delete[] mHandItems.items.data;
@@ -354,10 +360,8 @@ void Mob::tick()
         tickLeash();
         if (mTickCount % 5 == 0)
         {
-            boost::shared_ptr<Entity> controllingPassenger = getControllingPassenger();
-            bool hasNonMobPassenger = !Entity::instanceof(controllingPassenger, EntityType::MOB);
-            boost::shared_ptr<Entity> vehicle = getVehicle();
-            bool vehicleIsBoat = Entity::instanceof(vehicle, EntityType::BOAT);
+            bool hasNonMobPassenger = !Entity::instanceof(getControllingPassenger(), EntityType::MOB);
+            bool vehicleIsBoat = Entity::instanceof(getVehicle(), EntityType::BOAT);
             mGoalSelector.setControlFlag(1, hasNonMobPassenger);
             mGoalSelector.setControlFlag(4, hasNonMobPassenger && !vehicleIsBoat);
             mGoalSelector.setControlFlag(2, hasNonMobPassenger);
@@ -1099,42 +1103,34 @@ Item* Mob::getEquipmentForSlot(const EquipmentSlot* slot, int tier)
 
 void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
 {
-    ResourceLocation* gearTable = getDefaultGearTable();
-    if (gearTable != NULL)
+    if (getDefaultGearTable() != NULL)
     {
-        LootTable* lootTable = BuiltInLootTables::getLootTable(gearTable);
-        if (lootTable == NULL)
-            return;
+        LootTableContext::Builder* builder = (new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel)))
+                                                 ->withLootedEntity(shared_from_this())
+                                                 ->withDamageSource(NULL);
+        LootTableContext context = builder->build();
 
-        ServerLevel* serverLevel = static_cast<ServerLevel*>(mLevel);
-        LootTableContext::Builder builder(serverLevel);
-        builder.mThisEntity = shared_from_this();
-        builder.mDamageSource = NULL;
-        LootTableContext context = builder.build();
-
-        std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(mRandom, context);
+        std::vector<not_null_ptr<ItemInstance> >* items =
+            BuiltInLootTables::getLootTable(getDefaultGearTable())->getRandomItems(mRandom, context);
         for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin(); it != items->end(); ++it)
         {
-            not_null_ptr<ItemInstance> item = *it;
-            if (item.get() == NULL)
-                continue;
-
-            Item* heldItem = item->getItem();
-            ArmorItem* armorItem = dynamic_cast<ArmorItem*>(heldItem);
+            ArmorItem* armorItem = dynamic_cast<ArmorItem*>((*it)->getItem());
+            Item* item = (*it)->getItem();
             if (armorItem != NULL)
             {
-                setItemSlot(armorItem->getSlot(), item);
+                setItemSlot(armorItem->getSlot(), *it);
             }
-            else if (heldItem != NULL && heldItem->allowOffhand())
+            else if (item->allowOffhand())
             {
-                setItemSlot(EquipmentSlot::OFFHAND, item);
+                setItemSlot(EquipmentSlot::OFFHAND, *it);
             }
             else
             {
-                setItemSlot(EquipmentSlot::MAINHAND, item);
+                setItemSlot(EquipmentSlot::MAINHAND, *it);
             }
         }
         delete items;
+        delete builder;
         return;
     }
 

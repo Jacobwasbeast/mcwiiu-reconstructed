@@ -392,10 +392,8 @@ void AbstractHorse::eating(int animation)
 
 void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
 {
-    if (fallDistance <= 1.0f)
-        return;
-
-    playSound(SoundEvents::HORSE_LAND, 0.4f, 1.0f);
+    if (fallDistance > 1.0f)
+        playSound(SoundEvents::HORSE_LAND, 0.4f, 1.0f);
 
     const float scaled = (fallDistance * 0.5f - 3.0f) * damageMultiplier;
     int damage = static_cast<int>(scaled);
@@ -411,7 +409,8 @@ void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
         std::set<boost::shared_ptr<Entity> >* passengers = getIndirectPassengers();
         for (std::set<boost::shared_ptr<Entity> >::iterator it = passengers->begin(); it != passengers->end(); ++it)
         {
-            (*it)->hurt(DamageSource::FALL, static_cast<float>(damage));
+            boost::shared_ptr<Entity> passenger = *it;
+            passenger->hurt(DamageSource::FALL, static_cast<float>(damage));
         }
     }
 
@@ -483,11 +482,12 @@ boost::shared_ptr<AbstractHorse> AbstractHorse::getClosestMommy(const boost::sha
         entity, entity->mBoundingBox->expand(distance, distance, distance), PARENT_HORSE_SELECTOR, NULL);
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        const double distanceSqr = (*it)->distanceToSqr(entity->mX, entity->mY, entity->mZ);
+        boost::shared_ptr<Entity> candidate = *it;
+        const double distanceSqr = candidate->distanceToSqr(entity->mX, entity->mY, entity->mZ);
         if (distanceSqr < best)
         {
             best = distanceSqr;
-            closest = *it;
+            closest = candidate;
         }
     }
 #if !defined(RECON_NATIVE)
@@ -584,15 +584,11 @@ int AbstractHorse::getAmbientSoundInterval()
 
 void AbstractHorse::openInventory(const boost::shared_ptr<Player>& player)
 {
-    if (mLevel->mIsClientSide)
-        return;
-    if (isVehicle() && !hasPassenger(player))
-        return;
-    if (!isTamed())
-        return;
-
-    mInventory->setCustomName(getName());
-    player->openHorseInventory(boost::static_pointer_cast<AbstractHorse>(shared_from_this()), mInventory);
+    if (!mLevel->mIsClientSide && (!isVehicle() || hasPassenger(player)) && isTamed())
+    {
+        mInventory->setCustomName(getName());
+        player->openHorseInventory(boost::static_pointer_cast<AbstractHorse>(shared_from_this()), mInventory);
+    }
 }
 
 int AbstractHorse::CheckAndSetInLove(boost::shared_ptr<Player> player)
@@ -1000,8 +996,7 @@ void AbstractHorse::addAdditonalSaveData(CompoundTag* tag)
     if (getOwnerUUID().empty())
         tag->putString(L"OwnerUUID", getOwnerUUID());
 
-    not_null_ptr<ItemInstance> saddle = mInventory->getItem(0);
-    if (!saddle->isEmpty())
+    if (!mInventory->getItem(0)->isEmpty())
         tag->put(L"SaddleItem", mInventory->getItem(0)->save(new CompoundTag()));
 }
 
@@ -1017,7 +1012,9 @@ void AbstractHorse::readAdditionalSaveData(CompoundTag* tag)
     if (tag->contains(L"OwnerUUID", Tag::TAG_STRING))
         owner = tag->getString(L"OwnerUUID");
     else
-        tag->getString(L"OwnerName");
+    {
+        std::wstring ownerName = tag->getString(L"OwnerName");
+    }
     if (owner.empty())
         setOwnerUUID(owner);
 

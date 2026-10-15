@@ -181,9 +181,9 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
         canSee = mSeenBy.find(player) != mSeenBy.end();
 
     bool inLevel = false;
+    std::vector<boost::shared_ptr<Player> >& levelPlayers = player->mLevel->mPlayers;
     if (canSee)
     {
-        std::vector<boost::shared_ptr<Player> >& levelPlayers = player->mLevel->mPlayers;
         std::vector<boost::shared_ptr<Player> >::iterator it = levelPlayers.begin();
         while (it != levelPlayers.end() && *it != player)
             ++it;
@@ -596,7 +596,11 @@ void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
             if (!sentTo.empty())
             {
                 INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
-                if (networkPlayer != NULL)
+                if (networkPlayer == NULL)
+                {
+                    dontSend = true;
+                }
+                else
                 {
                     for (unsigned int i = 0; i < sentTo.size(); ++i)
                     {
@@ -697,24 +701,27 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
     }
     if (passengersChanged)
     {
+        mLastPassengers.clear();
         mLastPassengers = *passengers;
         broadcast(boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket(mEntity)));
     }
 
     if (eTYPE_DERIVED_FROM(EntityType::ITEM_FRAME, mEntity->GetType()) && mTickCount % 10 == 0)
     {
-        not_null_ptr<ItemInstance> item = boost::static_pointer_cast<ItemFrame>(mEntity)->getItem();
+        boost::shared_ptr<ItemFrame> frame = boost::static_pointer_cast<ItemFrame>(mEntity);
+        not_null_ptr<ItemInstance> item = frame->getItem();
         if (item->getItem() == Items::filledMap && !mEntity->mRemoved)
         {
-            MapItem* mapItem = static_cast<MapItem*>(Items::filledMap);
-            boost::shared_ptr<MapItemSavedData> savedData = mapItem->getSavedData(item, mEntity->mLevel);
+            boost::shared_ptr<MapItemSavedData> savedData =
+                static_cast<MapItem*>(Items::filledMap)->getSavedData(item, mEntity->mLevel);
             for (std::vector<boost::shared_ptr<Player> >::iterator it = players->begin(); it != players->end(); ++it)
             {
                 boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(*it);
                 savedData->tickCarriedBy(player, item);
-                if (!player->mRemoved && player->mConnection != NULL && player->mConnection->countDelayedPackets() < 6)
+                if (!player->mRemoved && player->mConnection != NULL && player->mConnection->countDelayedPackets() <= 5)
                 {
-                    boost::shared_ptr<Packet> packet = mapItem->getUpdatePacket(item, mEntity->mLevel, player);
+                    boost::shared_ptr<Packet> packet =
+                        static_cast<MapItem*>(Items::filledMap)->getUpdatePacket(item, mEntity->mLevel, player);
                     if (packet != NULL)
                         player->mConnection->send(packet);
                 }
@@ -729,13 +736,27 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
         }
     }
 
-    if (mTickCount % mUpdateInterval != 0 && !mEntity->mHasImpulse && !mEntity->getEntityData()->isDirty())
+    if (mTickCount % mUpdateInterval == 0 || mEntity->mHasImpulse || mEntity->getEntityData()->isDirty())
     {
-        ++mTickCount;
-    }
-    else
-    {
-        if (!mEntity->isPassenger())
+        if (mEntity->isPassenger())
+        {
+            int yRot = Mth::floor(mEntity->mYRot * 256.0f / 360.0f);
+            int xRot = Mth::floor(mEntity->mXRot * 256.0f / 360.0f);
+            if (std::abs(yRot - mYRotp) >= 1 || std::abs(xRot - mXRotp) >= 1)
+            {
+                broadcast(boost::shared_ptr<Packet>(
+                    new ClientboundMoveEntityPacket::Rot(mEntity->getId(), static_cast<unsigned char>(yRot),
+                                                         static_cast<unsigned char>(xRot), mEntity->mOnGround)));
+                mYRotp = yRot;
+                mXRotp = xRot;
+            }
+            mXp = EntityTracker::truncate(mEntity->mX);
+            mYp = EntityTracker::truncate(mEntity->mY);
+            mZp = EntityTracker::truncate(mEntity->mZ);
+            sendDirtyEntityData();
+            mWasRiding = true;
+        }
+        else
         {
             ++mTeleportDelay;
             int x = EntityTracker::truncate(mEntity->mX);
@@ -834,18 +855,14 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
                 rot = false;
             }
 
-            bool fallFlying = false;
-            if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mEntity->GetType())
-                && boost::static_pointer_cast<LivingEntity>(mEntity)->isFallFlying())
-            {
-                fallFlying = true;
-            }
+            bool fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mEntity->GetType())
+                              && boost::static_pointer_cast<LivingEntity>(mEntity)->isFallFlying();
             if ((fallFlying || mTrackDelta) && mTickCount > 0)
             {
                 double xd = mEntity->mXd - mXap;
                 double yd = mEntity->mYd - mYap;
                 double zd = mEntity->mZd - mZap;
-                double distance = zd * zd + xd * xd + yd * yd;
+                double distance = xd * xd + yd * yd + zd * zd;
                 if (distance > 0.0004
                     || (distance > 0.0 && mEntity->mXd == 0.0 && mEntity->mYd == 0.0 && mEntity->mZd == 0.0))
                 {
@@ -873,24 +890,6 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
             }
             mWasRiding = false;
         }
-        else
-        {
-            int yRot = Mth::floor(mEntity->mYRot * 256.0f / 360.0f);
-            int xRot = Mth::floor(mEntity->mXRot * 256.0f / 360.0f);
-            if (std::abs(yRot - mYRotp) >= 1 || std::abs(xRot - mXRotp) >= 1)
-            {
-                broadcast(boost::shared_ptr<Packet>(
-                    new ClientboundMoveEntityPacket::Rot(mEntity->getId(), static_cast<unsigned char>(yRot),
-                                                         static_cast<unsigned char>(xRot), mEntity->mOnGround)));
-                mYRotp = yRot;
-                mXRotp = xRot;
-            }
-            mXp = EntityTracker::truncate(mEntity->mX);
-            mYp = EntityTracker::truncate(mEntity->mY);
-            mZp = EntityTracker::truncate(mEntity->mZ);
-            sendDirtyEntityData();
-            mWasRiding = true;
-        }
 
         int yHeadRot = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
         if (std::abs(yHeadRot - mYHeadRotp) >= 1)
@@ -900,6 +899,10 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
             mYHeadRotp = yHeadRot;
         }
         mEntity->mHasImpulse = false;
+        ++mTickCount;
+    }
+    else
+    {
         ++mTickCount;
     }
 

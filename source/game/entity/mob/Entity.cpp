@@ -1962,12 +1962,8 @@ bool Entity::updateInWaterState()
 
 void Entity::doWaterSplashEffect()
 {
-    boost::shared_ptr<Entity> source = shared_from_this();
-
-    if (isVehicle() && getControllingPassenger())
-    {
-        source = getControllingPassenger();
-    }
+    boost::shared_ptr<Entity> source =
+        isVehicle() && getControllingPassenger() ? getControllingPassenger() : shared_from_this();
 
     float volume = source == shared_from_this() ? 0.2f : 0.9f;
 
@@ -2167,16 +2163,17 @@ void Entity::moveRelative(float x, float y, float z, float speed)
 
 int Entity::GetLightColor(Entity* entity)
 {
+    Level* level = entity->mLevel;
     MutableBlockPos pos(Mth::absFloor(entity->mX), 0, Mth::absFloor(entity->mZ));
 
-    if (!entity->mLevel->hasChunkAt(pos))
+    if (!level->hasChunkAt(pos))
     {
         return 0;
     }
 
     pos.setY(Mth::absFloor(entity->mY + (double)entity->getEyeHeight()));
 
-    return entity->mLevel->getLightColor(pos, 0, -1);
+    return level->getLightColor(pos, 0, -1);
 }
 
 int Entity::getLightColor()
@@ -2719,7 +2716,7 @@ void Entity::load(CompoundTag* tag)
 
     mXd = motion->getDouble(0);
     mYd = motion->getDouble(1);
-    double zd = motion->getDouble(2);
+    mZd = motion->getDouble(2);
 
     if (fabs(mXd) > 10.0)
     {
@@ -2731,12 +2728,10 @@ void Entity::load(CompoundTag* tag)
         mYd = 0.0;
     }
 
-    if (fabs(zd) > 10.0)
+    if (fabs(mZd) > 10.0)
     {
-        zd = 0.0;
+        mZd = 0.0;
     }
-
-    mZd = zd;
 
     mX = pos->getDouble(0);
     mY = pos->getDouble(1);
@@ -3085,7 +3080,7 @@ bool Entity::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
 
 unsigned int Entity::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::NAME_TAG
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::NAME_TAG
         && tooltipData.m_pItemInstance->hasCustomHoverName()
         && (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName() != getCustomName()))
     {
@@ -3147,7 +3142,7 @@ void Entity::fjImmediateBroadcastPassengerPacket(const boost::shared_ptr<Entity>
 
     boost::shared_ptr<ClientboundSetPassengersPacket> packet(new ClientboundSetPassengersPacket(vehicle));
 
-    boost::shared_ptr<TrackedEntity> tracked = dynamic_cast<ServerLevel*>(mLevel)->getTracker()->getTracker(vehicle);
+    boost::shared_ptr<TrackedEntity> tracked = static_cast<ServerLevel*>(mLevel)->getTracker()->getTracker(vehicle);
 
     tracked->broadcast(packet);
 }
@@ -3534,18 +3529,27 @@ Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
         return mBoundingBox->getCenter();
 
     case ENTITY_LOCATION_HEAD:
-        return getPos(partialTicks)
-            ->add(Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+    {
+        Vec3* offset = Vec3::newTemp(0.0, getEyeHeight(), 0.0);
+        offset->yRot(-getYHeadRot() * Mth::DEG_TO_RAD);
+        return getPos(partialTicks)->add(offset);
+    }
 
     case ENTITY_LOCATION_EYES:
-        return getPos(partialTicks)
-            ->add(Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+    {
+        Vec3* offset = Vec3::newTemp(0.0, getEyeHeight(), 0.0);
+        offset->yRot(-getYHeadRot() * Mth::DEG_TO_RAD);
+        return getPos(partialTicks)->add(offset);
+    }
 
     case ENTITY_LOCATION_DROP_ATTACH_POINT:
     case ENTITY_LOCATION_BREATHING_POINT:
     case ENTITY_LOCATION_MOUTH:
-        return getPos(partialTicks)
-            ->add(Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+    {
+        Vec3* offset = Vec3::newTemp(0.0, getEyeHeight(), 0.0);
+        offset->yRot(-getYHeadRot() * Mth::DEG_TO_RAD);
+        return getPos(partialTicks)->add(offset);
+    }
 
     default:
         return getPos(partialTicks);
@@ -4323,12 +4327,12 @@ bool Entity::hasIndirectPassenger(boost::shared_ptr<Entity> passenger)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
-        if (!rider)
+        if (rider == passenger)
         {
-            continue;
+            return true;
         }
 
-        if (rider == passenger || rider->hasIndirectPassenger(passenger))
+        if (rider && rider->hasIndirectPassenger(passenger))
         {
             return true;
         }

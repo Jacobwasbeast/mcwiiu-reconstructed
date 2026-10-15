@@ -408,14 +408,14 @@ float LivingEntity::GetInhaleTime()
 int LivingEntity::GetAirRegenPerTick()
 {
     float inhaleTime = GetInhaleTime();
-    int maxAirSupply = getMaxAirSupply();
+    int airRegen = getMaxAirSupply();
 
     if (fabsf(inhaleTime) > 0.0001f)
     {
-        return Math::round((float)maxAirSupply / (inhaleTime * 20.0f));
+        airRegen = Math::round((float)airRegen / (inhaleTime * 20.0f));
     }
 
-    return 0;
+    return airRegen;
 }
 
 bool LivingEntity::canBreathe()
@@ -1150,12 +1150,12 @@ void LivingEntity::addEffectNoUpdate(MobEffectInstance* effectInstance)
 
     if (mActiveEffects.find(effectInstance->getEffect()) != mActiveEffects.end())
     {
-        mActiveEffects[effectInstance->getEffect()]->update(effectInstance);
+        mActiveEffects[effectInstance->getEffect()] = effectInstance;
+        onEffectAdded(effectInstance);
     }
     else
     {
-        mActiveEffects[effectInstance->getEffect()] = effectInstance;
-        onEffectAdded(effectInstance);
+        mActiveEffects.find(effectInstance->getEffect())->second->update(effectInstance);
     }
 }
 
@@ -1568,7 +1568,7 @@ void LivingEntity::breakItem(not_null_ptr<ItemInstance> itemInstance)
     if (!mLevel->mIsClientSide)
     {
         mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::ITEM_BREAK, getSoundSource(), 0.8f,
-                          (float)(mLevel->mRandom->nextFloat() * 0.4000000059604645 + 0.800000011920929), 16.0f);
+                          mLevel->mRandom->nextFloat() * 0.4f + 0.8f, 16.0f);
     }
 
     for (int i = 0; i < 5; ++i)
@@ -2276,7 +2276,7 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
         if (forward != NULL)
         {
             const Direction* side = forward->getClockWise();
-            const int offsets[9][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1}};
+            const int offsets[9][2] = {{0, 1}, {0, -1}, {-1, 1}, {-1, -1}, {1, 1}, {1, -1}, {-1, 0}, {1, 0}, {0, 1}};
 
             double baseX = floor(mX) + 0.5;
             double baseZ = floor(mZ) + 0.5;
@@ -4137,9 +4137,8 @@ void LivingEntity::completeUsingItem()
 
     spawnItemUseParticles(mUseItem, 16);
 
-    mUseItem->finishUsingItem(mLevel, boost::dynamic_pointer_cast<Player>(shared_from_this()));
-
-    setItemInHand(getUsedItemHand(), mUseItem);
+    setItemInHand(getUsedItemHand(),
+                  mUseItem->finishUsingItem(mLevel, boost::dynamic_pointer_cast<Player>(shared_from_this())));
     stopUsingItem();
 }
 

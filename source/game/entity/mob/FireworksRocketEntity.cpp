@@ -211,67 +211,55 @@ double FireworksRocketEntity::HandleDirectionalAcceleration(int direction, doubl
 
 void FireworksRocketEntity::dealExplosionDamage()
 {
-    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ITEM);
-    if (item->isEmpty())
-    {
-        return;
-    }
-    CompoundTag* fireworksTag = static_cast<CompoundTag*>(item->getTagElement(FireworksItem::TAG_FIREWORKS));
-    if (fireworksTag == NULL)
-    {
-        return;
-    }
-    ListTag* explosions = fireworksTag->getList(FireworksItem::TAG_EXPLOSIONS, Tag::TAG_COMPOUND);
     float power = 0.0f;
-    if (explosions != NULL && !explosions->isEmpty())
+    ListTag* explosions = NULL;
+    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ITEM);
+    if (!item->isEmpty())
     {
-        power = static_cast<float>(explosions->size()) * 2.0f + 5.0f;
+        CompoundTag* fireworksTag = static_cast<CompoundTag*>(item->getTagElement(FireworksItem::TAG_FIREWORKS));
+        if (fireworksTag != NULL)
+        {
+            explosions = fireworksTag->getList(FireworksItem::TAG_EXPLOSIONS, Tag::TAG_COMPOUND);
+            if (explosions != NULL && !explosions->isEmpty())
+            {
+                power = static_cast<float>(explosions->size()) * 2.0f + 5.0f;
+            }
+        }
     }
-    if (power <= 0.0f)
+    if (power > 0.0f)
     {
-        return;
-    }
+        boost::shared_ptr<LivingEntity> attached = mAttachedToEntity.lock();
+        if (attached != NULL)
+        {
+            attached->hurt(DamageSource::FIREWORKS, static_cast<float>(explosions->size()) * 2.0f + 5.0f);
+        }
 
-    boost::shared_ptr<LivingEntity> attached = mAttachedToEntity.lock();
-    const DamageSource* explosionSource = DamageSource::FIREWORKS;
-    if (attached)
-    {
-        attached->hurt(explosionSource, power);
-    }
-
-    double radius = 5.0;
-    Vec3* center = Vec3::newTemp(mX, mY, mZ);
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(LivingEntity),
-                                                                                   mBoundingBox->grow(radius));
-    if (entities != NULL)
-    {
-        std::vector<boost::shared_ptr<Entity> >::iterator it;
-        for (it = entities->begin(); it != entities->end(); ++it)
+        double radius = 5.0;
+        Vec3* center = Vec3::newTemp(mX, mY, mZ);
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(LivingEntity),
+                                                                                       mBoundingBox->grow(radius));
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(*it);
-            if (living == attached)
+            if (living == attached || distanceToSqr(living) > radius * radius)
             {
                 continue;
             }
-            double distSq = distanceToSqr(*it);
-            if (radius * radius < distSq)
+            bool visible = false;
+            for (int i = 0; i < 2; ++i)
             {
-                continue;
-            }
-            Vec3* toFeet = Vec3::newTemp(living->mX, living->mY, living->mZ);
-            HitResult* hit = mLevel->clip(center, toFeet, false, true, false, false, NULL, false);
-            bool visible = (hit == NULL || hit->mType == HitResult::MISS);
-            if (!visible)
-            {
-                Vec3* toMid = Vec3::newTemp(living->mX, living->mY + static_cast<double>(living->mBbHeight) * 0.5,
-                                            living->mZ);
-                hit = mLevel->clip(center, toMid, false, true, false, false, NULL, false);
-                visible = (hit == NULL || hit->mType == HitResult::MISS);
+                Vec3* target = Vec3::newTemp(living->mX, living->mY + living->mBbHeight * 0.5 * i, living->mZ);
+                HitResult* hit = mLevel->clip(center, target, false, true, false, false, NULL, false);
+                if (hit == NULL || hit->mType == HitResult::MISS)
+                {
+                    visible = true;
+                    break;
+                }
             }
             if (visible)
             {
-                double falloff = std::sqrt((radius - distanceTo(*it)) / radius);
-                living->hurt(explosionSource, power * static_cast<float>(falloff));
+                float damage = power * static_cast<float>(std::sqrt((radius - distanceTo(living)) / radius));
+                living->hurt(DamageSource::FIREWORKS, damage);
             }
         }
         delete entities;
@@ -536,8 +524,7 @@ void FireworksRocketEntity::addAdditonalSaveData(CompoundTag* tag)
     not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ITEM);
     if (!item->isEmpty())
     {
-        CompoundTag* itemTag = item->save(new CompoundTag());
-        tag->put(L"FireworksItem", itemTag);
+        tag->put(L"FireworksItem", item->save(new CompoundTag()));
     }
 }
 
