@@ -223,6 +223,11 @@ void EndDragonFight::respawnDragon(const std::vector<boost::shared_ptr<EnderCrys
     if (!level->getLevelData()->getModernEnd())
         return;
 
+    BlockPattern::BlockPatternMatch* match = findExitPortal();
+    while (match != NULL)
+    {
+    }
+
     respawnStage = DragonRespawnAnimation::START;
     respawnTime = 0;
     spawnExitPortal(false);

@@ -19,20 +19,19 @@ void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level, EndDragon
                 std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();
                 while (it != crystals->end())
                 {
-                    it->get()->setBeamTarget(new BlockPos(0, 128, 0));
+                    boost::shared_ptr<EnderCrystal> crystal = *it;
+                    crystal->setBeamTarget(new BlockPos(0, 128, 0));
                     ++it;
                 }
             }
             else if (tick < 5)
             {
-                BlockPos eventPosition(0, 128, 0);
-                level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, eventPosition, 0);
+                level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, BlockPos(0, 128, 0), 0);
             }
         }
         else
         {
-            BlockPos eventPosition(0, 128, 0);
-            level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, eventPosition, 0);
+            level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, BlockPos(0, 128, 0), 0);
         }
         return;
     }

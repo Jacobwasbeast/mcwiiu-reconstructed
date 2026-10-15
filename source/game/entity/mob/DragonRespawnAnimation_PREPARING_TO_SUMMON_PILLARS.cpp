@@ -11,10 +11,9 @@ void DragonRespawnAnimation_PREPARING_TO_SUMMON_PILLARS::tick(ServerLevel* level
 {
     if (tick < 100)
     {
-        if (tick == 0 || (tick > 49 && tick < 53) || tick > 94)
+        if (tick == 0 || tick == 50 || tick == 51 || tick == 52 || tick >= 95)
         {
-            BlockPos beamTarget(0, 128, 0);
-            level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, beamTarget, 0);
+            level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, BlockPos(0, 128, 0), 0);
         }
     }
     else

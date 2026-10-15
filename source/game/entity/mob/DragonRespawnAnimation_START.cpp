@@ -10,11 +10,15 @@ void DragonRespawnAnimation_START::tick(ServerLevel* level, EndDragonFight* drag
 {
     BlockPos beamTarget(0, 128, 0);
 
-    std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();
-    while (it != crystals->end())
+    if (!crystals->empty())
     {
-        it->get()->setBeamTarget(new BlockPos(beamTarget));
-        ++it;
+        std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();
+        while (it != crystals->end())
+        {
+            boost::shared_ptr<EnderCrystal> crystal = *it;
+            crystal->setBeamTarget(new BlockPos(beamTarget));
+            ++it;
+        }
     }
 
     dragonFight->setRespawnStage(DragonRespawnAnimation::PREPARING_TO_SUMMON_PILLARS);
