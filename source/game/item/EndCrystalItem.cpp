@@ -66,9 +66,12 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
         {
             if (level->canCreateMore(EntityType::ENDER_CRYSTAL, Level::eSpawnType_Egg))
             {
-                boost::shared_ptr<EnderCrystal> crystal(new EnderCrystal(level, pos.x + 0.5f, pos.y + 1, pos.z + 0.5f));
-                crystal->setShowBottom(false);
-                level->addEntity(crystal);
+                {
+                    boost::shared_ptr<EnderCrystal> crystal(
+                        new EnderCrystal(level, pos.x + 0.5f, pos.y + 1, pos.z + 0.5f));
+                    crystal->setShowBottom(false);
+                    level->addEntity(crystal);
+                }
 
                 if (dynamic_cast<TheEndDimension*>(level->mDimension) != NULL)
                 {
