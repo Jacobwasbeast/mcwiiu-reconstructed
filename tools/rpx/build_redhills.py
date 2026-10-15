@@ -42,6 +42,7 @@ The LLVM tools (ld.lld, llvm-ar, llvm-nm) are found by tools/redhills/toolchain.
 """
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import os
 import re
@@ -69,7 +70,8 @@ GCC_ONLY_UNITS = {'platform/wiiu/BootInit.cpp'}
 # Units the original compiled as C; dlmalloc's malloc family has C names.
 C_UNITS = {'vendor/dlmalloc.cpp'}
 EDG_RUNTIME = re.compile(r'^cafe/libsedg/')
-TARGET = ['-target', 'powerpc-eabi', '-mcpu=750', '-O2', '-ffunction-sections', '-fdata-sections']
+TARGET = ['-target', 'powerpc-eabi', '-mcpu=750', '-O2', '-ffunction-sections', '-fdata-sections',
+          '-fno-delete-null-pointer-checks']
 SEMANTIC = ['-DNDEBUG', '-DNDEV=1', '-DCAFE=2', '-DPLATFORM=CAFE', '-DEPPC', '-DBOOST_SP_NO_SYNC',
             '-DBOOST_ENABLE_ASSERT_HANDLER', '-DBOOST_NO_EXCEPTIONS', '-DESPRESSO', '-D__WIIU__', '-D__WUT__',
             '-D__BASE__=__FILE_NAME__']
@@ -166,8 +168,17 @@ def depfile_inputs(path):
     return [Path(name) for name in names]
 
 
-def up_to_date(obj, dep, source, compiler):
+def flags_digest(flags):
+    return hashlib.sha1(repr([str(flag) for flag in flags]).encode('utf-8')).hexdigest()
+
+
+def up_to_date(obj, dep, source, compiler, digest):
     if not obj.is_file() or not dep.is_file():
+        return False
+    try:
+        if obj.with_suffix('.flags').read_text(encoding='utf-8') != digest:
+            return False
+    except OSError:
         return False
     built = obj.stat().st_mtime
     for path in [source, compiler] + depfile_inputs(dep):
@@ -181,7 +192,9 @@ def up_to_date(obj, dep, source, compiler):
 
 def compile_units(clang, units, flags, jobs, label):
     """units: [(source, object)]. Returns the failures as [(source, first error line)]."""
-    stale = [(src, obj) for src, obj in units if not up_to_date(obj, obj.with_suffix('.d'), src, Path(clang))]
+    digest = flags_digest([clang] + flags)
+    stale = [(src, obj) for src, obj in units
+             if not up_to_date(obj, obj.with_suffix('.d'), src, Path(clang), digest)]
     failures = []
 
     def compile_one(unit):
@@ -193,6 +206,7 @@ def compile_units(clang, units, flags, jobs, label):
                 obj.unlink()
             lines = [line for line in result.stderr.splitlines() if 'error' in line.lower()]
             return src, (lines or result.stderr.strip().splitlines() or ['exit %d' % result.returncode])[0]
+        obj.with_suffix('.flags').write_text(digest, encoding='utf-8')
         return None
 
     print('%s: %d of %d units to compile' % (label, len(stale), len(units)), flush=True)
