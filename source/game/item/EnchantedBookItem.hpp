@@ -27,7 +27,7 @@ public:
                                  std::vector<HtmlString>* lines, bool advanced);
     static void addEnchantment(not_null_ptr<ItemInstance> itemInstance, EnchantmentInstance* instance);
     static not_null_ptr<ItemInstance> createForEnchantment(EnchantmentInstance* instance);
-    static void createForEnchantment(Enchantment* enchantment, std::vector<not_null_ptr<ItemInstance> >* items);
+    void createForEnchantment(Enchantment* enchantment, std::vector<not_null_ptr<ItemInstance> >* items);
 };
 
 #endif

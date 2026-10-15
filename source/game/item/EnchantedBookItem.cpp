@@ -108,7 +108,6 @@ void EnchantedBookItem::createForEnchantment(Enchantment* enchantment, std::vect
 {
     for (int level = enchantment->getMinLevel(); level <= enchantment->getMaxLevel(); ++level)
     {
-        EnchantmentInstance instance(enchantment, level);
-        items->push_back(createForEnchantment(&instance));
+        items->push_back(createForEnchantment(new EnchantmentInstance(enchantment, level)));
     }
 }

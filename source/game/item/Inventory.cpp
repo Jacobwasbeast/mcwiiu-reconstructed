@@ -142,7 +142,7 @@ int Inventory::findSlotMatchingItem(not_null_ptr<ItemInstance> item, bool ignore
 
 int Inventory::getSuitableHotbarSlot()
 {
-    for (int offset = 0; offset < 9; ++offset)
+    for (unsigned int offset = 0; offset < 9; ++offset)
     {
         int slot = (m_selected + offset) % 9;
         if (m_items[slot]->isEmpty())
@@ -150,7 +150,7 @@ int Inventory::getSuitableHotbarSlot()
             return slot;
         }
     }
-    for (int offset = 0; offset < 9; ++offset)
+    for (unsigned int offset = 0; offset < 9; ++offset)
     {
         int slot = (m_selected + offset) % 9;
         if (!m_items[slot]->isEnchanted())
@@ -321,8 +321,8 @@ int Inventory::addResource(int slot, not_null_ptr<ItemInstance> item)
         if (item->hasTag())
         {
             current->setTag(item->getTag()->copy());
+            m_player->handleCollectItem(item);
         }
-        m_player->handleCollectItem(item);
         setItem(slot, current);
     }
 
@@ -978,6 +978,7 @@ void Inventory::removeResources(not_null_ptr<ItemInstance> item)
         return;
     }
     int remaining = item->getCount();
+    not_null_ptr<ItemInstance> removed = ItemInstance::EMPTY;
     while (remaining > 0)
     {
         int slot = findSlotMatchingItem(item, true);
@@ -985,7 +986,7 @@ void Inventory::removeResources(not_null_ptr<ItemInstance> item)
         {
             break;
         }
-        not_null_ptr<ItemInstance> removed = removeItem(slot, remaining);
+        removed = removeItem(slot, remaining);
         remaining -= removed->getCount();
     }
 }

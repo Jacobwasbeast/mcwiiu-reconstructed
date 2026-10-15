@@ -39,11 +39,6 @@ void PopulateContainerRuleDefinition::GetPos(int& x, int& y, int& z)
 
 void PopulateContainerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
 {
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
-         ++it)
-    {
-        children->push_back(*it);
-    }
     for (std::vector<AddItemRuleDefinition*>::iterator it = mAddItems.begin(); it != mAddItems.end(); ++it)
     {
         children->push_back(*it);

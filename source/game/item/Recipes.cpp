@@ -511,15 +511,14 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, va_list arg
             ingredientKey = static_cast<wchar_t>(va_arg(arguments, int));
             break;
         case L'g':
-        {
-            wchar_t groupCode = static_cast<wchar_t>(va_arg(arguments, int));
-            if (groupCode >= L'0' && groupCode <= L'5')
+            ingredientKey = static_cast<wchar_t>(va_arg(arguments, int));
+            if (ingredientKey >= L'0' && ingredientKey <= L'5')
             {
-                group = static_cast<Recipe::_eGroupType>(groupCode - L'0');
+                group = static_cast<Recipe::_eGroupType>(ingredientKey - L'0');
             }
             else
             {
-                switch (groupCode)
+                switch (ingredientKey)
                 {
                 case L'S':
                     group = Recipe::eGroupType_Structures;
@@ -548,7 +547,6 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, va_list arg
                 }
             }
             break;
-        }
         case L'i':
             ingredientMap.insert(std::make_pair(ingredientKey, new ItemInstance(va_arg(arguments, Item*))));
             break;

@@ -2,10 +2,13 @@
 #include "game/core/StringIds.hpp"
 
 #include "game/core/AttributeModifier.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/entity/mob/MobEffect.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Potion.hpp"
@@ -50,7 +53,7 @@ Potion* PotionUtils::getPotion(CompoundTag* tag)
 
 void PotionUtils::getCustomEffects(CompoundTag* tag, std::vector<MobEffectInstance*>* effects)
 {
-    if (tag == NULL || effects == NULL || !tag->contains(TAG_CUSTOM_POTION_EFFECTS, Tag::TAG_LIST))
+    if (tag == NULL || !tag->contains(TAG_CUSTOM_POTION_EFFECTS, Tag::TAG_LIST))
         return;
     ListTag* list = tag->getList(TAG_CUSTOM_POTION_EFFECTS, Tag::TAG_COMPOUND);
     for (int i = 0; i < list->size(); ++i)
@@ -223,10 +226,9 @@ bool PotionUtils::isFoil(not_null_ptr<ItemInstance> item)
 std::vector<MobEffectInstance*>* PotionUtils::getAllEffects(Potion* potion, std::vector<MobEffectInstance*>* effects)
 {
     std::vector<MobEffectInstance*>* result = new std::vector<MobEffectInstance*>();
-    if (potion != NULL)
-        result->insert(result->end(), potion->getEffects().begin(), potion->getEffects().end());
-    if (effects != NULL)
-        result->insert(result->end(), effects->begin(), effects->end());
+    std::vector<MobEffectInstance*>& potionEffects = potion->getEffects();
+    result->insert(result->begin(), potionEffects.begin(), potionEffects.end());
+    result->insert(result->begin(), effects->begin(), effects->end());
     return result;
 }
 
@@ -244,9 +246,31 @@ std::vector<MobEffectInstance*>* PotionUtils::getCustomEffects(not_null_ptr<Item
 
 int PotionUtils::getColor(std::vector<MobEffectInstance*>* effects)
 {
-    if (effects == NULL || effects->empty())
+    if (effects->empty())
         return 0x385dc6;
-    return MobEffectInstance::getColorValue(effects);
+    float red = 0.0f;
+    float green = 0.0f;
+    float blue = 0.0f;
+    int count = 0;
+    for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
+    {
+        MobEffectInstance* effect = *it;
+        if (effect->isVisible())
+        {
+            int color = gApp.GetHTMLColor(effect->getEffect()->getColor());
+            int amplifier = effect->getAmplifier() + 1;
+            red += static_cast<float>(amplifier * ((color >> 16) & 0xff)) / 255.0f;
+            green += static_cast<float>(amplifier * ((color >> 8) & 0xff)) / 255.0f;
+            blue += static_cast<float>(amplifier * (color & 0xff)) / 255.0f;
+            count += amplifier;
+        }
+    }
+    if (count == 0)
+        return 0;
+    red = red / count * 255.0f;
+    green = green / count * 255.0f;
+    blue = blue / count * 255.0f;
+    return static_cast<int>(red) << 16 | static_cast<int>(green) << 8 | static_cast<int>(blue);
 }
 
 int PotionUtils::getColor(const not_null_ptr<ItemInstance>& item)
@@ -277,7 +301,7 @@ std::wstring PotionUtils::getPotionID(not_null_ptr<ItemInstance> item)
 not_null_ptr<ItemInstance> PotionUtils::setCustomEffects(not_null_ptr<ItemInstance> item,
                                                          std::vector<MobEffectInstance*>* effects)
 {
-    if (effects == NULL || effects->empty())
+    if (effects->empty())
         return item;
     CompoundTag* tag = item->getTag() == NULL ? new CompoundTag() : item->getTag()->copy();
     ListTag* list = tag->getList(TAG_CUSTOM_POTION_EFFECTS, Tag::TAG_LIST);

@@ -165,56 +165,57 @@ void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item,
 
 void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectInstance*>* effects)
 {
-    if (mLevel == NULL || mBoundingBox == NULL || effects == NULL)
-        return;
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(LivingEntity),
                                                                                    mBoundingBox->grow(4.0, 2.0, 4.0));
     if (entities == NULL)
         return;
-    boost::shared_ptr<Entity> source = shared_from_this();
-    boost::shared_ptr<LivingEntity> owner = getOwner();
-    for (std::vector<boost::shared_ptr<Entity> >::iterator entityIt = entities->begin(); entityIt != entities->end();
-         ++entityIt)
+
+    if (!entities->empty())
     {
-        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(*entityIt);
-        if (!living || !living->isAffectedByPotions())
-            continue;
-        double distance = distanceToSqr(*entityIt);
-        if (distance >= SPLASH_RANGE_SQUARED)
-            continue;
-        double scale = -(std::sqrt(distance) * 0.25 - 1.0);
-        if (result != NULL && result->mEntity == *entityIt)
-            scale = 1.0;
-        for (std::vector<MobEffectInstance*>::iterator effectIt = effects->begin(); effectIt != effects->end();
-             ++effectIt)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator entityIt = entities->begin();
+             entityIt != entities->end(); ++entityIt)
         {
-            MobEffectInstance* effectInstance = *effectIt;
-            if (effectInstance == NULL || effectInstance->getEffect() == NULL)
+            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(*entityIt);
+            if (!living->isAffectedByPotions())
                 continue;
-            MobEffect* effect = effectInstance->getEffect();
-            if (effect->isInstantenous())
+            double distance = distanceToSqr(living);
+            if (distance >= SPLASH_RANGE_SQUARED)
+                continue;
+            double scale = -(std::sqrt(distance) * 0.25 - 1.0);
+            if (living == result->mEntity)
+                scale = 1.0;
+            for (std::vector<MobEffectInstance*>::iterator effectIt = effects->begin(); effectIt != effects->end();
+                 ++effectIt)
             {
-                effect->applyInstantenousEffect(source, owner, living, effectInstance->getAmplifier(), scale);
-            }
-            else
-            {
-                int duration = static_cast<int>(scale * (effectInstance->getDuration() - 0.0) * 0.75 + 0.5);
-                if (duration > 20)
+                MobEffectInstance* effectInstance = *effectIt;
+                if (effectInstance->getEffect()->isInstantenous())
                 {
-                    living->addEffect(new MobEffectInstance(effect, duration, effectInstance->getAmplifier()), source);
-
-                    if (effect == MobEffects::POISON && eTYPE_DERIVED_FROM(EntityType::WITCH, living->GetType())
-                        && owner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType()))
+                    effectInstance->getEffect()->applyInstantenousEffect(shared_from_this(), getOwner(), living,
+                                                                         effectInstance->getAmplifier(), scale);
+                }
+                else
+                {
+                    int duration = static_cast<int>(scale * (effectInstance->getDuration() * 0.75) + 0.5);
+                    if (duration > 20)
                     {
-                        boost::static_pointer_cast<ServerPlayer>(owner)->awardStat(
-                            GenericStats::tasteOfYourOwnMedicine(), GenericStats::param_tasteOfYourOwnMedicine());
-                    }
+                        living->addEffect(new MobEffectInstance(effectInstance->getEffect(), duration,
+                                                                effectInstance->getAmplifier()),
+                                          boost::shared_ptr<Entity>());
 
-                    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType())
-                        && effect == MobEffects::WATER_BREATHING)
-                    {
-                        boost::static_pointer_cast<Player>(living)->ResetTimerAchievement(
-                            Player::eTimerAchievement_SleepWithTheFishes);
+                        if (effectInstance->getEffect() == MobEffects::POISON
+                            && eTYPE_DERIVED_FROM(EntityType::WITCH, living->GetType()) && mOwner != NULL
+                            && eTYPE_DERIVED_FROM(EntityType::PLAYER, mOwner->GetType()))
+                        {
+                            boost::static_pointer_cast<ServerPlayer>(mOwner)->awardStat(
+                                GenericStats::tasteOfYourOwnMedicine(), GenericStats::param_tasteOfYourOwnMedicine());
+                        }
+
+                        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType())
+                            && effectInstance->getEffect() == MobEffects::WATER_BREATHING)
+                        {
+                            boost::static_pointer_cast<Player>(living)->ResetTimerAchievement(
+                                Player::eTimerAchievement_SleepWithTheFishes);
+                        }
                     }
                 }
             }

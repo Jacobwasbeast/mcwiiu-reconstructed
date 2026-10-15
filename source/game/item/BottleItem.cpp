@@ -91,7 +91,7 @@ InteractionResultHolder BottleItem::use(Level* level, boost::shared_ptr<Player> 
             }
             if (level->getBlockState(pos)->getMaterial() == Material::WATER)
             {
-                level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ,
+                level->playSound(player, player->mX, player->mY, player->mZ,
                                  SoundEvents::BOTTLE_FILL, SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
                 delete hit;
                 not_null_ptr<ItemInstance> result(new ItemInstance(Items::potion));

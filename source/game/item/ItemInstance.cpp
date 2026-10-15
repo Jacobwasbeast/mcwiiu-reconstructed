@@ -203,10 +203,6 @@ void ItemInstance::_init(Item* item, int count, int auxValue)
 
 void ItemInstance::addDataWalkers(DataFixerUpper* fixer)
 {
-    if (fixer == 0)
-    {
-        return;
-    }
     fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance, new ItemInstanceBlockEntityTagWalker());
     fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance, new ItemInstanceEntityTagWalker());
 }
@@ -693,7 +689,7 @@ void ItemInstance::addTagElement(std::wstring name, Tag* tag)
 {
     if (mTag == 0)
         setTag(new CompoundTag());
-    mTag->put(name, tag);
+    mTag->put(name.c_str(), tag);
 }
 
 Tag* ItemInstance::getOrCreateTagElement(const std::wstring& name)
@@ -975,7 +971,7 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
         {
             lines->push_back(HtmlString(L"", eMinecraftColour_NOTSET, false, false, 0));
             lines->push_back(
-                HtmlString(L10N::GetString(IDS_ITEM_CANPLACE), eMinecraftColour_HTMLColor_dark_7, false, false, 0));
+                HtmlString(L10N::GetString(IDS_ITEM_CANPLACE), eMinecraftColour_HTMLColor_7, false, false, 0));
             for (int index = 0; index < blocks->size(); ++index)
             {
                 Block* block = Block::byString(blocks->getString(index));
@@ -1017,15 +1013,11 @@ std::vector<HtmlString>* ItemInstance::getHoverTextOnly(boost::shared_ptr<Player
     {
         for (int i = 0; i < enchantments->size(); ++i)
         {
-            CompoundTag* entry = enchantments->getCompound(i);
-            if (entry == 0)
+            const int enchantmentId = enchantments->getCompound(i)->getShort(TAG_ENCH_ID);
+            const int level = enchantments->getCompound(i)->getShort(TAG_ENCH_LEVEL);
+            if (Enchantment::byId(enchantmentId) != NULL)
             {
-                continue;
-            }
-            Enchantment* enchantment = Enchantment::byId(entry->getShort(TAG_ENCH_ID));
-            if (enchantment != 0)
-            {
-                lines->push_back(enchantment->getFullname(entry->getShort(TAG_ENCH_LEVEL)));
+                lines->push_back(Enchantment::byId(enchantmentId)->getFullname(level));
             }
         }
     }

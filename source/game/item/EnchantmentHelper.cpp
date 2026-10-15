@@ -251,15 +251,13 @@ void EnchantmentHelper::doPostDamageEffects(const boost::shared_ptr<LivingEntity
     sPostDamageIteration.mAttacker = attacker;
     sPostDamageIteration.mTarget = target;
 
-    if (attacker.get() == NULL)
+    if (attacker.get() != NULL)
     {
-        return;
+        NonNullList<not_null_ptr<ItemInstance> > slots = target->getAllSlots();
+        runIterationOnInventory(sPostDamageIteration, slots);
     }
 
-    NonNullList<not_null_ptr<ItemInstance> > slots = target->getAllSlots();
-    runIterationOnInventory(sPostDamageIteration, slots);
-
-    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
+    if (attacker.get() != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
     {
         runIterationOnItem(sPostDamageIteration, attacker->getMainHandItem());
     }
@@ -468,9 +466,8 @@ std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(Random* 
 
     int spread = enchantmentValue / 4;
     int cost = level + 1 + random->nextInt(spread + 1) + random->nextInt(spread + 1);
-    cost = Mth::clamp(Math::round(static_cast<float>(cost) * (random->nextFloat() + random->nextFloat() - 1.0f) * 0.15f
-                                  + static_cast<float>(cost)),
-                      1, 2147483647);
+    float deviation = (random->nextFloat() + random->nextFloat() - 1.0f) * 0.15f;
+    cost = Mth::clamp(Math::round(static_cast<float>(cost) + static_cast<float>(cost) * deviation), 1, 2147483647);
 
     std::vector<EnchantmentInstance*>* available = getAvailableEnchantmentResults(cost, item, treasure);
     if (!available->empty())

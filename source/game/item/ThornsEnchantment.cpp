@@ -14,7 +14,7 @@
 #include "game/util/Random.hpp"
 
 ThornsEnchantment::ThornsEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
-    : Enchantment(rarity, EnchantmentCategory::ARMOR, slots)
+    : Enchantment(rarity, EnchantmentCategory::ARMOR_CHEST, slots)
 {
     setDescriptionId((int)IDS_ENCHANTMENT_THORNS);
 }
