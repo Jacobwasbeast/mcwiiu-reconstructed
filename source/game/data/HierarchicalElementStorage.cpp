@@ -633,16 +633,16 @@ void HierarchicalElementStorage::initWithPalettiser(Palettiser& palettiser, unsi
     for (unsigned int subChunk = 0; subChunk < SUBCHUNK_COUNT; ++subChunk)
     {
         SubChunkHeader* header = (SubChunkHeader*)(tempData + usedPages * SUBCHUNK_PAGE_BYTES);
-        unsigned int subChunkBaseIndex = ((subChunk & 7) << 4) | ((subChunk & 8) << 12);
+        unsigned int elementIndex = ((subChunk & 7) << 4) | ((subChunk & 8) << 12);
         unsigned short offset = 0;
         unsigned int emptySections = 0;
 
         for (unsigned int section = 0; section < SECTIONS_PER_SUBCHUNK; ++section)
         {
-            unsigned int sectionBaseIndex = (subChunkBaseIndex & 0x99F3) | ((section & 0x30) << 9)
-                                            | ((section & 0xC) << 7) | ((section & 3) << 2);
+            elementIndex = (elementIndex & 0x99F3) | ((section & 0x30) << 9) | ((section & 0xC) << 7)
+                           | ((section & 3) << 2);
 
-            palettiser.initialiseSection(sectionBaseIndex);
+            palettiser.initialiseSection(elementIndex);
 
             if (headroom != 0)
             {
@@ -664,8 +664,8 @@ void HierarchicalElementStorage::initWithPalettiser(Palettiser& palettiser, unsi
 
                 for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                 {
-                    unsigned int elementIndex = (sectionBaseIndex & 0xE67C) | ((element & 0x30) << 7)
-                                                | ((element & 0xC) << 5) | (element & 3);
+                    elementIndex = (elementIndex & 0xE67C) | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                   | (element & 3);
                     sectionRef.setElement(element, palettiser.getElement(elementIndex));
                 }
 
