@@ -70,43 +70,43 @@ boost, rapidxml and the C runtime, is not compared.
 
 ## Current result
 
-Measured on 14 October 2026 with the public build of the commit that added
-this page, against update 688's `Minecraft.Client.rpx`.
+Measured on 15 October 2026 with the public build of the commit that last
+updated these numbers, against update 688's `Minecraft.Client.rpx`.
 
-Of the original's 40,031 functions outside the standard library and the
-runtimes, 23,801 were compared; 6,477 were inlined by RedHills and 9,753
+Of the original's 40,032 functions outside the standard library and the
+runtimes, 23,848 were compared; 6,381 were inlined by RedHills and 9,803
 had nothing to compare.
 
 | Result | Functions | Share of compared |
 | --- | ---: | ---: |
-| Clean | 18,146 | 76.2% |
-| Differs | 5,099 | 21.4% |
+| Clean | 18,312 | 76.8% |
+| Differs | 4,980 | 20.9% |
 | Missing | 556 | 2.3% |
 
 | Area | Clean | Differs | Clean share |
 | --- | ---: | ---: | ---: |
-| Game | 14,455 | 3,695 | 79.6% |
-| Wii U platform layer | 549 | 290 | 65.4% |
-| Mii faces (FFL) | 229 | 81 | 73.9% |
-| NEX online library | 941 | 422 | 69.0% |
-| Pia online library | 1,578 | 470 | 77.1% |
+| Game | 14,589 | 3,591 | 80.2% |
+| Wii U platform layer | 551 | 287 | 65.8% |
+| Mii faces (FFL) | 228 | 81 | 73.8% |
+| NEX online library | 968 | 409 | 70.3% |
+| Pia online library | 1,580 | 472 | 77.0% |
 | Other Nintendo SDK | 43 | 5 | 89.6% |
-| Sound and middleware | 331 | 123 | 72.9% |
+| Sound and middleware | 333 | 122 | 73.2% |
 | Cafe SDK runtime | 19 | 10 | 65.5% |
-| Constructors, destructors and thunks | 4,027 | 765 | 83.3% |
+| Constructors, destructors and thunks | 4,130 | 717 | 84.5% |
 
 The 556 missing functions are ones the tool could not find a definition of
 in `source/`; its search reads source text, so some of them are defined in a
 form it does not recognise.
 
-Of the 2,433 virtual function tables the original's constructors install,
-2,406 are identical in the rebuilt executable, and 101,291 of their 101,338
-slots match. Of the 27 that differ, 15 differ in one way: the original's
+Of the 2,464 virtual function tables the original's constructors install,
+2,441 are identical in the rebuilt executable, and 102,993 of their 103,024
+slots match. Of the 23 that differ, 15 differ in one way: the original's
 compiler gives an override with a covariant return type
 (`CompoundTag::copy`, for one) a second slot of its own, and RedHills does
-not yet. 11 are tables the tool pairs with the wrong rebuilt table (a
-template's base table against its derived one, and secondary tables, which
-have no destructor slot to tell their class by), and one has trailing slots
-the rebuilt table lacks. 32 tables of abstract base classes are never
-installed by the rebuilt executable, whose compiler drops a store the
-derived constructor overwrites, and are not compared.
+not yet. 7 are tables the tool pairs with the wrong rebuilt table (the
+`IdMapper` base table of a `MappedRegistry` against the derived
+`SimpleRegistry` one), and one has trailing slots the rebuilt table lacks.
+29 tables of abstract base classes are never installed by the rebuilt
+executable, whose compiler drops a store the derived constructor
+overwrites, and are not compared.
