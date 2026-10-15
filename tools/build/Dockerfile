@@ -8,6 +8,8 @@ ARG REDHILLS_COMMIT=37713dd04a8cc1d211749b0abdcc684a8aa11423
 ARG LLVM_RELEASE=https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-X64.tar.xz
 ARG LLVM_SHA256=df0e1ecf16caf3489a272a5eea4eec9b0d82878f6477fa309504f918a0006384
 ARG CAPSTONE_VERSION=5.0.7
+# Parallel jobs for compiling RedHills; empty picks as many as fit in the memory Docker has.
+ARG JOBS=
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl lld python3-pip xz-utils \
@@ -15,7 +17,8 @@ RUN apt-get update \
  && pip3 install --no-cache-dir --break-system-packages capstone==${CAPSTONE_VERSION}
 
 # RedHills: clang only, configured as the RedHills Linux setup script does, with the assertions the
-# compiler is tested with.
+# compiler is tested with. Some of clang's own sources take 2 GB each to compile, so unless JOBS is
+# given the job count is the available memory over 2 GB, at least 1 and at most the core count.
 RUN git init -q /tmp/redhills \
  && git -C /tmp/redhills remote add origin ${REDHILLS_URL} \
  && git -C /tmp/redhills fetch -q --depth 1 origin ${REDHILLS_COMMIT} \
@@ -28,7 +31,10 @@ RUN git init -q /tmp/redhills \
       -DCLANG_ENABLE_ARCMT=OFF -DCLANG_PLUGIN_SUPPORT=OFF -DLLVM_ENABLE_BINDINGS=OFF \
       -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_OBJC_REWRITER=OFF \
       -DLLVM_ENABLE_ZSTD=OFF -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_LIBXML2=OFF \
- && ninja -C /tmp/redhills/build clang \
+ && jobs="${JOBS:-$(awk -v cores="$(nproc)" '/^MemAvailable:/ { n = int($2 / 2097152); \
+      if (n > cores) n = cores; if (n < 1) n = 1; print n }' /proc/meminfo)}" \
+ && echo "compiling RedHills with $jobs jobs" \
+ && ninja -C /tmp/redhills/build -j "$jobs" clang \
  && mkdir -p /opt/redhills/bin /opt/redhills/lib \
  && cp -a /tmp/redhills/build/bin/clang /tmp/redhills/build/bin/clang-[0-9]* /opt/redhills/bin/ \
  && cp -a /tmp/redhills/build/lib/clang /opt/redhills/lib/ \

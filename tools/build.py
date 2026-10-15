@@ -18,7 +18,8 @@ the build cache in the Docker volume, so they recompile only what changed.
 The result is build/Minecraft.Client.rpx, with its link map beside it.
 
 Options:
-  --jobs N       parallel compile jobs (default: all cores)
+  --jobs N       parallel compile jobs, also for compiling RedHills the first time (default: all cores
+                 for the game; for RedHills, as many as fit in the memory Docker has, at 2 GB each)
   --clean        discard the cached build (the toolchain image is kept)
   --keep-going   compile everything that can be compiled and report every failure
 """
@@ -118,14 +119,17 @@ def image_tag():
         return "%s:%s" % (IMAGE_NAME, hashlib.sha256(handle.read().replace(b"\r\n", b"\n")).hexdigest()[:16])
 
 
-def ensure_image():
+def ensure_image(jobs):
     tag = image_tag()
     present = subprocess.run(["docker", "image", "inspect", tag], stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL).returncode == 0
     if not present:
         print("building the toolchain image %s (compiles RedHills; this takes a while once)" % tag, flush=True)
+        command = ["docker", "build", "-t", tag]
+        if jobs:
+            command += ["--build-arg", "JOBS=%d" % jobs]
         with open(DOCKERFILE, "rb") as handle:
-            result = subprocess.run(["docker", "build", "-t", tag, "-"], stdin=handle)
+            result = subprocess.run(command + ["-"], stdin=handle)
         if result.returncode != 0:
             raise BuildError("building the toolchain image failed with exit code %d" % result.returncode)
     return tag
@@ -184,7 +188,7 @@ def build_in_docker(jobs, clean, keep_going):
         raise BuildError("docker is not installed or not on PATH; install Docker or use --local")
     if subprocess.run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
         raise BuildError("the Docker daemon is not running")
-    image = ensure_image()
+    image = ensure_image(jobs)
     if clean:
         subprocess.run(["docker", "volume", "rm", "-f", VOLUME], stdout=subprocess.DEVNULL)
 
@@ -228,7 +232,7 @@ def build_locally(jobs, clean, keep_going):
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--local", action="store_true", help="build with RedHills and devkitPPC on this machine")
-    parser.add_argument("--jobs", type=int, default=0, help="parallel compile jobs (default: all cores)")
+    parser.add_argument("--jobs", type=int, default=0, help="parallel compile jobs (default: see above)")
     parser.add_argument("--clean", action="store_true", help="discard the cached build first")
     parser.add_argument("--keep-going", action="store_true", help="report every failure instead of stopping")
     args = parser.parse_args(argv)

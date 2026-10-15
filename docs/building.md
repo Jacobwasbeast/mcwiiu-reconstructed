@@ -26,6 +26,10 @@ python tools/package.py --update <update v688 dump>
 - Docker (Docker Desktop on Windows and macOS) with about 15 GB of
   free space while the toolchain image is first built, and about 6 GB for
   the image and the build after that, plus 1.5 GB for the game files.
+  Compiling RedHills needs up to 2 GB of memory per parallel job, so with
+  less memory it uses fewer jobs and takes longer; at least 4 GB for Docker
+  is recommended (Docker Desktop's resource settings, or WSL's
+  `.wslconfig` on Windows).
 - Cemu 2.6 or newer to run the result, with the base game in its game list
   or installed in it. A stock Cemu is enough.
 
@@ -113,7 +117,7 @@ only the files that changed, typically in a few minutes.
 
 | Option | Effect |
 | --- | --- |
-| `--jobs N` | Parallel compile jobs. The default is every core Docker has. |
+| `--jobs N` | Parallel compile jobs, for the game and for compiling RedHills the first time. By default the game uses every core Docker has, and RedHills as many jobs as fit in the memory Docker has at 2 GB each, up to the core count. Use a lower number if your machine runs hot or out of memory. |
 | `--keep-going` | Compile everything that can be compiled and report every failure, instead of stopping at the first. |
 | `--clean` | Delete the Docker volume and build from scratch. The toolchain image is kept. |
 | `--local` | Build on this machine instead of in Docker (see below). |
