@@ -205,7 +205,5 @@ public:
     void getLastActionTime();
 };
 
-#if UINTPTR_MAX == 0xffffffffu && !defined(RECON_NATIVE)
-#endif
 
 #endif
