@@ -208,10 +208,7 @@ void FindUnderwaterTreasureGoal::tick()
         }
         else
         {
-            direction->normalize();
-            direction->multiply(range * 0.5);
-            current->add(direction);
-            target = BlockPos(current);
+            target = BlockPos(current->add(direction->normalize()->multiply(range * 0.5)));
         }
     }
 

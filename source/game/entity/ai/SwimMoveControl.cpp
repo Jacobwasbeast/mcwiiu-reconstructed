@@ -59,7 +59,7 @@ void SwimMoveControl::tick()
 
         float pitch = (float)atan2(dy, static_cast<double>(Mth::sqrt(horizontalSqr)));
         Mob* mob = mMob;
-        Vec3* rotation = Vec3::newTemp((double)(pitch * -Mth::RAD_TO_DEG), (double)mob->mYRot, 0.0);
+        Vec3* rotation = Vec3::newTemp((double)(pitch * (float)-(double)Mth::RAD_TO_DEG), (double)mob->mYRot, 0.0);
         LookControl* lookControl = static_cast<LookControl*>(mob->getLookControl());
         lookControl->setLookRotation(rotation, 5.0f, 10.0f);
 
