@@ -245,8 +245,7 @@ Vec3* LiquidBlock::getFlow(LevelSource* levelSource, const BlockPos& pos, const 
 
 Vec3* LiquidBlock::handleEntityInside(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, Vec3* motion)
 {
-    motion->add(getFlow(level, pos, level->getBlockState(entity->mTickCache, pos)));
-    return motion;
+    return motion->add(getFlow(level, pos, level->getBlockState(entity->mTickCache, pos)));
 }
 
 void LiquidBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*,

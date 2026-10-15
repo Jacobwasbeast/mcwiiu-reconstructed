@@ -24,6 +24,10 @@ class TextureAtlasSprite;
 class RedStoneWireBlock : public Block
 {
 public:
+    static const std::wstring TEXTURE_CROSS;
+    static const std::wstring TEXTURE_LINE;
+    static const std::wstring TEXTURE_CROSS_OVERLAY;
+    static const std::wstring TEXTURE_LINE_OVERLAY;
     static AbstractProperty<int>* POWER;
 
     class ConnectingSide : public StringRepresentable

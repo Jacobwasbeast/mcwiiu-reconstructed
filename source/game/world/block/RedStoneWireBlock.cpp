@@ -51,10 +51,10 @@ static const AABB* gRedStoneWireShapes[16] = {AABB::newPermanent(0.1875, 0.0, 0.
                                               AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0625, 0.8125),
                                               AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0625, 1.0)};
 
-static const std::wstring gRedStoneWireCrossSuffix = L"_cross";
-static const std::wstring gRedStoneWireLineSuffix = L"_line";
-static const std::wstring gRedStoneWireCrossOverlaySuffix = L"_cross_overlay";
-static const std::wstring gRedStoneWireLineOverlaySuffix = L"_line_overlay";
+const std::wstring RedStoneWireBlock::TEXTURE_CROSS = L"_cross";
+const std::wstring RedStoneWireBlock::TEXTURE_LINE = L"_line";
+const std::wstring RedStoneWireBlock::TEXTURE_CROSS_OVERLAY = L"_cross_overlay";
+const std::wstring RedStoneWireBlock::TEXTURE_LINE_OVERLAY = L"_line_overlay";
 
 AbstractProperty<int>* RedStoneWireBlock::POWER = static_cast<AbstractProperty<int>*>(
     IntegerProperty::create(L"power", 0, 15));
@@ -655,28 +655,28 @@ EBlockFaceShape RedStoneWireBlock::getBlockFaceShape(LevelSource*, const BlockSt
 
 void RedStoneWireBlock::registerIcons(IconRegister* iconRegister)
 {
-    mCrossIcon = iconRegister->registerIcon(getIconName() + gRedStoneWireCrossSuffix);
-    mLineIcon = iconRegister->registerIcon(getIconName() + gRedStoneWireLineSuffix);
-    mCrossOverlayIcon = iconRegister->registerIcon(getIconName() + gRedStoneWireCrossOverlaySuffix);
-    mLineOverlayIcon = iconRegister->registerIcon(getIconName() + gRedStoneWireLineOverlaySuffix);
+    mCrossIcon = iconRegister->registerIcon(getIconName() + TEXTURE_CROSS);
+    mLineIcon = iconRegister->registerIcon(getIconName() + TEXTURE_LINE);
+    mCrossOverlayIcon = iconRegister->registerIcon(getIconName() + TEXTURE_CROSS_OVERLAY);
+    mLineOverlayIcon = iconRegister->registerIcon(getIconName() + TEXTURE_LINE_OVERLAY);
     mIcon = mCrossIcon;
 }
 
 TextureAtlasSprite* RedStoneWireBlock::getTexture(const std::wstring& name)
 {
-    if (name == gRedStoneWireCrossSuffix)
+    if (name == TEXTURE_CROSS)
     {
         return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mCrossIcon;
     }
-    if (name == gRedStoneWireLineSuffix)
+    if (name == TEXTURE_LINE)
     {
         return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mLineIcon;
     }
-    if (name == gRedStoneWireCrossOverlaySuffix)
+    if (name == TEXTURE_CROSS_OVERLAY)
     {
         return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mCrossOverlayIcon;
     }
-    if (name == gRedStoneWireLineOverlaySuffix)
+    if (name == TEXTURE_LINE_OVERLAY)
     {
         return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mLineOverlayIcon;
     }

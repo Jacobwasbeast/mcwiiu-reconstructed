@@ -29,10 +29,10 @@ StoneBrickBlock::Variant* StoneBrickBlock::Variant::BY_DATA[4] = {
 std::wstring StoneBrickBlock::TEXTURE_NAMES[4] = {std::wstring(L""), std::wstring(L"mossy"), std::wstring(L"cracked"),
                                                   std::wstring(L"carved")};
 
-int StoneBrickBlock::DEFAULT_META = 0;
-int StoneBrickBlock::MOSSY_META = 0;
-int StoneBrickBlock::CRACKED_META = 0;
-int StoneBrickBlock::CHISELED_META = 0;
+int StoneBrickBlock::DEFAULT_META = -1;
+int StoneBrickBlock::MOSSY_META = -1;
+int StoneBrickBlock::CRACKED_META = -1;
+int StoneBrickBlock::CHISELED_META = -1;
 EnumProperty<StoneBrickBlock::Variant*>* StoneBrickBlock::VARIANT = NULL;
 
 StoneBrickBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
