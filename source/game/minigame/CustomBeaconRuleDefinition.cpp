@@ -14,7 +14,7 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
-static const wchar_t* sBeamDirectionNames[7] = {L"none", L"+y", L"-y", L"+x", L"-x", L"+z", L"-z"};
+static const wchar_t* sBeamDirectionNames[7] = {L"none", L"plus_y", L"minus_y", L"plus_x", L"minus_x", L"plus_z", L"minus_z"};
 
 CustomBeaconRuleDefinition::CustomBeaconRuleDefinition()
 {

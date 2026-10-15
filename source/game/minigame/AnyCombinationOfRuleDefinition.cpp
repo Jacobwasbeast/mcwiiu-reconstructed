@@ -66,10 +66,10 @@ void AnyCombinationOfRuleDefinition::GetPossibleLayerSizes(
 {
     std::vector<GameRuleDefinition*> children;
     mSizes->getChildren(&children);
-    std::vector<GameRuleDefinition*>::reverse_iterator it;
-    for (it = children.rbegin(); it != children.rend(); ++it)
+    std::vector<GameRuleDefinition*>::iterator it;
+    for (it = children.begin(); it != children.end(); ++it)
     {
-        sizes.insert(sizes.begin(), static_cast<LayerAttributeChildRuleDefinition<LayerSize*>*>(*it));
+        sizes.push_back(static_cast<LayerAttributeChildRuleDefinition<LayerSize*>*>(*it));
     }
 
     if (mDefinition != NULL)
@@ -83,10 +83,10 @@ void AnyCombinationOfRuleDefinition::GetPossibleLayerShapes(
 {
     std::vector<GameRuleDefinition*> children;
     mShapes->getChildren(&children);
-    std::vector<GameRuleDefinition*>::reverse_iterator it;
-    for (it = children.rbegin(); it != children.rend(); ++it)
+    std::vector<GameRuleDefinition*>::iterator it;
+    for (it = children.begin(); it != children.end(); ++it)
     {
-        shapes.insert(shapes.begin(), static_cast<LayerAttributeChildRuleDefinition<LayerShape*>*>(*it));
+        shapes.push_back(static_cast<LayerAttributeChildRuleDefinition<LayerShape*>*>(*it));
     }
 
     if (mDefinition != NULL)
@@ -100,10 +100,10 @@ void AnyCombinationOfRuleDefinition::GetPossibleLayerFills(
 {
     std::vector<GameRuleDefinition*> children;
     mFills->getChildren(&children);
-    std::vector<GameRuleDefinition*>::reverse_iterator it;
-    for (it = children.rbegin(); it != children.rend(); ++it)
+    std::vector<GameRuleDefinition*>::iterator it;
+    for (it = children.begin(); it != children.end(); ++it)
     {
-        fills.insert(fills.begin(), static_cast<LayerAttributeChildRuleDefinition<LayerFill*>*>(*it));
+        fills.push_back(static_cast<LayerAttributeChildRuleDefinition<LayerFill*>*>(*it));
     }
 
     if (mDefinition != NULL)
@@ -132,10 +132,10 @@ void AnyCombinationOfRuleDefinition::GetPossibleLayerThemes(
         {
             std::vector<GameRuleDefinition*> children;
             matchingTheme->getChildren(&children);
-            std::vector<GameRuleDefinition*>::reverse_iterator child = children.rbegin();
-            for (; child != children.rend(); ++child)
+            std::vector<GameRuleDefinition*>::iterator child;
+            for (child = children.begin(); child != children.end(); ++child)
             {
-                themes.insert(themes.begin(), static_cast<LayerAttributeChildRuleDefinition<LayerTheme*>*>(*child));
+                themes.push_back(static_cast<LayerAttributeChildRuleDefinition<LayerTheme*>*>(*child));
             }
         }
 

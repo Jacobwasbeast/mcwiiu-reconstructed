@@ -28,11 +28,11 @@ std::wstring join(wchar_t separator, const std::vector<std::wstring>& values)
 
 void split(wchar_t separator, const std::wstring& value, std::vector<std::wstring>& values)
 {
+    std::wstringstream stream(value);
     values.clear();
 
-    std::wistringstream stream(value);
     std::wstring part;
-    while (std::getline(stream, part, separator))
+    while (std::getline(stream, part, L';'))
     {
         values.push_back(part);
     }

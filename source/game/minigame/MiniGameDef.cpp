@@ -481,9 +481,10 @@ std::vector<not_null_ptr<ItemInstance> >* MiniGameDef::ModeVariationLootGroup::G
     for (const_iterator it = begin(); it != end(); ++it)
     {
         unsigned int copies = it->mMinCount;
-        if ((unsigned int)it->mPlayersForMin < playerCount)
+        unsigned int playersForMin = it->mPlayersForMin;
+        if (playersForMin < playerCount)
         {
-            float scale = (float)(playerCount - it->mPlayersForMin) / (float)(8 - it->mPlayersForMin);
+            float scale = (float)(playerCount - playersForMin) / (float)(8 - playersForMin);
             copies += (unsigned int)((float)(unsigned int)(it->mMaxCount - it->mMinCount) * scale);
         }
         for (unsigned int i = 0; i < copies; ++i)
@@ -492,8 +493,7 @@ std::vector<not_null_ptr<ItemInstance> >* MiniGameDef::ModeVariationLootGroup::G
             int count = it->mMinStackCount;
             if (it->mMaxStackCount - it->mMinStackCount > 0)
                 count += random.nextInt(it->mMaxStackCount - it->mMinStackCount);
-            int maxStackSize = item->getMaxStackSize();
-            item->setCount(count < maxStackSize ? count : maxStackSize);
+            item->setCount(std::min(count, item->getMaxStackSize()));
             items->push_back(item);
         }
     }
@@ -1539,35 +1539,41 @@ std::wstring MiniGameDef::GetLootSetText(int id) const
     unsigned int mode = GetId();
     if (mode == 1)
     {
-        if (id < 3)
+        switch (id)
         {
-            if (id == 0)
-                return L10N::GetString(IDS_MG01_ITEMSET_0);
-            if (id == 1)
-                return L10N::GetString(IDS_MG01_ITEMSET_1);
+        case 0:
+            return L10N::GetString(IDS_MG01_ITEMSET_0);
+        case 1:
+            return L10N::GetString(IDS_MG01_ITEMSET_1);
+        case 2:
             return L10N::GetString(IDS_MG01_ITEMSET_2);
-        }
-        if (id < 4)
+        case 3:
             return L10N::GetString(IDS_MG01_ITEMSET_3);
-        if (id == 4)
+        case 4:
             return L10N::GetString(IDS_MG01_ITEMSET_4);
-        if (id == 5)
+        case 5:
             return L10N::GetString(IDS_MG01_ITEMSET_RANDOM);
-        return std::wstring();
+        default:
+            return L"";
+        }
     }
     if (mode == 2)
     {
-        if (id == 0)
+        switch (id)
+        {
+        case 0:
             return L10N::GetString(IDS_MG02_VARIANT_1);
-        if (id == 1)
+        case 1:
             return L10N::GetString(IDS_MG02_VARIANT_2);
-        if (id < 3)
+        case 2:
             return L10N::GetString(IDS_MG02_VARIANT_FIREWORKS);
-        if (id == 3)
+        case 3:
             return L10N::GetString(IDS_MG02_VARIANT_LEVITATE);
-        return std::wstring();
+        default:
+            return L"";
+        }
     }
-    return std::wstring();
+    return L"";
 }
 
 std::wstring MiniGameDef::GetLootSetText() const
@@ -1580,35 +1586,41 @@ std::wstring MiniGameDef::GetLootSetDescription(int id) const
     unsigned int mode = GetId();
     if (mode == 1)
     {
-        if (id < 3)
+        switch (id)
         {
-            if (id == 0)
-                return L10N::GetString(IDS_MG01_ITEMSET_0_DESC);
-            if (id == 1)
-                return L10N::GetString(IDS_MG01_ITEMSET_1_DESC);
+        case 0:
+            return L10N::GetString(IDS_MG01_ITEMSET_0_DESC);
+        case 1:
+            return L10N::GetString(IDS_MG01_ITEMSET_1_DESC);
+        case 2:
             return L10N::GetString(IDS_MG01_ITEMSET_2_DESC);
-        }
-        if (id < 4)
+        case 3:
             return L10N::GetString(IDS_MG01_ITEMSET_3_DESC);
-        if (id == 4)
+        case 4:
             return L10N::GetString(IDS_MG01_ITEMSET_4_DESC);
-        if (id == 5)
+        case 5:
             return L10N::GetString(IDS_MG01_ITEMSET_RANDOM_DESC);
-        return std::wstring();
+        default:
+            return L"";
+        }
     }
     if (mode == 2)
     {
-        if (id == 0)
+        switch (id)
+        {
+        case 0:
             return L10N::GetString(IDS_MG02_VARIANT_1_DESC);
-        if (id == 1)
+        case 1:
             return L10N::GetString(IDS_MG02_VARIANT_2_DESC);
-        if (id < 3)
+        case 2:
             return L10N::GetString(IDS_MG02_VARIANT_FIREWORKS_DESC);
-        if (id == 3)
+        case 3:
             return L10N::GetString(IDS_MG02_VARIANT_LEVITATE_DESC);
-        return std::wstring();
+        default:
+            return L"";
+        }
     }
-    return std::wstring();
+    return L"";
 }
 
 MiniGamePlayerSettings MiniGameDef::GetDefaultPlayerSettings() const
@@ -2440,13 +2452,20 @@ unsigned int MiniGameDef::GetName() const
 unsigned int MiniGameDef::GetHostOptionStringId(eCustomGameModeHostOption option)
 {
     static const unsigned int names[] = {IDS_MG_OPTION_ALLOW_ALL_SKINS, 0x901c1fe8U, 0x908811f4U};
-    if (option < eCustomGameModeHostOption_MaxPlayers)
+    switch (option)
+    {
+    case eCustomGameModeHostOption_NoSmallSkins:
+    case eCustomGameModeHostOption_SpectateMode:
+    case eCustomGameModeHostOption_RoundLength:
         return names[option];
-    if (option == eCustomGameModeHostOption_CentreSpawn || option == eCustomGameModeHostOption_IsTeams)
+    case eCustomGameModeHostOption_CentreSpawn:
+    case eCustomGameModeHostOption_IsTeams:
         return 0xef2a2f6aU;
-    if (option == eCustomGameModeHostOption_GameVariant)
+    case eCustomGameModeHostOption_GameVariant:
         return 0x5bd476fbU;
-    return 0xffffffffU;
+    default:
+        return 0xffffffffU;
+    }
 }
 
 void MiniGameDef::AddLabelForOption(std::vector<HtmlString>& labels, eCustomGameModeHostOption option,
