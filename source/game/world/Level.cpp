@@ -5732,7 +5732,8 @@ void Level::updateNeighbourForOutputSignal(const BlockPos& pos, Block* block)
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
     for (unsigned int i = 0; i < directions.length; ++i)
     {
-        BlockPos neighbour = pos.relative(directions.data[i]);
+        const Direction* direction = directions.data[i];
+        BlockPos neighbour = pos.relative(direction);
         if (!hasChunkAt(neighbour))
         {
             continue;
@@ -5744,7 +5745,7 @@ void Level::updateNeighbourForOutputSignal(const BlockPos& pos, Block* block)
         }
         else if (state->isSolidBlockingCubeAndNotSignalSource())
         {
-            neighbour = neighbour.relative(directions.data[i]);
+            neighbour = neighbour.relative(direction);
             state = getBlockState(neighbour);
             if (static_cast<DiodeBlock*>(Blocks::unpowered_comparator)->isSameDiode(state))
             {
