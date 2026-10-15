@@ -281,7 +281,7 @@ void ThrowableProjectile::tick()
     if (isInWater())
     {
         for (int i = 0; i < 4; ++i)
-            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25, mZ - mZd * 0.25, 0.0, 0.0, 0.0,
+            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25, mZ - mZd * 0.25, mXd, mYd, mZd,
                                 arrayWithLength<int>());
         inertia = 0.8f;
     }

@@ -308,9 +308,9 @@ void AbstractRotatedItemProjectile::tick()
         if ((block != mInTile || data != mInData) && !mLevel->hasBlockCubes(mBoundingBox->grow(0.05)))
         {
             mInGround = false;
-            mXd = mXd * mRandom->nextDouble() * 0.2;
-            mYd = mYd * mRandom->nextDouble() * 0.2;
-            mZd = mZd * mRandom->nextDouble() * 0.2;
+            mXd *= mRandom->nextDouble() * 0.2;
+            mYd *= mRandom->nextDouble() * 0.2;
+            mZd *= mRandom->nextDouble() * 0.2;
             mLife = 0;
             mFlightTime = 0;
             ++mInGroundTime;

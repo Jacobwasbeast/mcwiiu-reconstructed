@@ -406,7 +406,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
             float cosAngle = cosf(angle);
             double x = mX + (double)(sinAngle * (float)mTicksCatchableDelay) * 0.1;
             double y = std::floor(mBoundingBox->mMinY) + 1.0;
-            double z = mZ + (double)(cosAngle * (float)mTicksCatchableDelay) * 0.1;
+            double z = mZ + (double)cosAngle * (double)mTicksCatchableDelay * 0.1;
             Block* block = serverLevel->getBlockState(BlockPos(x, y - 1.0, z))->getBlock();
 
             if (block == Blocks::water || block == Blocks::flowing_water)
