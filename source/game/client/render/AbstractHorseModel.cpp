@@ -286,12 +286,7 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
     mNeck->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
 
     float bob = Mth::sin(ageInTicks);
-    float maxAnim = standAnim;
-    if (standAnim - eatAnim < 0.0f)
-    {
-        maxAnim = eatAnim;
-    }
-    float notAnim = 1.0f - maxAnim;
+    float notAnim = 1.0f - std::max(standAnim, eatAnim);
 
     mNeck->mXRot = notAnim * (mouthAnim * bob * 0.05f + mNeck->mXRot)
                    + (standAnim * (headPitch + 0.2617994f) + eatAnim * (bob * 0.05f + EATING_HEAD_X_ROT));

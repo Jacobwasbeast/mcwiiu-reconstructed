@@ -13,6 +13,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/StrayClothingLayer.hpp"
@@ -55,7 +56,7 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
         if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
             && boost::static_pointer_cast<Player>(entity)->isSpectator()
             && boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead()
-            && (layer == NULL || dynamic_cast<StrayClothingLayer*>(layer) == NULL))
+            && (layer == NULL || dynamic_cast<CustomHeadLayer*>(layer) == NULL))
         {
             continue;
         }

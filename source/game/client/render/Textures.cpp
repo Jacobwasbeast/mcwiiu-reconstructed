@@ -34,16 +34,10 @@ static bool sTextureMipmap = true;
 
 Textures::Textures(TexturePackRepository* texturePackRepository, Options* options)
     : mOptions(options),
-      mTexturePackRepository(texturePackRepository),
-      mMissingImage(NULL),
-      mBlocks(NULL),
-      mItems(NULL),
-      mLastBoundId(-1),
-      mReloading(false),
-      mLoaded(false)
+      mTexturePackRepository(texturePackRepository)
 {
     InitializeCriticalSection(&mMutex);
-    mMissingImage = new BufferedImage(16, 16, 3);
+    mMissingImage = new BufferedImage(16, 16, 0);
     mBlocks = new TextureAtlas(0, L"terrain", L"textures/blocks/", mMissingImage, true);
     mItems = new TextureAtlas(1, L"items", L"textures/items/", mMissingImage, true);
     loadIndexedTextures();
@@ -292,12 +286,8 @@ BufferedImage* Textures::readImage(_TEXTURE_NAME textureName, const std::wstring
     MemSect(32);
     bool titleUpdate = IsTUImage(textureName, name);
     std::wstring path = L"";
-    bool useSelected = false;
-    if (mTexturePackRepository->getSelected() != TexturePackRepository::defaultTexturePack)
-    {
-        std::wstring resource = L"res/" + name;
-        useSelected = mTexturePackRepository->getSelected()->hasFile(resource, false);
-    }
+    bool useSelected = mTexturePackRepository->getSelected() != TexturePackRepository::defaultTexturePack
+        && mTexturePackRepository->getSelected()->hasFile(L"res/" + name, false);
     BufferedImage* image;
     if (useSelected)
     {
@@ -306,15 +296,14 @@ BufferedImage* Textures::readImage(_TEXTURE_NAME textureName, const std::wstring
     }
     else
     {
-        TexturePack* defaultPack = TexturePackRepository::defaultTexturePack;
-        path = defaultPack->getPath(titleUpdate, NULL);
+        path = TexturePackRepository::defaultTexturePack->getPath(titleUpdate, NULL);
         if (!IsOriginalImage(textureName, name) && !titleUpdate)
         {
-            image = defaultPack->getImageResource(L"1_2_2/" + name, false, false, path);
+            image = TexturePackRepository::defaultTexturePack->getImageResource(L"1_2_2/" + name, false, false, path);
         }
         else
         {
-            image = defaultPack->getImageResource(name, false, titleUpdate, path);
+            image = TexturePackRepository::defaultTexturePack->getImageResource(name, false, titleUpdate, path);
         }
     }
     MemSect(0);

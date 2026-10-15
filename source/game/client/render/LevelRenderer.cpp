@@ -438,7 +438,7 @@ void LevelRenderer::renderStars()
         double y = (double)(random.nextFloat() * 2.0f - 1.0f);
         double z = (double)(random.nextFloat() * 2.0f - 1.0f);
         double size = (double)(random.nextFloat() * 0.1f + 0.15f);
-        double lengthSqr = z * z + x * x + y * y;
+        double lengthSqr = x * x + y * y + z * z;
 
         if (lengthSqr < 1.0 && lengthSqr > 0.01)
         {
@@ -858,7 +858,7 @@ void LevelRenderer::allChanged(int dimension)
 
     mClipChunks[dimension] = arrayWithLength<ClipChunk>(mChunkGridWidth * mChunkGridHeight * mChunkGridDepth, true);
 
-    for (unsigned int index = 0; index < mClipChunks[dimension].length; ++index)
+    for (int index = 0; index < mChunkGridWidth * mChunkGridHeight * mChunkGridDepth; ++index)
     {
         mClipChunks[dimension][index].mChunk = 0;
     }
@@ -1035,14 +1035,12 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
 
     PIXBeginNamedEvent(0.0f, "Prepare");
 
-    boost::shared_ptr<Entity> blockEntityDispatcherCamera = mMinecraft->getCameraEntity();
     BlockEntityRenderDispatcher::instance->prepare(mLevels[userIndex], mTextures, mMinecraft->mFont,
-                                                   blockEntityDispatcherCamera, mMinecraft->mHitResult, partialTick);
+                                                   mMinecraft->getCameraEntity(), mMinecraft->mHitResult, partialTick);
 
     mMinecraft->getBlockRenderer()->prepare(mLevels[userIndex]);
 
-    boost::shared_ptr<Entity> entityDispatcherCamera = mMinecraft->getCameraEntity();
-    mEntityRenderDispatcher->prepare(mLevels[userIndex], mMinecraft->mFont, entityDispatcherCamera,
+    mEntityRenderDispatcher->prepare(mLevels[userIndex], mMinecraft->mFont, mMinecraft->getCameraEntity(),
                                      mMinecraft->mSpectateEntity, mMinecraft->mOptions, partialTick);
 
     PIXEndNamedEvent();
@@ -1088,7 +1086,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
         double dx = camX - sortEntity->mX;
         double dy = camY - sortEntity->mY;
         double dz = camZ - sortEntity->mZ;
-        sortedIndices.push_back(std::pair<int, double>((int)entityIndex, dx * dx + dy * dy + dz * dz));
+        sortedIndices.push_back(std::pair<int, double>((int)entityIndex, pow(dx, 2) + pow(dy, 2) + pow(dz, 2)));
     }
     std::sort(sortedIndices.begin(), sortedIndices.end(), &LevelRenderer::sortEntDisFunc);
 
@@ -1110,7 +1108,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
     PIXEndNamedEvent();
 
     InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Entities);
-    PIXBeginNamedEvent(0.0f, "Render %d entities", (int)sortedIndices.size());
+    PIXBeginNamedEvent(0.0f, "Render %d entities", (int)allEntities.size());
 
     std::vector<boost::shared_ptr<Entity> > glowingEntities;
     std::vector<boost::shared_ptr<Entity> > secondPassEntities;
@@ -1148,23 +1146,12 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             continue;
         }
 
-        boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
-        if (entity == cameraEntity)
+        if (entity == mMinecraft->getCameraEntity())
         {
-            bool skip = true;
-            if (mMinecraft->mPlayer->GetThirdPersonView(false) != 0)
-            {
-                skip = false;
-            }
-            else if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
-            {
-                if (boost::static_pointer_cast<LivingEntity>(entity)->isSleeping())
-                {
-                    skip = false;
-                }
-            }
-
-            if (skip)
+            bool thirdPerson = Minecraft::GetInstance()->mPlayer->GetThirdPersonView(false) != 0;
+            bool sleeping = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+                            && boost::static_pointer_cast<LivingEntity>(entity)->isSleeping();
+            if (!thirdPerson && !sleeping)
             {
                 continue;
             }
@@ -1172,7 +1159,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
 
         if (entity->mY >= 0.0 && entity->mY < 256.0)
         {
-            BlockPos entityBlockPos((int)floor(entity->mX), 0, (int)floor(entity->mZ));
+            BlockPos entityBlockPos(Mth::floor(entity->mX), 0, Mth::floor(entity->mZ));
             if (!mLevels[userIndex]->hasChunkAt(entityBlockPos))
             {
                 continue;
@@ -1182,7 +1169,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
         ++mCountEntitiesRendered;
         mEntityRenderDispatcher->render(entity, partialTick, false);
 
-        if (shouldEntityGlow(entity, mMinecraft->getCameraEntity(), culler))
+        if (shouldEntityGlow(entity, positionDispatcherCamera, culler))
         {
             glowingEntities.push_back(entity);
         }
@@ -1241,6 +1228,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
     }
 
     InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_BlockEntities);
+    deferredBlockEntities.clear();
     PIXEndNamedEvent();
 
     EnterCriticalSection(&mRenderableBlockEntityMutex);
@@ -1305,21 +1293,15 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
         {
             boost::shared_ptr<ChestBlockEntity> chestEntity = boost::static_pointer_cast<ChestBlockEntity>(
                 destroyBlockEntity);
-            boost::shared_ptr<ChestBlockEntity> neighbourChest = chestEntity->mWestNeighbour.lock();
-
-            if (neighbourChest)
+            if (chestEntity->mWestNeighbour.lock() != NULL)
             {
                 destroyPos = destroyPos.relative(Direction::WEST);
                 destroyBlockEntity = mLevels[userIndex]->getBlockEntity(destroyPos);
             }
-            else
+            else if (chestEntity->mNorthNeighbour.lock() != NULL)
             {
-                neighbourChest = chestEntity->mNorthNeighbour.lock();
-                if (neighbourChest)
-                {
-                    destroyPos = destroyPos.relative(Direction::NORTH);
-                    destroyBlockEntity = mLevels[userIndex]->getBlockEntity(destroyPos);
-                }
+                destroyPos = destroyPos.relative(Direction::NORTH);
+                destroyBlockEntity = mLevels[userIndex]->getBlockEntity(destroyPos);
             }
         }
 
@@ -1528,13 +1510,13 @@ void LevelRenderer::render(boost::shared_ptr<Entity> camera, int layer, double p
     double deltaY = camera->mY - mLastSortY[dimension];
     double deltaZ = camera->mZ - mLastSortZ[dimension];
 
-    if (deltaZ * deltaZ + deltaX * deltaX + deltaY * deltaY > 16.0)
+    if (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 16.0)
     {
         mLastSortX[dimension] = camera->mX;
         mLastSortY[dimension] = camera->mY;
         mLastSortZ[dimension] = camera->mZ;
 
-        resortChunks((int)Mth::lfloor(camera->mX), (int)Mth::lfloor(camera->mY), (int)Mth::lfloor(camera->mZ), -1);
+        resortChunks(Mth::floor(camera->mX), Mth::floor(camera->mY), Mth::floor(camera->mZ), -1);
     }
 
     Lighting::turnOff();
@@ -1613,16 +1595,16 @@ void LevelRenderer::renderSky(float partialTick)
         return;
     }
 
-    int userIndex = mMinecraft->mPlayer->mUserIndex;
-    Level* level = mLevels[userIndex];
+    GlStateManager::disableTexture();
 
-    if (!level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT))
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+
+    if (!mLevels[userIndex]->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT))
     {
         partialTick = 0.0f;
     }
 
-    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    Vec3* skyColor = level->getSkyColor(camera, partialTick);
+    Vec3* skyColor = mLevels[userIndex]->getSkyColor(mMinecraft->getCameraEntity(), partialTick);
     float red = (float)skyColor->x;
     float green = (float)skyColor->y;
     float blue = (float)skyColor->z;
@@ -1642,7 +1624,6 @@ void LevelRenderer::renderSky(float partialTick)
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
-    GlStateManager::disableTexture();
     GlStateManager::depthMask(false);
     GlStateManager::enableFog();
     GlStateManager::color3f(red, green, blue);
@@ -1653,8 +1634,7 @@ void LevelRenderer::renderSky(float partialTick)
     GlStateManager::blendFunc(4, 5);
     Lighting::turnOff();
 
-    Dimension* dimension = level->mDimension;
-    float* sunriseColors = dimension->getSunriseColor((float)level->getTimeOfDay(partialTick), partialTick);
+    float* sunriseColors = mLevels[userIndex]->mDimension->getSunriseColor((float)mLevels[userIndex]->getTimeOfDay(partialTick), partialTick);
 
     if (sunriseColors != 0)
     {
@@ -1664,7 +1644,7 @@ void LevelRenderer::renderSky(float partialTick)
         GlStateManager::pushMatrix();
         GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
 
-        float faceAngle = (Mth::sin(level->getSunAngle(partialTick)) >= 0.0f) ? 0.0f : 180.0f;
+        float faceAngle = (Mth::sin(mLevels[userIndex]->getSunAngle(partialTick)) >= 0.0f) ? 0.0f : 180.0f;
         GlStateManager::rotatef(faceAngle, 0.0f, 0.0f, 1.0f);
         GlStateManager::rotatef(90.0f, 0.0f, 0.0f, 1.0f);
 
@@ -1701,18 +1681,18 @@ void LevelRenderer::renderSky(float partialTick)
         GlStateManager::shadeModel(0);
     }
 
-    float sunAngleDegrees = (float)(level->getSunAngle(partialTick) * 57.2957763671875);
+    float sunAngleDegrees = (float)(mLevels[userIndex]->getSunAngle(partialTick) * 57.2957763671875);
     float moonAngleDegrees = fmodf(sunAngleDegrees + 180.0f, 360.0f);
 
     GlStateManager::enableTexture();
     GlStateManager::blendFunc(4, 1);
     GlStateManager::pushMatrix();
 
-    float rainLevel = level->getRainLevel(partialTick);
+    float rainLevel = mLevels[userIndex]->getRainLevel(partialTick);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f - rainLevel);
     GlStateManager::translatef(0.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(level->getTimeOfDay(partialTick) * 360.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(mLevels[userIndex]->getTimeOfDay(partialTick) * 360.0f, 1.0f, 0.0f, 0.0f);
 
     if (sunAngleDegrees <= 125.0f || 235.0f <= sunAngleDegrees)
     {
@@ -1732,7 +1712,7 @@ void LevelRenderer::renderSky(float partialTick)
     {
         mTextures->bindTexture(&sMoonPhasesLocation);
 
-        int moonPhase = level->getMoonPhase();
+        int moonPhase = mLevels[userIndex]->getMoonPhase();
         int column = moonPhase & 3;
         int row = (moonPhase >> 2) % 2;
         float u0 = (float)column * 0.25f;
@@ -1750,7 +1730,7 @@ void LevelRenderer::renderSky(float partialTick)
 
     GlStateManager::disableTexture();
 
-    float starBrightness = level->getStarBrightness(partialTick) * (1.0f - rainLevel);
+    float starBrightness = mLevels[userIndex]->getStarBrightness(partialTick) * (1.0f - rainLevel);
 
     if (starBrightness > 0.0f)
     {
@@ -1766,7 +1746,7 @@ void LevelRenderer::renderSky(float partialTick)
     GlStateManager::disableTexture();
     GlStateManager::color3f(0.0f, 0.0f, 0.0f);
 
-    if (!dimension->hasGround())
+    if (!mLevels[userIndex]->mDimension->hasGround())
     {
         GlStateManager::color3f(red, green, blue);
         GlStateManager::enableTexture();
@@ -1970,11 +1950,11 @@ void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, 
                 for (int cellCol = gridMin; cellCol <= gridRadius; ++cellCol)
                 {
                     float colWorld = (float)(cellCol * 8);
-                    double boxX = (double)(rowWorld - fracX);
-                    double boxZ = (double)(colWorld - fracZ);
+                    float boxX = rowWorld - fracX;
+                    float boxZ = colWorld - fracZ;
 
-                    if (frustum->cubeInFrustum(boxX, cloudRelativeY, boxZ, boxX + 8.0, cloudRelativeY + 4.0,
-                                               boxZ + 8.0))
+                    if (frustum->cubeInFrustum(boxX, cloudRelativeY, boxZ, boxX + 8.0f, cloudRelativeY + 4.0f,
+                                               boxZ + 8.0f))
                     {
                         GlStateManager::matrixMode(2);
                         GlStateManager::loadIdentity();
@@ -1982,7 +1962,7 @@ void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, 
                                                    colWorld * (1.0f / 256.0f) + wrapAnchorZ, 0.0f);
                         GlStateManager::matrixMode(0);
                         GlStateManager::pushMatrix();
-                        GlStateManager::translatef((float)boxX, (float)cloudRelativeY, (float)boxZ);
+                        GlStateManager::translatef(boxX, cloudRelativeY, boxZ);
                         GlStateManager::color4f(red, green, blue, alpha);
 
                         if (!cameraInCloudBand)
@@ -2208,12 +2188,15 @@ unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
 
     while ((dirtyChunk = mDirtyChunkStack.Pop()) != 0)
     {
-        if ((int)dirtyChunk > 1)
+        if ((int)dirtyChunk > 0)
         {
-            setGlobalChunkFlag((int)dirtyChunk - 2, 2, 0);
-        }
+            if ((int)dirtyChunk > 1)
+            {
+                setGlobalChunkFlag((int)dirtyChunk - 2, 2, 0);
+            }
 
-        mHasDirtyChunks = true;
+            mHasDirtyChunks = true;
+        }
     }
 
     if (mHasDirtyChunks)
@@ -2499,10 +2482,14 @@ void LevelRenderer::renderLineBox(const AABB* box, int color)
 void LevelRenderer::renderHitOutline(boost::shared_ptr<Player> player, const HitResult* hit, int pass,
                                      float partialTick)
 {
+    if (pass != 0 || hit->mType != HitResult::BLOCK)
+    {
+        return;
+    }
+
     int userIndex = mMinecraft->mPlayer->mUserIndex;
 
-    if (pass == 0 && hit->mType == HitResult::BLOCK
-        && GameSettings::GetGameSettings(userIndex, eGameSetting_DisplayHUD))
+    if (GameSettings::GetGameSettings(userIndex, eGameSetting_DisplayHUD))
     {
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 5);
@@ -2630,22 +2617,28 @@ void LevelRenderer::renderLine(std::vector<GameRenderer::PositionStruct>* positi
 
             if (!positions->empty())
             {
-                deltaZ = position.z - positions->at(1).z;
-                deltaX = position.x - positions->at(1).x;
+                GameRenderer::PositionStruct next = positions->at(1);
+                deltaZ = position.z - next.z;
+                deltaX = position.x - next.x;
             }
         }
         else
         {
-            deltaZ = positions->at(index - 1).z - position.z;
-            deltaX = positions->at(index - 1).x - position.x;
+            GameRenderer::PositionStruct previous = positions->at(index - 1);
+            deltaZ = previous.z - position.z;
+            deltaX = previous.x - position.x;
         }
 
         float angle = atan2f(deltaZ, deltaX) + 1.5707964f;
+        float cosAngle = cosf(angle);
+        float sinAngle = sinf(angle);
+        float oppositeAngle = angle + 3.1415927f;
+        float cosOpposite = cosf(oppositeAngle);
+        float oppositeOffsetZ = halfWidth * sinf(oppositeAngle);
 
         builder->color(color, alpha);
-        builder->vertex(halfWidth * cosf(angle) + position.x, position.y, halfWidth * sinf(angle) + position.z);
-        builder->vertex(halfWidth * cosf(angle + 3.1415927f) + position.x, position.y,
-                        position.z + halfWidth * sinf(angle + 3.1415927f));
+        builder->vertex(halfWidth * cosAngle + position.x, position.y, halfWidth * sinAngle + position.z);
+        builder->vertex(halfWidth * cosOpposite + position.x, position.y, position.z + oppositeOffsetZ);
     }
 
     builder->end();
@@ -3009,8 +3002,7 @@ void LevelRenderer::cull(Culler* culler, float partialTick)
         planes[i * 4 + 0] = plane[0];
         planes[i * 4 + 1] = plane[1];
         planes[i * 4 + 2] = plane[2];
-        planes[i * 4 + 3] = (float)((double)plane[2] * zOffset + (double)plane[1] * yOffset + (double)plane[0] * xOffset
-                                    + (double)plane[3]);
+        planes[i * 4 + 3] = (float)(plane[3] + plane[0] * xOffset + plane[1] * yOffset + plane[2] * zOffset);
     }
 
     ClipChunk* chunks = mClipChunks[userIndex].data;
@@ -3256,10 +3248,9 @@ int LevelRenderer::checkAllPresentChunks(bool* present)
 {
     const int userIndex = mMinecraft->mPlayer->mUserIndex;
     ClipChunk* clips = mClipChunks[userIndex].data;
-    const unsigned int clipCount = mClipChunks[userIndex].length;
     int count = 0;
 
-    for (unsigned int i = 0; i < clipCount; ++i)
+    for (unsigned int i = 0; i < mClipChunks[userIndex].length; ++i)
     {
         Chunk* chunk = clips[i].mChunk;
         if (chunk->mZ == 0 && mLevels[0]->reallyHasChunk(chunk->mX >> 4, chunk->mDimension >> 4))
@@ -3309,7 +3300,7 @@ Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, 
         return NULL;
 
     boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    if (camera == NULL || mMinecraft->mParticleEngine == NULL)
+    if (mMinecraft == NULL || camera == NULL || mMinecraft->mParticleEngine == NULL)
         return NULL;
 
     if (Mth::isNaN(x) || Mth::isNaN(y) || Mth::isNaN(z))
@@ -3336,7 +3327,7 @@ Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, 
             double dy = player->mY - y;
             double dx = player->mX - x;
             double dz = player->mZ - z;
-            if (dz * dz + dx * dx + dy * dy <= 256.0)
+            if (dx * dx + dy * dy + dz * dz <= 256.0)
             {
                 nearLocalPlayer = true;
                 break;

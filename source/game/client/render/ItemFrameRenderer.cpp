@@ -200,9 +200,8 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     GlStateManager::translatef(0.0f, 0.0f, 0.4375f);
     drawItem(itemFrame);
     GlStateManager::popMatrix();
-    const Direction* direction = itemFrame->mDirection;
-    renderName(entity, x + static_cast<float>(direction->getStepX()) * 0.3f, y - 0.25,
-               z + static_cast<float>(direction->getStepZ()) * 0.3f);
+    renderName(entity, x + static_cast<float>(itemFrame->mDirection->getStepX()) * 0.3f, y - 0.25,
+               z + static_cast<float>(itemFrame->mDirection->getStepZ()) * 0.3f);
     PIXEndNamedEvent();
 }
 
@@ -215,5 +214,8 @@ void ItemFrameRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, 
     double distance = itemFrame->distanceToSqr(mDispatcher->mCamera);
     float maxDistance = itemFrame->isSneaking() ? 32.0f : 64.0f;
     if (distance < (double)(maxDistance * maxDistance))
-        renderNameTag(entity, itemFrame->getItem()->getHoverName(), x, y, z, 64, 0xff000000);
+    {
+        std::wstring name = itemFrame->getItem()->getHoverName();
+        renderNameTag(entity, name, x, y, z, 64, 0xff000000);
+    }
 }

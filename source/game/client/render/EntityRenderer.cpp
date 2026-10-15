@@ -17,6 +17,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Culler.hpp"
 #include "game/core/MemSect.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Options.hpp"
@@ -40,7 +41,6 @@ EntityRenderer::EntityRenderer(EntityRenderDispatcher* dispatcher)
     : mDispatcher(dispatcher),
       mShadowRadius(0.0F),
       mShadowStrength(1.0F),
-      mSolidRender(false),
       mModel(NULL),
       mOriginalModel(NULL)
 {
@@ -233,7 +233,9 @@ void EntityRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
     GlStateManager::polygonOffset(-3.0F, -0.3F);
+    MemSect(0x1f);
     mDispatcher->mTextures->bindTexture(&sShadowTexture);
+    MemSect(0);
     Level* level = getLevel();
     GlStateManager::depthMask(false);
 
@@ -253,12 +255,12 @@ void EntityRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     double entityX = entity->mXOld + (entity->mX - entity->mXOld) * partialTick;
     double entityY = entity->mYOld + (entity->mY - entity->mYOld) * partialTick;
     double entityZ = entity->mZOld + (entity->mZ - entity->mZOld) * partialTick;
-    int minX = (int)std::floor(entityX - radius);
-    int maxX = (int)std::floor(entityX + radius);
-    int minY = (int)std::floor(entityY - radius);
-    int maxY = (int)std::floor(entityY);
-    int minZ = (int)std::floor(entityZ - radius);
-    int maxZ = (int)std::floor(entityZ + radius);
+    int minX = Mth::floor(entityX - radius);
+    int maxX = Mth::floor(entityX + radius);
+    int minY = Mth::floor(entityY - radius);
+    int maxY = Mth::floor(entityY);
+    int minZ = Mth::floor(entityZ - radius);
+    int maxZ = Mth::floor(entityZ + radius);
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     builder->begin();
@@ -346,15 +348,12 @@ Font* EntityRenderer::getFont()
 void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std::wstring& name, double x, double y,
                                    double z, int maxDistance, int color)
 {
-    boost::shared_ptr<Entity> camera = mDispatcher->mCamera;
-    double distance = entity->distanceToSqr(camera);
+    double distance = entity->distanceToSqr(mDispatcher->mCamera);
     if (distance > (double)(maxDistance * maxDistance))
         return;
 
     bool sneaking = entity->isSneaking();
-    float yOffset = entity->mBbHeight + 0.5F;
-    if (sneaking)
-        yOffset -= 0.25F;
+    float yOffset = entity->mBbHeight + 0.5F - (sneaking ? 0.25F : 0.0F);
     std::wstring displayName(name);
     int nameOffset = 0;
     if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
@@ -372,17 +371,11 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
     if (distance >= (double)fadeDistance)
     {
         int fade = (int)std::sqrt(distance - fadeDistance);
-        if (fade <= fadeDistance)
-        {
-            int divisor = fade / 2;
-            alpha = divisor == 0 ? 1.0F : 1.0F / divisor;
-            if (alpha > 1.0F)
-                alpha = 1.0F;
-        }
-        else
-        {
+        alpha = 1.0F / (fade / 2);
+        if (fade > fadeDistance || alpha < 0.0F)
             alpha = 0.0F;
-        }
+        else if (alpha > 1.0F)
+            alpha = 1.0F;
     }
 
     bool renderSneaking = sneaking && !Minecraft::InMiniGame(eMiniGameId_Any, true);

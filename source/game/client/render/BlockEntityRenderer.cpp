@@ -31,14 +31,16 @@ void BlockEntityRenderer::renderNameTag(boost::shared_ptr<BlockEntity> blockEnti
 {
     boost::shared_ptr<Entity> camera = mDispatcher->mCamera;
 
-    if (blockEntity->distanceToSqr(camera->mX, camera->mY, camera->mZ) <= (double)(maxDistance * maxDistance))
+    if (blockEntity->distanceToSqr(camera->mX, camera->mY, camera->mZ) > (double)(maxDistance * maxDistance))
     {
-        float cameraYRot = mDispatcher->mCameraYRot;
-        float cameraXRot = mDispatcher->mCameraXRot;
-
-        GameRenderer::renderNameTagInWorld(getFont(), name, (float)x + 0.5F, (float)y + 1.5F, (float)z + 0.5F, 0,
-                                           cameraYRot, cameraXRot, false, false, 0xFF000000, 1.0F);
+        return;
     }
+
+    float cameraYRot = mDispatcher->mCameraYRot;
+    float cameraXRot = mDispatcher->mCameraXRot;
+
+    GameRenderer::renderNameTagInWorld(getFont(), name, (float)x + 0.5F, (float)y + 1.5F, (float)z + 0.5F, 0, cameraYRot,
+                                       cameraXRot, false, false, 0xFF000000, 1.0F);
 }
 
 void BlockEntityRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
