@@ -8,6 +8,13 @@ namespace nn
 namespace nex
 {
 
+ZLibPlugin ZLibPlugin::s_instance;
+
+ZLibPlugin* ZLibPlugin::GetInstance()
+{
+    return &s_instance;
+}
+
 PluginObject* ZLibPlugin::CreatePluginObject()
 {
     ZLibCompression* pCompression = new ZLibCompression;

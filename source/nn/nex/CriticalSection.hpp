@@ -24,7 +24,7 @@ public:
     CriticalSection(const CriticalSection& other);
     virtual ~CriticalSection();
 
-    CriticalSection& operator=(const CriticalSection& other);
+    CriticalSection& operator=(const CriticalSection&) { return *this; }
 
     virtual void Enter()
     {

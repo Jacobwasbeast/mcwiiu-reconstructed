@@ -4,7 +4,9 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 
+#include "game/core/SendMultiParameter.hpp"
 #include "nn/nex/Platform.hpp"
+#include "nn/nex/PseudoGlobalVariable.hpp"
 #include "nn/nex/PseudoSingleton.hpp"
 #include "nn/nex/Time.hpp"
 #include "vendor/__N_19_OnlineCore_Blob_cpp_9428d484.hpp"
@@ -60,31 +62,12 @@ SendToCallback s_pfnSendToCallback = __N_19_OnlineCore_Blob_cpp_9428d484::Defaul
 RecvCallback s_pfnRecvCallback = __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvCallback;
 SendCallback s_pfnSendCallback = __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendCallback;
 
-struct PeerAddressState
-{
-    unsigned int m_unknown0;
-    unsigned int m_unknown4;
-    BerkeleySocketDriver::PeerAddressTable* m_pTables;
-    BerkeleySocketDriver::PeerAddressTable m_table;
-};
-
-PeerAddressState s_peerAddressState;
-
-inline BerkeleySocketDriver::PeerAddressTable& GetPeerAddressTable()
-{
-    if (g_usingInstantiationContext)
-    {
-        unsigned int uiContextId = g_instantiationContextVariable->GetRef();
-        if (uiContextId != 0)
-            return s_peerAddressState.m_pTables[uiContextId];
-    }
-
-    return s_peerAddressState.m_table;
-}
+PseudoGlobalVariable<SendMultiParameter> s_sendMultiParameter;
 
 }
 
-BerkeleySocketDriver::BerkeleySocket::BerkeleySocket() : m_iHandle(-1), m_pPeerAddressTable(&GetPeerAddressTable())
+BerkeleySocketDriver::BerkeleySocket::BerkeleySocket()
+    : m_iHandle(-1), m_pSendMultiParameter(&s_sendMultiParameter.Get())
 {
 }
 
@@ -426,33 +409,32 @@ bool BerkeleySocketDriver::Poll(PollInfo* pInfo, unsigned int uiCount, unsigned 
 void BerkeleySocketDriver::GetPeerAddress(nn::nex::InetAddress* pAddresses, unsigned int uiCapacity,
                                           unsigned int* pCount)
 {
-    PeerAddressTable& rTable = GetPeerAddressTable();
-    if (rTable.m_uiCount <= uiCapacity)
-    {
-        ScopedCS lock(&rTable.m_criticalSection);
-        unsigned int i = 0;
-        while (i < rTable.m_uiCount)
-        {
-            const sockaddr_in& rAddress = rTable.m_addresses[i % rTable.m_uiCount];
-            pAddresses[i].SetAddress(ntohl(rAddress.sin_addr.s_addr));
-            pAddresses[i].SetPortNumber(ntohs(rAddress.sin_port));
-            ++i;
-        }
-
-        *pCount = rTable.m_uiCount;
-    }
-    else
+    SendMultiParameter& rParameter = s_sendMultiParameter.Get();
+    if (uiCapacity < rParameter.m_uiPeerAddressCount)
     {
         *pCount = 0;
+        return;
     }
+
+    ScopedCS lock(&rParameter.m_lock);
+    unsigned int i = 0;
+    while (i < rParameter.m_uiPeerAddressCount)
+    {
+        const sockaddr_in& rAddress = rParameter.m_peerAddresses[i % rParameter.m_uiPeerAddressCount];
+        pAddresses[i].SetAddress(ntohl(rAddress.sin_addr.s_addr));
+        pAddresses[i].SetPortNumber(ntohs(rAddress.sin_port));
+        ++i;
+    }
+
+    *pCount = rParameter.m_uiPeerAddressCount;
 }
 
 void BerkeleySocketDriver::SetPeerAddress(const nn::nex::InetAddress* pAddresses, unsigned int uiCount)
 {
-    PeerAddressTable& rTable = GetPeerAddressTable();
-    if (uiCount < PEER_ADDRESS_CAPACITY + 1)
+    SendMultiParameter& rParameter = s_sendMultiParameter.Get();
+    if (uiCount <= PEER_ADDRESS_CAPACITY)
     {
-        ScopedCS lock(&rTable.m_criticalSection);
+        ScopedCS lock(&rParameter.m_lock);
         unsigned int i = 0;
         while (i < uiCount)
         {
@@ -461,11 +443,11 @@ void BerkeleySocketDriver::SetPeerAddress(const nn::nex::InetAddress* pAddresses
             address.sin_family = AF_INET;
             address.sin_addr.s_addr = htonl(pAddresses[i].GetAddress());
             address.sin_port = htons(pAddresses[i].GetPortNumber());
-            rTable.m_addresses[i] = address;
+            rParameter.m_peerAddresses[i] = address;
             ++i;
         }
 
-        rTable.m_uiCount = uiCount;
+        rParameter.m_uiPeerAddressCount = uiCount;
     }
 }
 

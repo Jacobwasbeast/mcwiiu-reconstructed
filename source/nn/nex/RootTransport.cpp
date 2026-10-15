@@ -32,6 +32,7 @@ const unsigned int ADDRESS_TEXT_LENGTH = 128;
 const unsigned short NAT_CHECK_SERVER_PORT = 10025;
 const unsigned short NAT_CHECK_SERVER_REPLY_PORT = 10125;
 const unsigned short RELAY_SERVER_PORT = 12525;
+const unsigned short DEFAULT_WELL_KNOWN_PORT = 9203;
 const unsigned int DYNAMIC_PORT_BASE = 0xC000;
 const unsigned int DYNAMIC_PORT_COUNT = 0x3FFF;
 
@@ -40,12 +41,10 @@ const wchar_t* s_pSecondaryNATCheckServer = L"nncs2.app.nintendowifi.net";
 
 }
 
-std::vector<unsigned int, MemAllocator<unsigned int> > g_blockedAddresses;
+PseudoGlobalVariable<wchar_t*> RootTransport::s_interfaceAddress(L"");
+PseudoGlobalVariable<unsigned short> RootTransport::s_wellKnownPortNumber(DEFAULT_WELL_KNOWN_PORT);
 
-unsigned short* RootTransport::s_pWellKnownPortNumbers;
-unsigned short RootTransport::s_uiWellKnownPortNumber;
-wchar_t** RootTransport::s_pInterfaceAddresses;
-wchar_t* RootTransport::s_pInterfaceAddress;
+qVector<unsigned int> g_blockedAddresses;
 
 RootTransport::RootTransport()
     : m_uiBufferSize(DEFAULT_BUFFER_SIZE),
@@ -105,30 +104,12 @@ void RootTransport::StopTransportThread()
 
 void RootTransport::SetWellKnownPortNumber(unsigned short uiPort)
 {
-    if (g_usingInstantiationContext)
-    {
-        unsigned int uiContextId = g_instantiationContextVariable->GetRef();
-        if (uiContextId != 0)
-        {
-            s_pWellKnownPortNumbers[uiContextId] = uiPort;
-            return;
-        }
-    }
-
-    s_uiWellKnownPortNumber = uiPort;
+    s_wellKnownPortNumber.Get() = uiPort;
 }
 
 unsigned short RootTransport::GetWellKnownPortNumber()
 {
-    unsigned short uiPort = s_uiWellKnownPortNumber;
-    if (g_usingInstantiationContext)
-    {
-        unsigned int uiContextId = g_instantiationContextVariable->GetRef();
-        if (uiContextId != 0)
-            uiPort = s_pWellKnownPortNumbers[uiContextId];
-    }
-
-    return uiPort;
+    return s_wellKnownPortNumber.Get();
 }
 
 unsigned short RootTransport::GetNextPortNumber()
@@ -138,17 +119,7 @@ unsigned short RootTransport::GetNextPortNumber()
 
 void RootTransport::SetInterfaceAddress(wchar_t* pAddress)
 {
-    if (g_usingInstantiationContext)
-    {
-        unsigned int uiContextId = g_instantiationContextVariable->GetRef();
-        if (uiContextId != 0)
-        {
-            s_pInterfaceAddresses[uiContextId] = pAddress;
-            return;
-        }
-    }
-
-    s_pInterfaceAddress = pAddress;
+    s_interfaceAddress.Get() = pAddress;
 }
 
 void RootTransport::SetBlockedAddresses(const qList<InetAddress>& rAddresses)

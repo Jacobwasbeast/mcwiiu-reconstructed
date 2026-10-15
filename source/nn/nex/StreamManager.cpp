@@ -11,6 +11,7 @@
 #include "nn/nex/RootTransport.hpp"
 #include "nn/nex/StreamSettings.hpp"
 #include "nn/nex/String.hpp"
+#include "nn/nex/SystemSetting.hpp"
 #include "nn/nex/qResult.hpp"
 
 namespace nn
@@ -31,7 +32,8 @@ const unsigned int SIMULATED_FAULT_ERROR = 5;
 wchar_t StreamManager::s_aSandboxAccessKey[SandboxAccessKeyCapacity];
 int StreamManager::s_iKeySuffix = 0;
 float StreamManager::s_fPacketDropProbability = 0.0f;
-int StreamManager::s_iUnknownListenFlag;
+
+SystemSetting g_useDistinctPortForStreamManager(L"UseDistinctPortForStreamManager", 0);
 
 void StreamManager::SetStreamKey()
 {
@@ -105,7 +107,7 @@ bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID, 
     if (m_pStream->Initialize() == false)
         return false;
 
-    if (s_iUnknownListenFlag != 0)
+    if (g_useDistinctPortForStreamManager.m_value != 0)
     {
         bool bListening;
         if ((uiFlags & INITIALIZE_FLAG_2) != 0)

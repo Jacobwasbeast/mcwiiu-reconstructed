@@ -17,8 +17,6 @@ namespace nex
 class CallContext;
 class PeriodicJob;
 
-extern int g_checkExpiredCallsPeriod;
-
 class CallContextRegister : public SystemComponent
 {
 public:

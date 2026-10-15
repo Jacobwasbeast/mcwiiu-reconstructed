@@ -48,7 +48,7 @@ enum
 }
 
 int g_nasErrorCodeBase = 20000;
-int g_httpErrorCodeBase = 22968;
+int g_httpErrorCodeBase = 23000;
 
 NgsFacade::NgsFacade()
     : RendezVous(),

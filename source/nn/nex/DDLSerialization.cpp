@@ -13,7 +13,6 @@ namespace nn
 namespace nex
 {
 
-SystemSetting g_ddlConnectionEncoding(L"ConnectionEncoding", 1);
 unsigned int g_ddlStringEncoding = 2;
 
 namespace

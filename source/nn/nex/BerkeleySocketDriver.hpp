@@ -21,6 +21,8 @@ int inet_pton(int af, const char* src, void* dst);
 
 in_addr_t inet_addr(const char* cp);
 
+class SendMultiParameter;
+
 namespace nn
 {
 namespace nex
@@ -32,17 +34,6 @@ public:
     enum
     {
         PEER_ADDRESS_CAPACITY = 15
-    };
-
-    struct PeerAddressTable
-    {
-        PeerAddressTable() {}
-
-        unsigned int m_unknown0;
-        CriticalSection m_criticalSection;
-        unsigned int m_uiCount;
-        sockaddr_in m_addresses[PEER_ADDRESS_CAPACITY];
-        unsigned int m_unknown144;
     };
 
     class BerkeleySocket : public SocketDriver::Socket
@@ -73,7 +64,7 @@ public:
         friend class BerkeleySocketDriver;
 
         int m_iHandle;
-        PeerAddressTable* m_pPeerAddressTable;
+        SendMultiParameter* m_pSendMultiParameter;
     };
 
     virtual ~BerkeleySocketDriver();

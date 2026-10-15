@@ -16,7 +16,7 @@ const unsigned int BITS_PER_BYTE = 8;
 
 }
 
-KeyDerivation* KerberosEncryption::s_pKeyDerivation = 0;
+KeyDerivation* KerberosEncryption::s_pKeyDerivation = &s_defaultKeyDerivation;
 KeyCache* KerberosEncryption::s_pKeyCache = 0;
 MD5KeyDerivation KerberosEncryption::s_defaultKeyDerivation;
 

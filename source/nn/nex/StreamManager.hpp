@@ -76,7 +76,6 @@ private:
     static wchar_t s_aSandboxAccessKey[SandboxAccessKeyCapacity];
     static int s_iKeySuffix;
     static float s_fPacketDropProbability;
-    static int s_iUnknownListenFlag;
 };
 
 }

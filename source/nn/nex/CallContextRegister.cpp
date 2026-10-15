@@ -11,6 +11,7 @@
 #include "nn/nex/PeriodicJob.hpp"
 #include "nn/nex/Scheduler.hpp"
 #include "nn/nex/String.hpp"
+#include "nn/nex/SystemSetting.hpp"
 #include "nn/nex/Time.hpp"
 
 namespace nn
@@ -18,7 +19,7 @@ namespace nn
 namespace nex
 {
 
-int g_checkExpiredCallsPeriod = 0;
+SystemSetting g_checkExpiredCallsPeriod(L"CallContextRegisterCheckExpiredCalls", 100);
 
 const int CALL_CONTEXT_RESULT_CONNECTION_LOST = static_cast<int>(0x80010004u);
 const int CALL_CONTEXT_RESULT_TIMEOUT = static_cast<int>(0x8001000Bu);
@@ -209,7 +210,7 @@ void CallContextRegister::Start()
         Job::JOB_TYPE_0, String(L"CallContextRegister::CheckExpiredCalls"), &CallContextRegister::CheckExpiredCalls,
         this);
 
-    m_pCheckExpiredCallsJob->SetPeriod(g_checkExpiredCallsPeriod);
+    m_pCheckExpiredCallsJob->SetPeriod(g_checkExpiredCallsPeriod.m_value);
     m_pCheckExpiredCallsJob->AddRef();
 
     Scheduler::GetInstance()->Queue(m_pCheckExpiredCallsJob, false);

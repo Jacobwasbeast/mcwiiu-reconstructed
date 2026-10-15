@@ -9,6 +9,7 @@
 #include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/NATProperties.hpp"
 #include "nn/nex/OutputEmulationDevice.hpp"
+#include "nn/nex/PseudoGlobalVariable.hpp"
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/Stream.hpp"
 #include "nn/nex/String.hpp"
@@ -34,7 +35,7 @@ class StationURL;
 class VirtualFilterDevice;
 class VirtualNATDevice;
 
-extern std::vector<unsigned int, MemAllocator<unsigned int> > g_blockedAddresses;
+extern qVector<unsigned int> g_blockedAddresses;
 
 class RootTransport : public RootObject
 {
@@ -146,10 +147,8 @@ private:
     InetAddress m_relayAddress;
     String m_relayName;
 
-    static unsigned short* s_pWellKnownPortNumbers;
-    static unsigned short s_uiWellKnownPortNumber;
-    static wchar_t** s_pInterfaceAddresses;
-    static wchar_t* s_pInterfaceAddress;
+    static PseudoGlobalVariable<wchar_t*> s_interfaceAddress;
+    static PseudoGlobalVariable<unsigned short> s_wellKnownPortNumber;
 };
 
 }

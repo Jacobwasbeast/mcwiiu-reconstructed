@@ -29,5 +29,7 @@ SystemSetting::~SystemSetting()
     GetList()->erase(position);
 }
 
+SystemSetting g_ddlConnectionEncoding(L"ConnectionEncoding", 1);
+
 }
 }

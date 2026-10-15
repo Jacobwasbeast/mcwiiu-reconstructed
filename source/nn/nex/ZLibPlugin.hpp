@@ -29,6 +29,11 @@ public:
 
     virtual PluginObject* CreatePluginObject();
     virtual void DeletePluginObject(PluginObject* pObject);
+
+    static ZLibPlugin* GetInstance();
+
+private:
+    static ZLibPlugin s_instance;
 };
 
 }
