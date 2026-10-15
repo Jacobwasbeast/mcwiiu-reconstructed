@@ -2,6 +2,7 @@
 #define GAME_UTIL_RESOURCELOCATION_HPP
 
 #include <cstddef>
+#include <functional>
 #include <string>
 
 #include <boost/functional/hash.hpp>
@@ -305,6 +306,21 @@ template <>
 struct hash<ResourceLocation>
 {
     std::size_t operator()(const ResourceLocation& location) const { return location.hashCode(); }
+};
+
+template <>
+struct hash<ResourceLocation*>
+{
+    std::size_t operator()(const ResourceLocation* location) const { return location->hashCode(); }
+};
+}
+
+namespace std
+{
+template <>
+struct equal_to<ResourceLocation*>
+{
+    bool operator()(const ResourceLocation* left, const ResourceLocation* right) const { return left->equals(right); }
 };
 }
 
