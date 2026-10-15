@@ -65,13 +65,6 @@
 #include "game/core/User.hpp"
 #include "vendor/_LoadingInputParams.hpp"
 #include "platform/wiiu/CPlatformNetworkManagerNintendo.hpp"
-#if defined(RECON_NATIVE)
-#include <cerrno>
-#include <cstring>
-#include <nn/fp/fp_cpp.h>
-#include <cstdio>
-#include <cstdlib>
-#endif
 
 #include <sysapp/args.h>
 
@@ -423,19 +416,6 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
             {
                 Random random(System::processTimeInNanoSecs());
                 initData->m_seed = random.nextLong();
-#if defined(RECON_NATIVE)
-                const char* fixture = std::getenv("MC_WORLD_SEED");
-                if (fixture != NULL && *fixture != '\0')
-                {
-                    char* end = NULL;
-                    errno = 0;
-                    const long long fixtureSeed = std::strtoll(fixture, &end, 10);
-                    if (errno == 0 && end != fixture && *end == '\0')
-                        initData->m_seed = fixtureSeed;
-                    else
-                        std::fprintf(stderr, "[native-world] invalid MC_WORLD_SEED: %s\n", fixture);
-                }
-#endif
             }
             else
             {
