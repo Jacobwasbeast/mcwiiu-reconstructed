@@ -68,9 +68,9 @@ struct BANNEDLISTDATA;
 struct _TMSPPRequest;
 struct FEATURE_DATA
 {
-    int type;
     int x;
     int z;
+    int type;
 };
 enum eGameHostOption
 {

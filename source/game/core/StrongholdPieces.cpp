@@ -83,19 +83,26 @@ StrongholdPieces::StrongholdPiece::StrongholdPiece() : StructurePiece(), mEntryD
 
 bool StrongholdPieces::StrongholdPiece::isOkBox(BoundingBox* box, StartPiece* start)
 {
-    if (box == NULL)
-        return false;
-    bool result = box->y0 > 10;
-    if (start == NULL)
-        return result;
-    if (start->mLevel->getOriginalSaveVersion() <= 4)
-        return result;
-    int halfSize = start->mLevel->getLevelData()->getXZSize() * 8;
-    int minBound = 1 - halfSize;
-    int maxBound = halfSize - 1;
-    result = box->x1 < maxBound && minBound < box->z0 && minBound < box->x0 && result;
-    if (maxBound <= box->z1)
-        result = false;
+    bool result = false;
+    if (box != NULL)
+    {
+        if (box->y0 > 10)
+            result = true;
+        if (start != NULL && start->mLevel->getOriginalSaveVersion() >= 5)
+        {
+            int halfSize = start->mLevel->getLevelData()->getXZSize() * 16 / 2;
+            int minBound = 1 - halfSize;
+            int maxBound = halfSize - 1;
+            if (box->x0 <= minBound)
+                result = false;
+            if (box->z0 <= minBound)
+                result = false;
+            if (box->x1 >= maxBound)
+                result = false;
+            if (box->z1 >= maxBound)
+                result = false;
+        }
+    }
     return result;
 }
 
@@ -1689,7 +1696,7 @@ StrongholdPieces::StartPiece::StartPiece()
 {
 }
 
-BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
+BlockPos* StrongholdPieces::StartPiece::getLocatorPosition()
 {
     if (mPortalRoom != NULL)
         return mPortalRoom->getLocatorPosition();

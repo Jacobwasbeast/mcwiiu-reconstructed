@@ -155,7 +155,7 @@ public:
     const Direction* getCounterClockWise(Axis* axis) const;
     const Direction* getRelative(const Direction* direction) const;
 
-    double toYRot() const;
+    float toYRot() const;
     Vec3i getNormal() const;
     virtual std::wstring toString() const;
     virtual std::wstring getSerializedName() const;

@@ -265,9 +265,9 @@ const Direction* Direction::getCounterClockWise() const
     return NULL;
 }
 
-double Direction::toYRot() const
+float Direction::toYRot() const
 {
-    return (float)(data3D & 3) * 90.0f;
+    return (float)(data2D & 3) * 90.0f;
 }
 
 std::wstring Direction::toString() const

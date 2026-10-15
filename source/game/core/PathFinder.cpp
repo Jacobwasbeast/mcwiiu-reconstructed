@@ -92,7 +92,7 @@ Path* PathFinder::findPath(Node* start, Node* end, float maxDistance)
                 }
                 else
                 {
-                    openSet.changeCost(neighbor, neighbor->f);
+                    openSet.changeCost(neighbor, neighbor->g + neighbor->h);
                 }
             }
         }

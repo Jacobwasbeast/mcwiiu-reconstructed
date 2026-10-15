@@ -644,8 +644,9 @@ void WitherBoss::aiStep()
                 }
                 else
                 {
-                    double yd = std::max(mYd, 0.0);
-                    mYd = yd + (0.5 - yd) * 0.6;
+                    if (mYd < 0.0)
+                        mYd = 0.0;
+                    mYd += (0.5 - mYd) * 0.6;
                 }
             }
             else if (getMoveControl() != NULL)
@@ -912,7 +913,7 @@ void WitherBoss::customServerAiStep()
             {
                 std::vector<boost::shared_ptr<Entity> >* players = mLevel->getEntitiesOfClass(
                     typeid(Player), mBoundingBox->grow(mTargetRange, 8.0, mTargetRange));
-                for (int attempt = 0; attempt < 10 && players != NULL && !players->empty(); ++attempt)
+                for (int attempt = 0; attempt < 10 && !players->empty(); ++attempt)
                 {
                     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(
                         players->at(mRandom->nextInt(players->size())));

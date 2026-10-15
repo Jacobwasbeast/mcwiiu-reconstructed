@@ -18,6 +18,7 @@
 #include "game/core/Painting.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/data/DoubleTag.hpp"
+#include "game/data/IntTag.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
@@ -747,24 +748,46 @@ void ConsoleSchematicFile::pasteIntoArray(arrayWithLength<unsigned char>& destin
                                           int destinationIndex, bool swapNibbles, bool includeAir, bool includeSpecial)
 {
     bool low = CanPasteBlock(elements.data[elementIndex], includeAir, includeSpecial);
-    bool high = CanPasteBlock(elements.data[elementIndex + 1], includeAir, includeSpecial);
-    unsigned char value = source.data[sourceIndex];
-    if (swapNibbles)
+    if (low && CanPasteBlock(elements.data[elementIndex + 1], includeAir, includeSpecial))
     {
-        value = (unsigned char)((value << 4) | (value >> 4));
-    }
-    if (low && high)
-    {
-        destination.data[destinationIndex] = value;
+        if (swapNibbles)
+        {
+            destination.data[destinationIndex] = (unsigned char)((source.data[sourceIndex] >> 4)
+                                                                 | (source.data[sourceIndex + 1] << 4));
+        }
+        else
+        {
+            destination.data[destinationIndex] = source.data[sourceIndex];
+        }
     }
     else
     {
         if (low)
-            destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0xf0)
-                                                                 | (value & 0x0f));
-        if (high)
-            destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0x0f)
-                                                                 | (value & 0xf0));
+        {
+            if (swapNibbles)
+            {
+                destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0xf0)
+                                                                     | (source.data[sourceIndex] >> 4));
+            }
+            else
+            {
+                destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0xf0)
+                                                                     | (source.data[sourceIndex] & 0x0f));
+            }
+        }
+        if (CanPasteBlock(elements.data[elementIndex + 1], includeAir, includeSpecial))
+        {
+            if (swapNibbles)
+            {
+                destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0x0f)
+                                                                     | (source.data[sourceIndex + 1] << 4));
+            }
+            else
+            {
+                destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0x0f)
+                                                                     | (source.data[sourceIndex] & 0xf0));
+            }
+        }
     }
 }
 
@@ -798,71 +821,190 @@ void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWit
         highYEnd = y1 - 0x80;
     }
 
+    bool swapLowNibbles = hasLowY && (y0 & 1) != 0 && y0 > 2;
+    bool swapHighNibbles = !hasLowY && (highYStart & 1) != 0 && highYStart > 2;
+    bool oddLowSpan = hasLowY && ((lowYEnd - y0) & 1) != 0;
+
     PIXBeginNamedEvent(0.0f, "Applying Data data");
     for (int x = x0; x < x1; ++x)
     {
         for (int z = z0; z < z1; ++z)
         {
+            int height = y1 - y0;
+            int nibble = height - 1;
             if (mirror == eSchematicMirror_FrontBack)
             {
-                index += (y1 - y0) - 1;
+                index += height - 1;
             }
 
             if (hasLowY)
             {
+                int lowCount = lowYEnd - y0;
                 if (mirror == eSchematicMirror_FrontBack)
                 {
-                    for (int y = y0; y < lowYEnd; y += 2)
+                    for (int y = y0; y < y0 + lowCount; ++y)
                     {
-                        unsigned int dest = (unsigned int)((x << 11) | (z << 7) | y) >> 1;
-                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir,
-                                       includeSpecial);
-                        index -= 2;
-                        count += 2;
+                        if (CanPasteBlock(elements.data[index], includeAir, includeSpecial))
+                        {
+                            int dest = ((x << 11) | (z << 7) | y) >> 1;
+                            unsigned char value = in.data[count + (nibble >> 1)];
+                            value = (nibble & 1) != 0 ? value >> 4 : value & 0x0f;
+                            if ((y & 1) != 0)
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0x0f) | (value << 4));
+                            }
+                            else
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0xf0) | value);
+                            }
+                        }
+                        --index;
+                        --nibble;
                     }
                 }
                 else
                 {
-                    for (int y = y0; y < lowYEnd; y += 2)
+                    int dest = ((x << 11) | (z << 7) | y0) >> 1;
+                    unsigned int remaining = lowCount;
+                    if (swapLowNibbles)
                     {
-                        unsigned int dest = (unsigned int)((x << 11) | (z << 7) | y) >> 1;
-                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir,
+                        if (CanPasteBlock(elements.data[index], includeAir, includeSpecial))
+                        {
+                            out.data[dest] = (unsigned char)((out.data[dest] & 0x0f) | (in.data[count] << 4));
+                        }
+                        ++index;
+                        ++dest;
+                        --remaining;
+                    }
+                    while (remaining > 1)
+                    {
+                        pasteIntoArray(out, in, elements, index, count, dest, swapLowNibbles, includeAir,
                                        includeSpecial);
                         index += 2;
-                        count += 2;
+                        remaining -= 2;
+                        ++dest;
+                        ++count;
+                    }
+                    if (remaining != 0)
+                    {
+                        if (CanPasteBlock(elements.data[index], includeAir, includeSpecial))
+                        {
+                            if (swapLowNibbles)
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0xf0) | (in.data[count] >> 4));
+                                ++count;
+                            }
+                            else
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0xf0) | (in.data[count] & 0x0f));
+                            }
+                        }
+                        ++index;
+                        if (!hasHighY)
+                        {
+                            ++count;
+                            ++index;
+                        }
                     }
                 }
             }
 
             if (hasHighY)
             {
+                int highCount = highYEnd - highYStart;
                 if (mirror == eSchematicMirror_FrontBack)
                 {
-                    for (int y = highYStart; y < highYEnd; y += 2)
+                    for (int y = highYStart; y < highYStart + highCount; ++y)
                     {
-                        unsigned int dest = (unsigned int)(((x << 11) | (z << 7) | y) + 0x8000) >> 1;
-                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir,
-                                       includeSpecial);
-                        index -= 2;
-                        count += 2;
+                        if (CanPasteBlock(elements.data[index], includeAir, includeSpecial))
+                        {
+                            int dest = (((x << 11) | (z << 7) | y) + 0x8000) >> 1;
+                            unsigned char value = in.data[count + (nibble >> 1)];
+                            value = (nibble & 1) != 0 ? value >> 4 : value & 0x0f;
+                            if ((y & 1) != 0)
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0x0f) | (value << 4));
+                            }
+                            else
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0xf0) | value);
+                            }
+                        }
+                        --index;
+                        --nibble;
                     }
                 }
                 else
                 {
-                    for (int y = highYStart; y < highYEnd; y += 2)
+                    int dest = (((x << 11) | (z << 7) | highYStart) + 0x8000) >> 1;
+                    unsigned int remaining = highCount;
+                    if (oddLowSpan)
                     {
-                        unsigned int dest = (unsigned int)(((x << 11) | (z << 7) | y) + 0x8000) >> 1;
-                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir,
-                                       includeSpecial);
-                        index += 2;
-                        count += 2;
+                        while (remaining > 1)
+                        {
+                            pasteIntoArray(out, in, elements, index, count, dest, swapLowNibbles, includeAir,
+                                           includeSpecial);
+                            index += 2;
+                            ++dest;
+                            remaining -= 2;
+                            ++count;
+                        }
+                        if (remaining != 0)
+                        {
+                            if (CanPasteBlock(elements.data[index], includeAir, includeSpecial))
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0xf0) | (in.data[count] >> 4));
+                            }
+                            ++count;
+                            ++index;
+                        }
+                    }
+                    else
+                    {
+                        if (swapHighNibbles)
+                        {
+                            if (CanPasteBlock(elements.data[index], includeAir, includeSpecial))
+                            {
+                                out.data[dest] = (unsigned char)((out.data[dest] & 0x0f) | (in.data[count] << 4));
+                            }
+                            ++index;
+                            --remaining;
+                            ++dest;
+                        }
+                        while (remaining > 1)
+                        {
+                            pasteIntoArray(out, in, elements, index, count, dest, swapHighNibbles, includeAir,
+                                           includeSpecial);
+                            index += 2;
+                            remaining -= 2;
+                            ++dest;
+                            ++count;
+                        }
+                        if (remaining != 0)
+                        {
+                            if (CanPasteBlock(elements.data[index], includeAir, includeSpecial))
+                            {
+                                if (swapHighNibbles)
+                                {
+                                    out.data[dest] = (unsigned char)((out.data[dest] & 0xf0) | (in.data[count] >> 4));
+                                }
+                                else
+                                {
+                                    out.data[dest] = (unsigned char)((out.data[dest] & 0xf0)
+                                                                     | (in.data[count] & 0x0f));
+                                }
+                            }
+                            ++count;
+                            ++index;
+                        }
                     }
                 }
             }
 
             if (mirror == eSchematicMirror_FrontBack)
             {
-                index += y1 - y0;
+                count += height >> 2;
+                index += height;
             }
         }
     }
@@ -976,7 +1118,7 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                     bool extractHigh = false;
                     if (hasLowY)
                     {
-                        int dataIndex = (int)((xIndex | zIndex | (unsigned int)y) >> 1);
+                        int dataIndex = (int)(xIndex | zIndex | y) >> 1;
                         unsigned int yRemaining = lowYRemaining;
                         if (yRemaining > 1)
                         {
@@ -1169,14 +1311,14 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
     int x1 = x + width;
     int z1 = z + depth;
 
+    arrayWithLength<unsigned char> blockLight(0x8000, true);
     arrayWithLength<unsigned char> skyLight(0x8000, true);
-    arrayWithLength<unsigned char> extraSkyLight(0x8000, true);
 
     int elementCount = 0;
     int dataCount = 0;
     int extraDataCount = 0;
 
-    for (int chunkX = x; chunkX < x1; chunkX = ((chunkX >> 4) << 4) + 16)
+    for (int chunkX = x; chunkX < x1; ++chunkX)
     {
         int lx0 = chunkX - ((chunkX >> 4) << 4);
         if (lx0 < 0)
@@ -1185,7 +1327,7 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
         if (lx1 > 16)
             lx1 = 16;
 
-        for (int chunkZ = z; chunkZ < z1; chunkZ = ((chunkZ >> 4) << 4) + 16)
+        for (int chunkZ = z; chunkZ < z1;)
         {
             int lz0 = chunkZ - ((chunkZ >> 4) << 4);
             int lz1 = z1 - ((chunkZ >> 4) << 4);
@@ -1202,8 +1344,8 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
             }
             if (extraData != 0)
             {
-                chunk->getBlockLightData(arrayWithLength<unsigned char>(extraSkyLight.data, extraSkyLight.length));
-                getData(arrayWithLength<unsigned char>(extraSkyLight.data, extraSkyLight.length), extraData,
+                chunk->getBlockLightData(arrayWithLength<unsigned char>(blockLight.data, blockLight.length));
+                getData(arrayWithLength<unsigned char>(blockLight.data, blockLight.length), extraData,
                         extraDataCount, lx0, y, lz0, lx1, yEnd, lz1);
             }
             if (data != 0)
@@ -1212,11 +1354,12 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
                 getData(arrayWithLength<unsigned char>(skyLight.data, skyLight.length), data, dataCount, lx0, y, lz0,
                         lx1, yEnd, lz1);
             }
+            chunkZ += lz1 - lz0;
         }
     }
 
     delete[] skyLight.data;
-    delete[] extraSkyLight.data;
+    delete[] blockLight.data;
 }
 
 long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData* paste)
@@ -1292,7 +1435,8 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
          it != paste->mBlockEntities.end(); ++it)
     {
         double x = it->first->x;
-        double y = it->first->y + static_cast<int>(std::floor(paste->mArea->mMinY));
+        double y = it->first->y;
+        y += static_cast<int>(std::floor(paste->mArea->mMinY));
         double z = it->first->z;
         schematicCoordToChunkCoord(paste->mArea, x, z, paste->mRotation, paste->mMirror, x, z);
         if (chunkArea->containsIncludingLowerBound(Vec3::newTemp(x + 0.01, y + 0.01, z + 0.01)))
@@ -1511,43 +1655,53 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
     return true;
 }
 
-long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int chunkZ, int x0, int y0, int z0,
-                                                         int x1, int y1, int z1, PasteData* paste,
+long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int, int chunkZ, int x0, int y0, int z0, int x1,
+                                                         int y1, int z1, PasteData* paste,
                                                          arrayWithLength<unsigned short> elements,
                                                          arrayWithLength<unsigned short> extraElements,
                                                          arrayWithLength<unsigned char> data,
                                                          arrayWithLength<unsigned char> extraData)
 {
     int volume = (x1 - x0) * (y1 - y0) * (z1 - z0);
-    int halfHeight = (paste->mHeight + 1) / 2;
+    int height = mPasteData.mHeight;
+    int depth = mPasteData.mDepth;
+    int halfHeight = (height + 1) / 2;
     for (int x = x0; x < x1; ++x)
     {
+        int localX = x - chunkX;
         for (int z = z0; z < z1; ++z)
         {
+            int localZ = z - chunkZ;
             int schematicX;
             int schematicZ;
             chunkCoordToSchematicCoord(paste->mArea, x, z, paste->mRotation, paste->mMirror, schematicX, schematicZ);
-            int elementIndex = schematicX * paste->mDepth * paste->mHeight + schematicZ * paste->mHeight
-                               + (y0 - chunkY);
-            int localX = x - chunkX;
-            int localZ = z - chunkZ;
-            setElements(elements, paste->mElements, paste->mRotation, paste->mMirror, localX, y0, localZ, localX + 1,
-                        y1, localZ + 1, elementIndex, paste->mIncludeAir, paste->mIncludeSpecial);
-            int extraIndex = schematicX * paste->mDepth * paste->mHeight + schematicZ * paste->mHeight + (y0 - chunkY);
-            setElements(extraElements, paste->mExtraElements, paste->mRotation, paste->mMirror, localX, y0, localZ,
-                        localX + 1, y1, localZ + 1, extraIndex, paste->mIncludeAir, paste->mIncludeSpecial);
-            int destinationDataIndex = schematicX * paste->mDepth * halfHeight + schematicZ * halfHeight
-                                       + ((y0 - chunkY) >> 1);
-            int sourceDataIndex = destinationDataIndex;
-            setData(data, paste->mData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1,
-                    destinationDataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mElements,
-                    sourceDataIndex);
-            destinationDataIndex = schematicX * paste->mDepth * halfHeight + schematicZ * halfHeight
-                                   + ((y0 - chunkY) >> 1);
-            sourceDataIndex = destinationDataIndex;
-            setData(extraData, paste->mExtraData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1,
-                    destinationDataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mExtraElements,
-                    sourceDataIndex);
+            if (elements.data != 0 && paste->mElements.data != 0)
+            {
+                int elementIndex = schematicX * height * depth + schematicZ * height;
+                setElements(elements, paste->mElements, paste->mRotation, paste->mMirror, localX, y0, localZ,
+                            localX + 1, y1, localZ + 1, elementIndex, paste->mIncludeAir, paste->mIncludeSpecial);
+            }
+            if (extraElements.data != 0 && paste->mExtraElements.data != 0)
+            {
+                int elementIndex = schematicX * height * depth + schematicZ * height;
+                setElements(extraElements, paste->mExtraElements, paste->mRotation, paste->mMirror, localX, y0,
+                            localZ, localX + 1, y1, localZ + 1, elementIndex, paste->mIncludeAir,
+                            paste->mIncludeSpecial);
+            }
+            if (data.data != 0 && paste->mData.data != 0)
+            {
+                int dataIndex = schematicX * depth * halfHeight + schematicZ * halfHeight;
+                int elementIndex = schematicX * height * depth + schematicZ * height;
+                setData(data, paste->mData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1, dataIndex,
+                        paste->mIncludeAir, paste->mIncludeSpecial, paste->mElements, elementIndex);
+            }
+            if (extraData.data != 0 && paste->mExtraData.data != 0)
+            {
+                int dataIndex = schematicX * depth * halfHeight + schematicZ * halfHeight;
+                int elementIndex = schematicX * height * depth + schematicZ * height;
+                setData(extraData, paste->mExtraData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1,
+                        dataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mElements, elementIndex);
+            }
         }
     }
     return volume;
@@ -1661,15 +1815,15 @@ void ConsoleSchematicFile::getBlockEntitiesInRegion(Level* level, int x0, int y0
             for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = blockEntities->begin();
                  it != blockEntities->end(); ++it)
             {
+                boost::shared_ptr<BlockEntity> blockEntity = *it;
                 CompoundTag* tag = new CompoundTag();
-                (*it)->save(tag);
-                BlockPos relative = (*it)->getBlockPos().offset(-x0, -y0, -z0);
+                blockEntity->save(tag);
+                BlockPos relative = blockEntity->getBlockPos().offset(-x0, -y0, -z0);
                 tag->putInt(L"x", relative.x);
                 tag->putInt(L"y", relative.y);
                 tag->putInt(L"z", relative.z);
                 result.push_back(std::make_pair(new BlockPos(relative), tag));
             }
-            delete blockEntities;
         }
     }
 }
@@ -1677,47 +1831,47 @@ void ConsoleSchematicFile::getBlockEntitiesInRegion(Level* level, int x0, int y0
 void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int z0, int x1, int y1, int z1,
                                                std::vector<std::pair<Vec3*, CompoundTag*> >& result)
 {
-    AABB* bounds = AABB::newTemp((double)x0, (double)y0, (double)z0, (double)x1, (double)y1, (double)z1);
-    std::vector<boost::shared_ptr<Entity> > entities;
-    level->getEntities(boost::shared_ptr<Entity>(), bounds, &entities);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+    AABB* bounds = AABB::newTemp(x0, y0, z0, x1, y1, z1);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(boost::shared_ptr<Entity>(), bounds, NULL);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
-        if (entity == NULL)
-            continue;
-
-        unsigned long long type = entity->GetType();
-        if (!mMobs && (type & EntityType::MOB) == EntityType::MOB)
-            continue;
-
-        CompoundTag* tag = new CompoundTag();
-        if (entity->save(tag))
+        if ((mMobs
+             && ((entity->GetType() & EntityType::MONSTER) == EntityType::MONSTER
+                 || (entity->GetType() & EntityType::AGABLE_WATER_ANIMAL) == EntityType::AGABLE_WATER_ANIMAL
+                 || (entity->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL
+                 || (entity->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL
+                 || entity->GetType() == EntityType::VILLAGER))
+            || (entity->GetType() & EntityType::MINECART) == EntityType::MINECART
+            || entity->GetType() == EntityType::BOAT
+            || (entity->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY
+            || entity->GetType() == EntityType::ARMOR_STAND)
         {
-            if (tag->contains(L"UUID"))
+            CompoundTag* tag = new CompoundTag();
+            if (entity->save(tag))
             {
-                tag->remove(L"UUID");
-            }
+                ListTag* position = tag->getList(L"Pos", Tag::TAG_DOUBLE);
+                double x = static_cast<DoubleTag*>(position->get(0))->mValue -= x0;
+                double y = static_cast<DoubleTag*>(position->get(1))->mValue -= y0;
+                double z = static_cast<DoubleTag*>(position->get(2))->mValue -= z0;
 
-            ListTag* position = tag->getList(L"Pos", Tag::TAG_DOUBLE);
-            if (position != NULL && position->size() >= 3)
-            {
-                position->set(0, new DoubleTag(entity->mX - x0));
-                position->set(1, new DoubleTag(entity->mY - y0));
-                position->set(2, new DoubleTag(entity->mZ - z0));
-            }
+                if ((entity->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
+                {
+                    IntTag* tileX = static_cast<IntTag*>(tag->get(L"TileX"));
+                    x = tileX->mValue -= x0;
+                    IntTag* tileY = static_cast<IntTag*>(tag->get(L"TileY"));
+                    y = tileY->mValue -= y0;
+                    IntTag* tileZ = static_cast<IntTag*>(tag->get(L"TileZ"));
+                    z = tileZ->mValue -= z0;
+                }
 
-            if (type == EntityType::PAINTING || type == EntityType::ITEM_FRAME)
-            {
-                tag->putInt(L"TileX", (int)(entity->mX - x0));
-                tag->putInt(L"TileY", (int)(entity->mY - y0));
-                tag->putInt(L"TileZ", (int)(entity->mZ - z0));
+                if (tag->contains(L"UUID"))
+                {
+                    tag->remove(L"UUID");
+                }
+
+                result.push_back(std::make_pair(Vec3::newPermanent(x, y, z), tag->copy()));
             }
-            result.push_back(
-                std::make_pair(Vec3::newPermanent(entity->mX - x0, entity->mY - y0, entity->mZ - z0), tag));
-        }
-        else
-        {
-            delete tag;
         }
     }
 }

@@ -45,8 +45,8 @@ public:
     unsigned int GetRoundTime();
     void AwardMG01Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players);
     static bool SORT_MG02_STATS(PlayerStats* first, PlayerStats* second);
-    static boost::shared_ptr<ServerPlayer> getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats,
-                                                                 unsigned int index);
+    static boost::weak_ptr<ServerPlayer> getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats,
+                                                               unsigned int index);
     void AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players);
     static bool SORT_MG03_STATS_FALLBACK(PlayerStats* first, PlayerStats* second);
     static bool SORT_MG03_STATS_POINTS(PlayerStats* first, PlayerStats* second);

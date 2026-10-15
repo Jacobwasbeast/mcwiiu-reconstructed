@@ -115,7 +115,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
                 {
                     boost::shared_ptr<Endermite> endermite(new Endermite(mLevel));
                     endermite->setPlayerSpawned(true);
-                    endermite->moveTo(player->mX, player->mY, player->mZ, player->mYRot, player->mXRot);
+                    endermite->moveTo(owner->mX, owner->mY, owner->mZ, owner->mYRot, owner->mXRot);
                     mLevel->addEntity(endermite);
                 }
 

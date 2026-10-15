@@ -20,7 +20,7 @@ const VertexFormatElement::Type* VertexFormatElement::Type::SHORT = new Type(2, 
 const VertexFormatElement::Type* VertexFormatElement::Type::UINT = new Type(4, L"Unsigned Int", 0, eType_UnsignedInt);
 const VertexFormatElement::Type* VertexFormatElement::Type::INT = new Type(4, L"Int", 0, eType_Int);
 
-VertexFormatElement::Type::Type(int elementSize, const std::wstring& elementName, int elementGlType, EType elementType)
+VertexFormatElement::Type::Type(int elementSize, std::wstring elementName, int elementGlType, EType elementType)
     : size(elementSize),
       name(elementName),
       glType(elementGlType),
@@ -33,7 +33,7 @@ int VertexFormatElement::Type::getSize() const
     return size;
 }
 
-VertexFormatElement::Usage::Usage(const std::wstring& usageName, EUsage usageId) : name(usageName), usage(usageId)
+VertexFormatElement::Usage::Usage(std::wstring usageName, EUsage usageId) : name(usageName), usage(usageId)
 {
 }
 

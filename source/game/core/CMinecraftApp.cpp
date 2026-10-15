@@ -717,17 +717,14 @@ void CMinecraftApp::InitTime()
 }
 uint32_t CMinecraftApp::IsActionPending(int player, eXuiAction action)
 {
-    if (player < 0 || player >= 4)
-        return 0;
     EnterCriticalSection(&mPendingActionsMutex);
     if (mXuiActions[player].action == action)
     {
         LeaveCriticalSection(&mPendingActionsMutex);
         return 1;
     }
-    for (std::vector<XuiActionAndParam>::const_iterator it = mPendingActions[player].begin();
-         it != mPendingActions[player].end(); ++it)
-        if (it->action == action)
+    for (unsigned int i = 0; i < mPendingActions[player].size(); ++i)
+        if (mPendingActions[player][i].action == action)
         {
             LeaveCriticalSection(&mPendingActionsMutex);
             return 1;
@@ -765,8 +762,7 @@ void CMinecraftApp::SetActionInternal(int player, eXuiAction action, void* param
     if (static_cast<unsigned int>(player) >= 4U)
         return;
 
-    eXuiAction& currentAction = mXuiActions[player].action;
-    void*& currentParam = mXuiActions[player].param;
+    const eXuiAction currentAction = mXuiActions[player].action;
 
     if ((IsActionPending(player, action) == 0
          || (action != eXuiAction_ConnectionLost && action != eXuiAction_ExitWorld
@@ -781,10 +777,10 @@ void CMinecraftApp::SetActionInternal(int player, eXuiAction action, void* param
             if (!pending.empty())
             {
                 EnterCriticalSection(&mPendingActionsMutex);
-                currentAction = pending.front().action;
-                currentParam = pending.front().param;
+                const XuiActionAndParam next = pending.front();
                 pending.erase(pending.begin());
                 LeaveCriticalSection(&mPendingActionsMutex);
+                mXuiActions[player] = next;
                 return;
             }
         }
@@ -798,8 +794,8 @@ void CMinecraftApp::SetActionInternal(int player, eXuiAction action, void* param
             LeaveCriticalSection(&mPendingActionsMutex);
             return;
         }
-        currentAction = action;
-        currentParam = param;
+        mXuiActions[player].action = action;
+        mXuiActions[player].param = param;
     }
 }
 void CMinecraftApp::SetAction(int player, eXuiAction action, void* param)
@@ -1457,25 +1453,21 @@ int CMinecraftApp::RemoteSaveThreadProc(void* context)
     Block::CreateNewThreadStorage();
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    ProgressRenderer* progressRenderer = minecraft->mProgressRenderer;
-    progressRenderer->progressStartNoAbort(static_cast<int>(IDS_PROGRESS_HOST_SAVING));
-    progressRenderer->progressStage(-1);
-    progressRenderer->progressStagePercentage(0);
+    minecraft->mProgressRenderer->progressStartNoAbort(static_cast<int>(IDS_PROGRESS_HOST_SAVING));
+    minecraft->mProgressRenderer->progressStage(-1);
+    minecraft->mProgressRenderer->progressStagePercentage(0);
 
-    while (gApp.GetGameStarted() == 0)
+    while (gApp.GetGameStarted() == 0
+           && gApp.GetXuiAction(gProfile->GetPrimaryPad()) == eXuiAction_RemoteSaveInProgress)
     {
-        const int player = gProfile->GetPrimaryPad();
-        if (gApp.GetXuiAction(player) != eXuiAction_RemoteSaveInProgress)
-            break;
         minecraft->tickAllConnections();
         Sleep(100);
     }
 
-    const int player = gProfile->GetPrimaryPad();
-    if (gApp.GetXuiAction(player) != eXuiAction_RemoteSaveInProgress)
+    if (gApp.GetXuiAction(gProfile->GetPrimaryPad()) != eXuiAction_RemoteSaveInProgress)
         return ERROR_CANCELLED;
 
-    gApp.SetAction(player, eXuiAction_Idle, NULL);
+    gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_Idle, NULL);
     gConsoleUIController.UpdatePlayerBasePositions();
     Block::ReleaseThreadStorage();
     ElementStorage::ReleaseThreadStorage();
@@ -1679,7 +1671,6 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
     FireworksRecipe::UseDefaultThreadStorage();
     ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_GameModeTransition);
 
-    ProgressRenderer* progressRenderer = minecraft->mProgressRenderer;
     {
         std::wstring transitionOverride =
             Minecraft::GetInstance()->GetClientMasterGameMode()->GetTransitionTextOverride();
@@ -1688,22 +1679,22 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
         if (!transitionOverride.empty())
             progressStrings.push_back(transitionOverride);
         progressStrings.push_back(L10N::GetString(IDS_PROGRESS_DOWNLOADING_TERRAIN));
-        progressStrings.push_back(L"TPACK");
+        progressStrings.push_back(L"");
 
-        progressRenderer->progressStartNoAbort(progressStrings[0]);
-        progressRenderer->progressStage(progressStrings[1]);
+        minecraft->mProgressRenderer->progressStartNoAbort(progressStrings[0]);
+        minecraft->mProgressRenderer->progressStage(progressStrings[1]);
     }
 
-    progressRenderer->progressStagePercentage(0);
+    minecraft->mProgressRenderer->progressStagePercentage(0);
     Sleep(100);
-    progressRenderer->progressStagePercentage(10);
+    minecraft->mProgressRenderer->progressStagePercentage(10);
 
     TexturePack* previousPack = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
     TexturePack* previousPackWithAudio = NULL;
     if (previousPack->hasAudio())
         previousPackWithAudio = previousPack;
 
-    progressRenderer->progressStagePercentage(20);
+    minecraft->mProgressRenderer->progressStagePercentage(20);
 
     if (minecraft->mTexturePackRepository->selectTexturePackById(texturePackId, false))
     {
@@ -1719,7 +1710,7 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
         }
     }
 
-    progressRenderer->progressStagePercentage(30);
+    minecraft->mProgressRenderer->progressStagePercentage(30);
     ClientMasterGameMode* masterGameMode = minecraft->GetClientMasterGameMode();
     int progress = 30;
     int progressAccumulator = 0;
@@ -1744,7 +1735,7 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
         if (progressAccumulator == 0 && progress < 90)
         {
             progress += 10;
-            progressRenderer->progressStagePercentage(progress);
+            minecraft->mProgressRenderer->progressStagePercentage(progress);
         }
 
         if (!exitWaitLoop)
@@ -1766,7 +1757,7 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
         }
     }
 
-    progressRenderer->progressStagePercentage(90);
+    minecraft->mProgressRenderer->progressStagePercentage(90);
 
     if (!CGameNetworkManager::sInstance.IsHost())
     {
@@ -1820,19 +1811,13 @@ int CMinecraftApp::GameModeTransitionComplete(void* context)
     if (gApp.GetXuiAction(primaryPad) != eXuiAction_ExitWorld && !CGameNetworkManager::sInstance.IsLeavingGame()
         && context == reinterpret_cast<void*>(1))
     {
-        for (int playerIndex = 0; playerIndex < 4; playerIndex += 2)
+        for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> first = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
-            if (first)
+            boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+            if (player)
             {
-                first.get()->SetWaitingForScoreboard(true);
+                player.get()->SetWaitingForScoreboard(true);
                 gApp.SetAction(playerIndex, eXuiAction_RespawnProgress, NULL);
-            }
-            boost::shared_ptr<MultiplayerLocalPlayer> second = Minecraft::GetInstance()->mLocalPlayers[playerIndex + 1];
-            if (second)
-            {
-                second.get()->SetWaitingForScoreboard(true);
-                gApp.SetAction(playerIndex + 1, eXuiAction_RespawnProgress, NULL);
             }
         }
     }
@@ -2093,8 +2078,7 @@ std::wstring CMinecraftApp::getRootPath(unsigned int contentType, bool create, b
                 path = std::wstring(L"WiiU\\DLC\\") + name;
         }
 
-        File candidateFile(path);
-        if (!candidateFile.exists())
+        if (!File(path).exists())
             path = suffix;
     }
     return path + (mounted ? std::wstring(L"\\Data\\") : std::wstring(L"\\"));
@@ -2102,8 +2086,7 @@ std::wstring CMinecraftApp::getRootPath(unsigned int contentType, bool create, b
 std::wstring CMinecraftApp::getFilePath(unsigned int contentType, std::wstring name, bool mounted, std::wstring suffix)
 {
     const std::wstring primary = getRootPath(contentType, true, mounted, suffix) + name;
-    File primaryFile(primary);
-    if (primaryFile.exists())
+    if (File(primary).exists())
         return primary;
     return getRootPath(contentType, false, true, suffix) + name;
 }
@@ -2628,8 +2611,7 @@ bool CMinecraftApp::LoadTradingMenu(int player, boost::shared_ptr<Inventory> inv
 bool CMinecraftApp::LoadShulkerBoxMenu(int player, boost::shared_ptr<Inventory> inventory,
                                        boost::shared_ptr<Container> container)
 {
-    boost::shared_ptr<Container> inventoryContainer(inventory, static_cast<Container*>(inventory.get()));
-    return LoadContainerMenu(player, inventoryContainer, container);
+    return LoadContainerMenu(player, inventory, container);
 }
 bool CMinecraftApp::LoadHopperMenu(int player, boost::shared_ptr<Inventory> inventory,
                                    boost::shared_ptr<Container> container)
@@ -2998,20 +2980,14 @@ void CMinecraftApp::SetUniqueMapName(char* name)
 }
 uint64_t CMinecraftApp::getArchiveFileSize(const std::wstring& path)
 {
+    TexturePack* selected = NULL;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != NULL && minecraft->mTexturePackRepository != NULL)
-    {
-        TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
-        if (selected != NULL && selected->hasData())
-        {
-            ArchiveFile* archive = selected->getArchiveFile();
-            if (archive != NULL && archive->hasFile(path))
-                return archive->getFileSize(path);
-        }
-    }
-    if (mMediaArchive != NULL)
-        return mMediaArchive->getFileSize(path);
-    return 0;
+        selected = minecraft->mTexturePackRepository->getSelected();
+    if (selected != NULL && selected->hasData() && selected->getArchiveFile() != NULL
+        && selected->getArchiveFile()->hasFile(path))
+        return selected->getArchiveFile()->getFileSize(path);
+    return mMediaArchive->getFileSize(path);
 }
 void CMinecraftApp::SetTrialTimerStart()
 {
@@ -3132,7 +3108,7 @@ std::wstring CMinecraftApp::GetSingleActionReplacement(int32_t pad, uint32_t but
     else
         found = false;
 
-    if (GetLocalPlayerCount() > 1)
+    if (gApp.GetLocalPlayerCount() > 1)
     {
         size = L"_Small";
         iconSize = 20;
@@ -3148,43 +3124,46 @@ std::wstring CMinecraftApp::GetSingleActionReplacement(int32_t pad, uint32_t but
         controller = L"_CTRL_1";
     }
 
-    if (found)
-    {
-        wchar_t image[128];
-        swprintf(image, 128, L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>", button.c_str(),
-                 controller.c_str(), size.c_str(), iconSize, iconSize);
-        return image;
-    }
-    return std::wstring(L" ") + L10N::GetString(IDS_CONTROLS_NONE);
+    if (!found)
+        return std::wstring(L" ").append(L10N::GetString(IDS_CONTROLS_NONE));
+
+    wchar_t image[128];
+    swprintf(image, 128, L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>", button.c_str(),
+             size.c_str(), controller.c_str(), iconSize, iconSize);
+    return image;
 }
 std::wstring CMinecraftApp::GetActionReplacement(int32_t controllerIndex, uint8_t actionMask)
 {
+    wchar_t replacement[256];
     uint32_t primaryButton = g_pInput->GetGameJoypadMaps(controllerIndex, actionMask);
+    uint32_t secondaryButton = 0;
     if (actionMask >= 0x20 && actionMask < 0x39)
     {
         primaryButton = static_cast<uint32_t>(
             GameSettings::GetInputButton(controllerIndex, false, static_cast<EControllerActions>(actionMask)));
-        const uint32_t secondaryButton = static_cast<uint32_t>(
+        secondaryButton = static_cast<uint32_t>(
             GameSettings::GetInputButton(controllerIndex, true, static_cast<EControllerActions>(actionMask)));
-        if (secondaryButton != 0)
-        {
-            const std::wstring secondary = GetSingleActionReplacement(controllerIndex, secondaryButton);
-            const std::wstring primary = GetSingleActionReplacement(controllerIndex, primaryButton);
-            wchar_t replacement[256];
-            swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]), L"%ls+%ls", secondary.c_str(),
-                     primary.c_str());
-            return std::wstring(replacement);
-        }
     }
 
-    const std::wstring primary = GetSingleActionReplacement(controllerIndex, primaryButton);
-    wchar_t replacement[256];
-    swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]), L"%ls", primary.c_str());
+    if (secondaryButton != 0)
+    {
+        swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]), L"%ls+%ls",
+                 GetSingleActionReplacement(controllerIndex, secondaryButton).c_str(),
+                 GetSingleActionReplacement(controllerIndex, primaryButton).c_str());
+    }
+    else
+    {
+        swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]), L"%ls",
+                 GetSingleActionReplacement(controllerIndex, primaryButton).c_str());
+    }
     return std::wstring(replacement);
 }
 std::wstring CMinecraftApp::GetVKReplacement(int32_t player, uint32_t key, bool fullSize)
 {
-    const wchar_t* action = NULL;
+    std::wstring action = L"";
+    std::wstring controller = L"";
+    std::wstring size = L"";
+    bool found = true;
     if (key >= VK_PAD_LTHUMB_UP && key <= VK_PAD_LTHUMB_DOWNLEFT)
         action = L"LeftStickNavigate";
     else if (key >= VK_PAD_RTHUMB_UP && key <= VK_PAD_RTHUMB_DOWNLEFT)
@@ -3194,10 +3173,16 @@ std::wstring CMinecraftApp::GetVKReplacement(int32_t player, uint32_t key, bool 
         switch (key)
         {
         case VK_PAD_A:
-            action = g_pInput->IsCircleCrossSwapped() ? L"ActionRight" : L"ActionBottom";
+            if (g_pInput->IsCircleCrossSwapped())
+                action = L"ActionRight";
+            else
+                action = L"ActionBottom";
             break;
         case VK_PAD_B:
-            action = g_pInput->IsCircleCrossSwapped() ? L"ActionBottom" : L"ActionRight";
+            if (g_pInput->IsCircleCrossSwapped())
+                action = L"ActionBottom";
+            else
+                action = L"ActionRight";
             break;
         case VK_PAD_X:
             action = L"ActionLeft";
@@ -3217,23 +3202,31 @@ std::wstring CMinecraftApp::GetVKReplacement(int32_t player, uint32_t key, bool 
         case VK_PAD_RTRIGGER:
             action = L"TriggerR";
             break;
+        default:
+            found = false;
+            break;
         }
     }
-    if (action == NULL)
-        return std::wstring(L" ") + L10N::GetString(IDS_CONTROLS_NONE);
 
-    const bool small = !fullSize && gApp.GetLocalPlayerCount() > 1;
-    const wchar_t* controller = L"";
+    int iconSize = 30;
+    if (!fullSize && gApp.GetLocalPlayerCount() > 1)
+    {
+        size = L"_Small";
+        iconSize = 20;
+    }
+
     if (g_pInput->IsPadDRCController(player) || player == 4)
         controller = L"_CTRL_1";
     else if (g_pInput->IsPadClassicController(player))
         controller = L"_CTRL_2";
-    const int imageSize = small ? 20 : 30;
-    wchar_t replacement[128];
-    swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]),
-             L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>", action, controller,
-             small ? L"_Small" : L"", imageSize, imageSize);
-    return std::wstring(replacement);
+
+    if (!found)
+        return std::wstring(L" ").append(L10N::GetString(IDS_CONTROLS_NONE));
+
+    wchar_t image[128];
+    swprintf(image, 128, L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>", action.c_str(),
+             size.c_str(), controller.c_str(), iconSize, iconSize);
+    return image;
 }
 std::wstring CMinecraftApp::GetIconReplacement(uint32_t icon)
 {
@@ -3580,7 +3573,7 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
 
         if (std::strcmp(key, "4J_SEED") == 0)
         {
-            char seedText[23];
+            char seedText[22];
             std::memset(seedText, 0, sizeof(seedText));
             std::strncpy(seedText, cursor, 0x16);
             const char* seedEnd = seedText;
@@ -3753,8 +3746,12 @@ unsigned int CMinecraftApp::CreateImageTextData(unsigned char* image, const PngT
     {
         std::strcpy(output + length, "4J_EXPLOREDCHUNKS");
         length += 18;
-        std::sprintf(output + length, "%08x%08x%08x%08x%08x", data->exploredChunks[0], data->exploredChunks[1],
+        char exploredChunks[41];
+        std::memset(exploredChunks, 0, sizeof(exploredChunks));
+        std::sprintf(exploredChunks, "%08x%08x%08x%08x%08x", data->exploredChunks[0], data->exploredChunks[1],
                      data->exploredChunks[2], data->exploredChunks[3], data->exploredChunks[4]);
+        std::strcpy(output + length, exploredChunks);
+        length += static_cast<unsigned int>(std::strlen(exploredChunks)) + 1;
         length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
     }
 
@@ -3763,6 +3760,7 @@ unsigned int CMinecraftApp::CreateImageTextData(unsigned char* image, const PngT
         std::strcpy(output + length, "4J_BASESAVENAME");
         length += 16;
         std::strcpy(output + length, data->baseSaveName);
+        length += static_cast<unsigned int>(std::strlen(data->baseSaveName)) + 1;
         length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
     }
 
@@ -3987,13 +3985,8 @@ uint32_t CMinecraftApp::RetrieveNextDLCContent()
     }
 
     _DLCRequest* request = *it;
-    if (gStorage == NULL)
-    {
-        LeaveCriticalSection(&mDLCRetrieveMutex);
-        return 1;
-    }
-
-    const int result = gStorage->GetDLCOffers(primaryPad, DLCOffersReturned, this, request->mContentId);
+    const int result =
+        gStorage->GetDLCOffers(gProfile->GetPrimaryPad(), DLCOffersReturned, this, request->mContentId);
 
     request->mStatus = (result == 5) ? 1U : 2U;
     LeaveCriticalSection(&mDLCRetrieveMutex);
@@ -4088,21 +4081,23 @@ std::vector<SKIN_BOX*>* CMinecraftApp::GetAdditionalSkinBoxes(unsigned int skinI
 }
 unsigned int CMinecraftApp::getSkinIdFromPath(const std::wstring& path)
 {
+    unsigned int id = 0;
     if (path.length() < 14)
-        return 0;
+        return id;
 
-    const bool dlcSkin = path.compare(0, 3, L"dlc") == 0;
+    const bool dlcSkin = path.substr(0, 3).compare(L"dlc") == 0;
     std::wstring idText = path.substr(7);
     const std::wstring::size_type extension = idText.find(L'.');
     idText = idText.substr(0, extension);
 
-    unsigned int id = 0;
-    std::wstringstream stream(idText);
+    std::wstringstream stream;
     if (dlcSkin)
-        stream >> std::dec >> id;
+        stream << std::dec << idText.c_str();
     else
-        stream >> std::hex >> id;
-    return id | (dlcSkin ? 0x80000000U : 0U);
+        stream << std::hex << idText.c_str();
+    stream >> id;
+    id = (dlcSkin ? (1U << SKIN_ID_DLC_FLAG_SHIFT) : 0U) | (id & SKIN_ID_DLC_MASK);
+    return id;
 }
 std::wstring CMinecraftApp::getSkinPathFromId(unsigned int id)
 {
@@ -4346,8 +4341,9 @@ void CMinecraftApp::RunFrame()
 void CMinecraftApp::HandleXuiActions()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer;
 
-    if (GetGlobalXuiAction() == eXuiAction_LavaNearSpawn)
+    if (gApp.GetGlobalXuiAction() == eXuiAction_LavaNearSpawn)
     {
         int parameters[1] = {static_cast<int>(IDS_CONFIRM_OK)};
         if (gConsoleUIController.RequestErrorMessage(IDS_CANT_PLACE_NEAR_SPAWN_TITLE, static_cast<int>(0xbf12dc51U),
@@ -4553,8 +4549,8 @@ void CMinecraftApp::HandleXuiActions()
         }
         case eXuiAction_RespawnProgress:
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[pad];
-            if (player == NULL || player->mHasOpenedInventory)
+            localPlayer = minecraft->mLocalPlayers[pad];
+            if (localPlayer == NULL || localPlayer->mHasOpenedInventory)
             {
                 SetActionInternal(pad, eXuiAction_Idle, NULL);
                 break;
@@ -4602,11 +4598,10 @@ void CMinecraftApp::HandleXuiActions()
             gConsoleUIController.NavigateToHomeMenu(false);
             break;
         case eXuiAction_RemoveLocalPlayer:
-        case eXuiAction_RemoveLocalPlayerNoStats:
         {
             const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
             gStorage->ForceQueuedProfileWrites(pad);
-            if (action == eXuiAction_RemoveLocalPlayer && g_pLeaderboardManager->OpenSession())
+            if (g_pLeaderboardManager->OpenSession())
             {
                 for (int player = 0; player < 4; ++player)
                 {
@@ -4615,6 +4610,37 @@ void CMinecraftApp::HandleXuiActions()
                 }
                 g_pLeaderboardManager->CloseSession();
             }
+            minecraft->mGui->clearMessages(pad);
+            minecraft->setLocalPlayerIdx(gProfile->GetPrimaryPad());
+            minecraft->removeLocalPlayerIdx(pad);
+            gConsoleUIController.SetTooltips(pad, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false,
+                                             false);
+            if (playerCount > 2)
+            {
+                for (int player = 0; player < 4; ++player)
+                {
+                    if (player != pad && minecraft->mLocalPlayers[player] != NULL)
+                        gProfile->SetCurrentGameActivity(player, CGameNetworkManager::sInstance.IsLocalGame() ? 3 : 2,
+                                                         false);
+                }
+            }
+            else
+            {
+                for (int player = 0; player < 4; ++player)
+                {
+                    if (player != pad && minecraft->mLocalPlayers[player] != NULL)
+                        gProfile->SetCurrentGameActivity(player, CGameNetworkManager::sInstance.IsLocalGame() ? 5 : 4,
+                                                         false);
+                }
+            }
+            gProfile->SignOutUser(pad);
+            SetActionInternal(pad, eXuiAction_Idle, NULL);
+            break;
+        }
+        case eXuiAction_RemoveLocalPlayerNoStats:
+        {
+            const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+            gStorage->ForceQueuedProfileWrites(pad);
             minecraft->mGui->clearMessages(pad);
             minecraft->setLocalPlayerIdx(gProfile->GetPrimaryPad());
             minecraft->removeLocalPlayerIdx(pad);
@@ -4644,8 +4670,9 @@ void CMinecraftApp::HandleXuiActions()
             break;
         case eXuiAction_CloseScenesOnConnect:
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[pad];
-            if (player != NULL && player->mPacketListener != NULL && player->mPacketListener->isStarted())
+            localPlayer = minecraft->mLocalPlayers[pad];
+            if (localPlayer != NULL && localPlayer->mPacketListener != NULL
+                && localPlayer->mPacketListener->isStarted())
             {
                 SetActionInternal(pad, eXuiAction_Idle, NULL);
                 gConsoleUIController.CloseUIScenes(pad, false);
@@ -5050,7 +5077,7 @@ void CMinecraftApp::HandleXuiActions()
             break;
         }
 
-        switch (GetTMSAction(pad))
+        switch (gApp.GetTMSAction(pad))
         {
         case 1:
             SetTMSAction(pad, eTMSAction_Default);

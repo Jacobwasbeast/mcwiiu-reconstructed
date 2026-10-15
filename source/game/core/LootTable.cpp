@@ -55,7 +55,7 @@ std::vector<int>* LootTable::getAvailableSlots(Container* container, Random* ran
 
 void LootTable::shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* items, int maxSize, Random* random)
 {
-    std::vector<not_null_ptr<ItemInstance> > splitItems;
+    std::vector<not_null_ptr<ItemInstance> >* splitItems = new std::vector<not_null_ptr<ItemInstance> >();
 
     for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin(); it != items->end();)
     {
@@ -70,23 +70,18 @@ void LootTable::shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* i
         }
         else
         {
-            splitItems.push_back(item);
+            splitItems->push_back(item);
             it = items->erase(it);
         }
     }
 
-    if (maxSize <= (int)items->size())
-    {
-        items->insert(items->end(), splitItems.begin(), splitItems.end());
-        Mth::shuffle(items, *random);
-        return;
-    }
+    int remaining = maxSize - (int)items->size();
 
-    while (!splitItems.empty())
+    while (remaining > 0 && !splitItems->empty())
     {
-        int index = Mth::nextInt(random, 0, (int)splitItems.size() - 1);
-        not_null_ptr<ItemInstance> item = splitItems[(unsigned int)index];
-        splitItems.erase(splitItems.begin() + index);
+        int index = Mth::nextInt(random, 0, (int)splitItems->size() - 1);
+        not_null_ptr<ItemInstance> item = (*splitItems)[(unsigned int)index];
+        splitItems->erase(splitItems->begin() + index);
 
         int splitCount = Mth::nextInt(random, 1, item->getCount() / 2);
         not_null_ptr<ItemInstance> split = item->split(splitCount);
@@ -97,7 +92,7 @@ void LootTable::shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* i
         }
         else
         {
-            splitItems.push_back(item);
+            splitItems->push_back(item);
         }
 
         if (split->getCount() == 0 || !random->nextBoolean())
@@ -106,10 +101,11 @@ void LootTable::shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* i
         }
         else
         {
-            splitItems.push_back(split);
+            splitItems->push_back(split);
         }
     }
 
+    items->insert(items->end(), splitItems->begin(), splitItems->end());
     Mth::shuffle(items, *random);
 }
 

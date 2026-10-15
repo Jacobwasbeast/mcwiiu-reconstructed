@@ -327,9 +327,8 @@ unsigned int GameRuleManager::addLevelGenerationOptions(LevelGenerationOptions* 
 void GameRuleManager::readAttributes(DataInputStream* input, std::vector<std::wstring>* names,
                                      GameRuleDefinition* definition)
 {
-    unsigned int count = input->readInt();
-    unsigned int i;
-    for (i = 0; i < count; ++i)
+    int count = input->readInt();
+    for (int i = 0; i < count; ++i)
     {
         unsigned int nameIndex = input->readInt();
         std::wstring value = input->readUTF();
@@ -345,9 +344,8 @@ void GameRuleManager::readChildren(DataInputStream* input, std::vector<std::wstr
                                    boost::unordered_map<int, ConsoleGameRules::EGameRuleType>* types,
                                    GameRuleDefinition* definition)
 {
-    unsigned int count = input->readInt();
-    unsigned int i;
-    for (i = 0; i < count; ++i)
+    int count = input->readInt();
+    for (int i = 0; i < count; ++i)
     {
         int id = input->readInt();
         ConsoleGameRules::EGameRuleType type = static_cast<ConsoleGameRules::EGameRuleType>(-1);

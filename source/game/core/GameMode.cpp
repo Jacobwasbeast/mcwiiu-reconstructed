@@ -345,10 +345,7 @@ void GameMode::RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingr
             }
 
             if (resource->isEmpty() && consumedItem != NULL && consumedItem->hasCraftingRemainingItem())
-            {
-                not_null_ptr<ItemInstance> remaining(new ItemInstance(consumedItem->getCraftingRemainingItem()));
-                inventory->add(remaining);
-            }
+                inventory->add(not_null_ptr<ItemInstance>(new ItemInstance(consumedItem->getCraftingRemainingItem())));
         }
     }
 }
@@ -437,24 +434,28 @@ boost::shared_ptr<ItemInstance> GameMode::handleStackedCraftItem(std::vector<std
     for (std::vector<std::pair<int, int> >::iterator it = recipeStack.begin(); it != recipeStack.end(); ++it)
     {
         Recipe::INGREDIENTS_REQUIRED& required = ingredients[it->first];
-        not_null_ptr<ItemInstance> source = result;
+        not_null_ptr<ItemInstance> source = ItemInstance::EMPTY;
         if (firstRecipe && it->second >= 0)
         {
             source = player->mInventory->getItem(it->second)->copy();
             source->setCount(1);
         }
+        else
+        {
+            source = result;
+        }
 
-        boost::shared_ptr<CraftingContainer> crafting;
+        bool preserveSource = true;
         if (!source->isEmpty())
         {
-            crafting = required.recipe->generateExpectedCraftSlots();
+            boost::shared_ptr<CraftingContainer> crafting = required.recipe->generateExpectedCraftSlots();
             bool substituted = false;
             for (unsigned int row = 0; row < 3 && !substituted; ++row)
             {
                 for (unsigned int column = 0; column < 3; ++column)
                 {
-                    not_null_ptr<ItemInstance> expected = crafting->getItem(row, column);
-                    if (!expected->isEmpty() && expected->getItem() == source->getItem())
+                    if (!crafting->getItem(row, column)->isEmpty()
+                        && crafting->getItem(row, column)->getItem() == source->getItem())
                     {
                         crafting->setItem(row + column * 3, source);
                         substituted = true;
@@ -462,30 +463,28 @@ boost::shared_ptr<ItemInstance> GameMode::handleStackedCraftItem(std::vector<std
                     }
                 }
             }
-        }
 
-        result = required.recipe->assemble(crafting);
-        bool preserveSource = true;
-        if (result->getItem() == Items::banner)
+            result = required.recipe->assemble(crafting);
+            if (result->getItem() == Items::banner)
+            {
+                result = BannerRecipes::mAddPatternRecipe->assemble(crafting);
+                if (result->isEmpty())
+                {
+                    result = BannerRecipes::mDuplicateRecipe->assemble(crafting);
+                    const DyeColor* color = BannerBlockEntity::getBaseColor(source);
+                    result = not_null_ptr<ItemInstance>(BannerItem::makeBanner(color, NULL));
+                    BannerBlockEntity::addTags(result, color->getItemData(), NULL);
+                    preserveSource = false;
+                }
+            }
+        }
+        else
         {
-            BannerRecipes::BannerAddPatternRecipe addPatternRecipe;
-            result = addPatternRecipe.assemble(crafting);
-            if (result->isEmpty())
-            {
-                BannerRecipes::BannerDuplicateRecipe duplicateRecipe;
-                result = duplicateRecipe.assemble(crafting);
-            }
-            if (result->isEmpty())
-            {
-                const DyeColor* color = BannerBlockEntity::getBaseColor(source);
-                result = not_null_ptr<ItemInstance>(BannerItem::makeBanner(color, NULL));
-                BannerBlockEntity::addTags(result, color->getItemData(), NULL);
-                preserveSource = false;
-            }
+            result = required.recipe->assemble(boost::shared_ptr<CraftingContainer>());
         }
 
-        result->onCraftedBy(player->mLevel, player, result->getCount());
         bool creativeDebug = gApp.DebugSettingsOn() && (player->mDebugOptions & 0x4000) != 0;
+        result->onCraftedBy(player->mLevel, player, result->getCount());
         if (!creativeDebug)
             RemoveRecipeItemsFromInventory(required, player->mInventory, firstRecipe ? source : result,
                                            !firstRecipe || !preserveSource);

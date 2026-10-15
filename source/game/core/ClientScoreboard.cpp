@@ -659,25 +659,24 @@ void ClientScoreboard::GetPlayersSortedByPoints(std::list<std::pair<std::wstring
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)
     {
-        std::pair<std::wstring, int> entry(GetDisplayName(it->first), GetPoints(it->first, round));
-        std::list<std::pair<std::wstring, int> >::iterator insert = players.begin();
-        while (insert != players.end() && insert->second >= entry.second)
+        PlayerStats::_RoundStats& stats = it->second->mRoundStats[round];
+        int points = stats.mItemsCollected + stats.mBlocksMined;
+        bool inserted = false;
+        std::list<std::pair<std::wstring, int> >::iterator player = players.begin();
+        for (; player != players.end(); ++player)
         {
-            ++insert;
+            if (points > player->second)
+            {
+                players.insert(player, std::pair<std::wstring, int>(it->second->mName, points));
+                inserted = true;
+                break;
+            }
         }
-        players.insert(insert, entry);
+        if (!inserted)
+        {
+            players.push_back(std::pair<std::wstring, int>(it->second->mName, points));
+        }
     }
-}
-
-namespace
-{
-struct PositionEntry
-{
-    std::wstring name;
-    int placement;
-    double order;
-    unsigned int tie;
-};
 }
 
 void ClientScoreboard::GetPlayersSortedByPosition(std::list<std::pair<std::wstring, int> >& players, int round)
@@ -686,31 +685,31 @@ void ClientScoreboard::GetPlayersSortedByPosition(std::list<std::pair<std::wstri
     {
         round = mCurrentRound;
     }
-    const double activeOrder = 100.0;
-    std::list<PositionEntry> entries;
+    std::list<double> progress;
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)
     {
-        PlayerStats::_RoundStats* stats = GetPlayerRoundStats(it->first, round);
-        if (stats != NULL)
+        PlayerStats::_RoundStats& stats = it->second->mRoundStats[round];
+        double traversed = stats.mWinner ? 100.0 : stats.mFallDistance;
+        unsigned int time = stats.mWinner ? stats.mPlacement : 0;
+        bool inserted = false;
+        std::list<double>::iterator rank = progress.begin();
+        std::list<std::pair<std::wstring, int> >::iterator player = players.begin();
+        for (; rank != progress.end() && player != players.end(); ++rank, ++player)
         {
-            PositionEntry entry;
-            entry.name = GetDisplayName(it->first);
-            entry.placement = stats->mActive ? stats->mPlacement : 0;
-            entry.order = stats->mActive ? activeOrder : stats->mBestTime;
-            entry.tie = stats->mActive ? (unsigned int)stats->mPlacement : 0;
-            std::list<PositionEntry>::iterator insert = entries.begin();
-            while (insert != entries.end()
-                   && (insert->order < entry.order || (insert->order == entry.order && insert->tie <= entry.tie)))
+            if (traversed > *rank || (traversed == *rank && stats.mWinner && time < player->second))
             {
-                ++insert;
+                players.insert(player, std::pair<std::wstring, int>(it->second->mName, time));
+                progress.insert(rank, traversed);
+                inserted = true;
+                break;
             }
-            entries.insert(insert, entry);
         }
-    }
-    for (std::list<PositionEntry>::const_iterator entry = entries.begin(); entry != entries.end(); ++entry)
-    {
-        players.push_back(std::make_pair(entry->name, entry->placement));
+        if (!inserted)
+        {
+            players.push_back(std::pair<std::wstring, int>(it->second->mName, time));
+            progress.push_back(traversed);
+        }
     }
 }
 

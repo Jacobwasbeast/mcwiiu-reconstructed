@@ -556,7 +556,7 @@ void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player> player,
         lapsCompleted = getScoreboard()->GetLapsCompleted(player->getSUID(), -1);
     }
 
-    unsigned int sequenceID = 0;
+    int sequenceID = 0;
     if (checkpointID != -1)
         sequenceID = rules->at(checkpointID)->getSequenceID() + 1;
 
@@ -572,24 +572,23 @@ void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player> player,
     if (nextCheckpoints.empty())
     {
         for (std::vector<AABB*>::const_iterator area = areas->begin(); area != areas->end(); ++area)
-            nearestDistance = std::min(nearestDistance, player->getPos(1.0f)->distanceTo(*area));
+            nearestDistance = std::min(player->getPos(1.0f)->distanceTo(*area), nearestDistance);
     }
     else
     {
         for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = nextCheckpoints.begin();
              checkpoint != nextCheckpoints.end(); ++checkpoint)
-            nearestDistance = std::min(nearestDistance, player->getPos(1.0f)->distanceTo((*checkpoint)->getArea()));
+            nearestDistance = std::min(player->getPos(1.0f)->distanceTo((*checkpoint)->getArea()), nearestDistance);
     }
 
     const double sequenceProgress = mSequenceDistances.at(sequenceID) - nearestDistance;
     double distanceTravelled = sequenceProgress;
-    for (unsigned int i = 0; i < sequenceID; ++i)
+    for (int i = 0; i < sequenceID; ++i)
         distanceTravelled += mSequenceDistances.at(i);
 
     const double progress = (distanceTravelled / mTotalDistance) * 100.0;
-    const double speed = Vec3::newTemp(player->mXo, player->mYo, player->mZo)
-                             ->distanceTo(Vec3::newTemp(player->mX, player->mY, player->mZ))
-                         * 20.0;
+    Vec3* oldPos = Vec3::newTemp(player->mXo, player->mYo, player->mZo);
+    const double speed = oldPos->distanceTo(Vec3::newTemp(player->mX, player->mY, player->mZ)) * 20.0;
 
     GameMode* gameMode = player->GetGameMode();
     if (gameMode != NULL)

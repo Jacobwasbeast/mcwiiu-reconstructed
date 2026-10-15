@@ -69,7 +69,7 @@ OSFastMutex g_uiCriticalSection;
 ConsoleUIController gConsoleUIController;
 
 static unsigned int s_trialTimerValue = 0;
-static unsigned int s_trialTimerLimitSecs = 0;
+static unsigned int s_trialTimerLimitSecs = 40 * 60;
 static bool s_uiCriticalSectionInitialized = false;
 
 void PopupToast(void* context, int playerId, int achievementId, int imageId, int value)
@@ -349,7 +349,7 @@ void ConsoleUIController::loadSkins()
 {
     std::wstring platformSkin = L"";
     platformSkin = L"skinWiiU.fui";
-    if (m_screenHeight >= 1080.0f)
+    if (m_screenHeight == 1080.0f || m_screenHeight > 1080.0f)
     {
         m_skinScenes[0] = loadSkin(platformSkin, L"platformskinHD.fui", 0);
     }
@@ -1813,8 +1813,9 @@ void ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                     }
                     bool hitFound = false;
                     if (touchScene != 0)
-                        hitFound = TouchBoxHit(touchScene, touchX, touchY);
-                    if (!hitFound && touchTooltips != 0)
+                        hitFound = TouchBoxHit(touchScene, touchX, touchY)
+                                   || TouchBoxHit(touchTooltips, touchX, touchY);
+                    else if (touchTooltips != 0)
                         hitFound = TouchBoxHit(touchTooltips, touchX, touchY);
                     if (hitFound)
                     {
@@ -1845,8 +1846,9 @@ void ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                     }
                     bool hitFound = false;
                     if (touchScene != 0)
-                        hitFound = TouchBoxHit(touchScene, touchX, touchY);
-                    if (!hitFound && touchTooltips != 0)
+                        hitFound = TouchBoxHit(touchScene, touchX, touchY)
+                                   || TouchBoxHit(touchTooltips, touchX, touchY);
+                    else if (touchTooltips != 0)
                         hitFound = TouchBoxHit(touchTooltips, touchX, touchY);
                     if (hitFound)
                     {

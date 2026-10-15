@@ -23,7 +23,7 @@ ListTag* Rotations::save() const
 
 bool Rotations::equals(const Rotations* other) const
 {
-    return other != NULL && x == other->x && y == other->y && z == other->z;
+    return x == other->x && y == other->y && z == other->z;
 }
 
 float Rotations::getX() const

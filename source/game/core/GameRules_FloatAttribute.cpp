@@ -30,12 +30,12 @@ void GameRules_FloatAttribute::setValue(const std::wstring& value)
 
     if (mHasMin)
     {
-        *mValue = std::max(*mValue, mMin);
+        *mValue = std::max(mMin, *mValue);
     }
 
     if (mHasMax)
     {
-        *mValue = std::min(*mValue, mMax);
+        *mValue = std::min(mMax, *mValue);
     }
 }
 

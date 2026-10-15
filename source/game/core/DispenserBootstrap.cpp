@@ -39,6 +39,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/BlockItem.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockSource.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -593,7 +594,7 @@ not_null_ptr<ItemInstance> DispenserBootstrap::BoatDispenseBehavior::execute(Blo
     outcome = eOUTCOME_Success;
     boost::shared_ptr<Boat> boat(new Boat(level, x, y + yOffset, z));
     boat->setType(mType);
-    boat->mYRot = (float)direction->getOpposite()->toYRot();
+    boat->mYRot = direction->getOpposite()->toYRot();
     level->addEntity(boat);
     item->shrink(1);
     return item;
@@ -633,7 +634,7 @@ not_null_ptr<ItemInstance> DispenserBootstrap::ShulkerBoxDispenseBehavior::execu
         if (placed->hasTag())
         {
             boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::static_pointer_cast<ShulkerBoxBlockEntity>(entity);
-            box->loadFromTag(placed->getTag()->getCompound(L"BlockEntityTag"));
+            box->loadFromTag(placed->getTag()->getCompound(BlockItem::BLOCK_ENTITY_TAG));
         }
         if (placed->hasCustomHoverName())
         {

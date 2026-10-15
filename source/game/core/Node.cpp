@@ -8,7 +8,7 @@
 #include "game/world/block/BlockPathTypes.hpp"
 
 unsigned int Node::poolSize = 0;
-bool Node::usePool = false;
+bool Node::usePool = true;
 Node Node::pool[1024];
 std::vector<Node*> Node::allocated;
 

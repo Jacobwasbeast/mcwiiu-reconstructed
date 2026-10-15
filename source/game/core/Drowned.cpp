@@ -285,8 +285,8 @@ ResourceLocation* Drowned::getDefaultLootTable()
 
 ResourceLocation* Drowned::getDefaultGearTable()
 {
-    return mRandom->nextFloat() < 0.85f ? &BuiltInLootTables::DROWNED_RANGED_EQUIPMENT
-                                        : &BuiltInLootTables::DROWNED_EQUIPMENT;
+    return mRandom->nextFloat() < 0.85f ? &BuiltInLootTables::DROWNED_EQUIPMENT
+                                        : &BuiltInLootTables::DROWNED_RANGED_EQUIPMENT;
 }
 
 void Drowned::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)

@@ -148,7 +148,7 @@ bool VindicationIllager::LIVING_ENTITY_SELECTOR::apply(boost::shared_ptr<Entity>
            && boost::static_pointer_cast<LivingEntity>(entity)->attackable();
 }
 VindicationIllager::VindicatorJohnnyAttackGoal::VindicatorJohnnyAttackGoal(VindicationIllager* mob)
-    : NearestAttackableTargetGoal(mob, typeid(Entity), 0, true, true, new LIVING_ENTITY_SELECTOR(), false, true)
+    : NearestAttackableTargetGoal(mob, typeid(LivingEntity), 0, true, true, new LIVING_ENTITY_SELECTOR(), false, true)
 {
 }
 bool VindicationIllager::VindicatorJohnnyAttackGoal::canUse()

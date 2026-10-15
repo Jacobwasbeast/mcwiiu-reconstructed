@@ -33,7 +33,7 @@ std::wstring particleNames[3] = {L"options.particles.all", L"options.particles.d
 
 Options::Option items[18] = {
     Options::Option(L"options.music", true, false),           Options::Option(L"options.sound", true, false),
-    Options::Option(L"options_invertMouse", false, true),     Options::Option(L"options.sensitivity", true, false),
+    Options::Option(L"options.invertMouse", false, true),     Options::Option(L"options.sensitivity", true, false),
     Options::Option(L"options.renderDistance", false, false), Options::Option(L"options.viewBobbing", false, true),
     Options::Option(L"options.anaglyph", false, true),        Options::Option(L"options.advancedOpengl", false, true),
     Options::Option(L"options.framerateLimit", false, false), Options::Option(L"options.difficulty", false, false),

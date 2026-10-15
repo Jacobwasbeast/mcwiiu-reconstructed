@@ -285,7 +285,7 @@ public:
     public:
         StartPiece(int depth, Random& random, int x, int z, Level* level);
         StartPiece();
-        virtual BlockPos getLocatorPosition();
+        virtual BlockPos* getLocatorPosition();
         virtual EStructurePiece GetType();
         bool mStartFlag;
         PieceWeight* mLastPieceWeight;

@@ -293,7 +293,7 @@ void Guardian::aiStep()
                     double offset = 1.8 - scale;
                     do
                     {
-                        t = t + mRandom->nextDouble() * step + offset;
+                        t += offset + mRandom->nextDouble() * step;
                         mLevel->addParticle(PARTICLE_BUBBLE, (dx / distance) * t + mX,
                                             (dy / distance) * t + mY + getEyeHeight(), (dz / distance) * t + mZ, 0.0,
                                             0.0, 0.0, arrayWithLength<int>());

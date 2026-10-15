@@ -124,8 +124,8 @@ public:
 
     MultiPlayerLevel* getLevel(int dimension);
     LevelStorageSource* getLevelSource();
-    void setLevel(MultiPlayerLevel* level, int dimension, boost::shared_ptr<Player> player, bool disconnect,
-                  bool saveStats);
+    void setLevel(MultiPlayerLevel* level, int dimension, boost::shared_ptr<Player> player, bool doForceStatsSave,
+                  bool primaryPlayerSignedOut);
     void forceaddLevel(MultiPlayerLevel* level);
     void releaseLevel(int dimension);
     void prepareLevel(int dimension);

@@ -2,16 +2,13 @@
 
 BossEvent::BossEvent(const std::wstring& id, int nameId, const std::wstring& name, BossBarColor color,
                      BossBarOverlay overlay)
-    : id(id),
-      name(name),
-      nameId(nameId),
-      percent(1.0f),
-      color(color),
-      overlay(overlay),
-      darkenScreen(false),
-      playBossMusic(false),
-      createWorldFog(false)
 {
+    this->id = id;
+    this->nameId = nameId;
+    this->name = name;
+    this->percent = 1.0f;
+    this->color = color;
+    this->overlay = overlay;
 }
 
 std::wstring BossEvent::getId()

@@ -265,8 +265,8 @@ bool GameStats::SORT_MG02_STATS(PlayerStats* first, PlayerStats* second)
     return false;
 }
 
-boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats,
-                                                                 unsigned int index)
+boost::weak_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats,
+                                                               unsigned int index)
 {
     if (index < stats.size())
     {
@@ -274,7 +274,7 @@ boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vect
                                                      ->getPlayerFromStatsUID(stats.at(index)->mStatsUID);
         return player;
     }
-    return boost::shared_ptr<ServerPlayer>();
+    return boost::weak_ptr<ServerPlayer>();
 }
 
 void GameStats::AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players)
@@ -457,7 +457,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
             continue;
         for (int category = 0; category < eTimeSpentCategory_Count; ++category)
             stats->getRoundStats(mCurrentRound)
-                ->MedalTimestamp(static_cast<eTimeSpentCategory>(category), false, System::processTimeInMilliSecs());
+                ->MedalTimestamp(static_cast<eTimeSpentCategory>(category), false,
+                                 System::processTimeInMilliSecs() - mRoundStartTime);
     }
 
     MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;

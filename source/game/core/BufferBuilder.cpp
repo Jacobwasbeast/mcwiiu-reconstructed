@@ -631,10 +631,6 @@ void BufferBuilder::putColor(int red, int green, int blue, int alpha)
 
 void BufferBuilder::fixupVertexColor(int colorValue, int index)
 {
-    if (index >= 0 && index < mBufferSize)
-    {
-        mRawBuffer->data[index] = colorValue;
-    }
 }
 
 void BufferBuilder::fixupVertexColor(float red, float green, float blue, int index)
@@ -668,10 +664,6 @@ void BufferBuilder::postNormal(float x, float y, float z)
 
 void BufferBuilder::fixupQuadColor(int colorValue)
 {
-    for (int i = 0; i < 4; ++i)
-    {
-        fixupVertexColor(colorValue, getStartingColorIndex(i));
-    }
 }
 
 void BufferBuilder::fixupQuadColor(float red, float green, float blue)

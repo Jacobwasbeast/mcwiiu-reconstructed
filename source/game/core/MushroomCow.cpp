@@ -50,8 +50,10 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player, Interacti
             return true;
         }
         if (!player->mInventory->add(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew))))
+        {
             player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew)), false);
-        return true;
+            return true;
+        }
     }
 
     if (itemInstance->getItem() == Items::shears && getAge() >= 0)

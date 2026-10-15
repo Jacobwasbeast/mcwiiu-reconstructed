@@ -704,9 +704,10 @@ void MasterGameMode::CheckReadyStates()
         BroadcastChat(ClientboundChatPacket::eChatPacketMessage_MorePlayersRequired, arguments);
     }
 
-    unsigned int requiredReady = minimumPlayers;
+    unsigned int requiredReady = playerCount;
     if (!GetMiniGame()->CanAutoStart())
     {
+        requiredReady = minimumPlayers;
         const unsigned int halfPlayers = std::ceil(playerCount * 0.5f);
         if (minimumPlayers < halfPlayers)
             requiredReady = halfPlayers;
@@ -863,11 +864,12 @@ int MasterGameMode::ChooseItemSet(const MiniGameDef& definition, bool central)
     else if (miniGameId == eMiniGameId_Battle)
     {
         const int lootSetId = definition.GetLootSetId();
-        if (mRandomLootSetChosen || lootSetId != RANDOM_LOOT_SET)
-            return lootSetId;
-
-        mRandomLootSetChosen = true;
-        return Random().nextInt(RANDOM_LOOT_SET);
+        if (mRandomLootSetChosen || lootSetId == RANDOM_LOOT_SET)
+        {
+            mRandomLootSetChosen = true;
+            return Random().nextInt(RANDOM_LOOT_SET);
+        }
+        return lootSetId;
     }
     return definition.GetLootSetId();
 }
@@ -891,7 +893,8 @@ void MasterGameMode::SetupTeams()
                                                         ? Team::NEVER
                                                         : Team::ALWAYS;
 
-    for (int teamIndex = GetTeamCount(); teamIndex != 0; --teamIndex)
+    const unsigned int teamCount = GetTeamCount();
+    for (unsigned int teamIndex = 0; teamIndex < teamCount; ++teamIndex)
     {
         wchar_t teamName[0x20];
         swprintf(teamName, 0x20, L"%d", teamIndex);
@@ -963,15 +966,15 @@ void MasterGameMode::ResetPlayers()
     for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
          ++it)
     {
-        boost::shared_ptr<ServerPlayer> player = *it;
+        const boost::shared_ptr<ServerPlayer>& player = *it;
         player->mGameMode->SetDeaths(0);
         player->mInventory->setCarried(ItemInstance::EMPTY);
         player->getFoodData()->setExhaustion(0.0f);
 
-        const MiniGameDef::FoodBalance* foodBalance = GetMiniGame()->GetFoodBalance();
-        player->getFoodData()->setFoodLevel(foodBalance->mMaxFood.otherwise(FoodConstants::MaxFood()));
-        foodBalance = GetMiniGame()->GetFoodBalance();
-        player->getFoodData()->setSaturation(foodBalance->mMaxSaturation.otherwise(FoodConstants::MaxSaturation()));
+        player->getFoodData()->setFoodLevel(
+            GetMiniGame()->GetFoodBalance()->mMaxFood.otherwise(FoodConstants::MaxFood()));
+        player->getFoodData()->setSaturation(
+            GetMiniGame()->GetFoodBalance()->mMaxSaturation.otherwise(FoodConstants::MaxSaturation()));
         player->removeAllEffects();
     }
 
@@ -1165,7 +1168,6 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
             player->setItemSlot(EquipmentSlot::HEAD, ItemInstance::EMPTY);
     }
 
-    AABB* spawnArea = NULL;
     if (ruleset != NULL)
     {
         if (GetMiniGame()->IsTeamBasedSpawn())
@@ -1180,7 +1182,7 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
 
                 AABB* teamArea = teamAreas.front();
                 if (teamAreas.size() > 1)
-                    teamArea = teamAreas.at(mRandom.nextInt(static_cast<int>(teamAreas.size()) - 1));
+                    teamAreas.at(mRandom.nextInt(static_cast<int>(teamAreas.size()) - 1));
                 GameModeUtilities::SpawnWithinArea(player, teamArea);
                 teamAreas.clear();
             }
@@ -1205,15 +1207,16 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
                     if (static_cast<unsigned int>(checkpointIndex) >= checkpoints->size())
                         continue;
 
-                    CheckpointRuleDefinition* checkpoint = (*checkpoints)[checkpointIndex];
-                    if (!checkpoint->hasSpawnPoint())
+                    if (!(*checkpoints)[checkpointIndex]->hasSpawnPoint())
                         continue;
 
-                    checkpoint->setPlayerPosition(player);
+                    (*checkpoints)[checkpointIndex]->setPlayerPosition(player);
                     playerGameMode->ResetTempPoints();
-                    mGameStats.RecordSpawnedAtCheckpoint(player->getSUID(), checkpoint->getSequenceID());
-                    playerGameMode->RecordLastCheckpoint(checkpointIndex, checkpoint->getSequenceID(), false, true,
-                                                         true);
+                    mGameStats.RecordSpawnedAtCheckpoint(player->getSUID(),
+                                                         (*checkpoints)[checkpointIndex]->getSequenceID());
+                    playerGameMode->RecordLastCheckpoint(checkpointIndex,
+                                                         (*checkpoints)[checkpointIndex]->getSequenceID(), false,
+                                                         true, true);
                     ResetLastKnownPosition(player->mPlayerIndex);
                     break;
                 }
@@ -1266,20 +1269,16 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
             return;
         }
 
-        spawnArea = GeneratorSpawn();
-        if (spawnArea == NULL)
-            spawnArea = gApp.getLevelGenerationOptions()->getRequiredGameRules()->getNamedArea(L"RoundSpawn");
-    }
-    else
-    {
-        spawnArea = GeneratorSpawn();
-    }
-
-    if (spawnArea != NULL)
-    {
-        TumbleGenerator* tumbleGenerator = mMapGenerator == NULL ? NULL : dynamic_cast<TumbleGenerator*>(mMapGenerator);
-        GameModeUtilities::SpreadPlayers(players, spawnArea, SPREAD_PLAYERS_DISTANCE, gMinecraftServer->getLevel(0),
-                                         false, tumbleGenerator);
+        AABB* spawnArea = GeneratorSpawn() != NULL
+                              ? GeneratorSpawn()
+                              : gApp.getLevelGenerationOptions()->getRequiredGameRules()->getNamedArea(L"RoundSpawn");
+        if (spawnArea != NULL)
+        {
+            TumbleGenerator* tumbleGenerator =
+                mMapGenerator == NULL ? NULL : dynamic_cast<TumbleGenerator*>(mMapGenerator);
+            GameModeUtilities::SpreadPlayers(players, spawnArea, SPREAD_PLAYERS_DISTANCE,
+                                             gMinecraftServer->getLevel(0), false, tumbleGenerator);
+        }
     }
 }
 
@@ -1750,22 +1749,28 @@ bool MasterGameMode::CanEndPostGame()
 
 bool MasterGameMode::ShouldPlayAnotherRound()
 {
-    const unsigned int nextRound = mGameStats.mCurrentRound + 1;
+    const int nextRound = mGameStats.mCurrentRound + 1;
     switch (GetMiniGame()->GetId())
     {
     case eMiniGameId_Battle:
     case eMiniGameId_Glide:
-        return nextRound < GetMiniGame()->GetRoundCount() && GetPlayerCount(false, false) >= GetMinimumPlayersToStart();
+        return nextRound < static_cast<int>(GetMiniGame()->GetRoundCount())
+               && static_cast<unsigned int>(GetPlayerCount(false, false))
+                      >= static_cast<unsigned int>(GetMinimumPlayersToStart());
     case eMiniGameId_Tumble:
     {
         std::vector<boost::shared_ptr<ServerPlayer> >* players = gMinecraftServer->getPlayers()->getPlayers();
-        for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
-             playerIt != players->end(); ++playerIt)
+        if (players != NULL)
         {
-            if (mGameStats.GetRoundsWon((*playerIt)->getSUID()) >= TUMBLE_ROUNDS_TO_WIN)
-                return false;
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+                 playerIt != players->end(); ++playerIt)
+            {
+                if (mGameStats.GetRoundsWon((*playerIt)->getSUID()) >= TUMBLE_ROUNDS_TO_WIN)
+                    return false;
+            }
         }
-        return GetPlayerCount(false, false) >= GetMinimumPlayersToStart();
+        return static_cast<unsigned int>(GetPlayerCount(false, false))
+               >= static_cast<unsigned int>(GetMinimumPlayersToStart());
     }
     default:
         return false;
@@ -1856,7 +1861,7 @@ void MasterGameMode::Tick()
     {
         boost::shared_ptr<ServerPlayer> player = *playerIt;
         if (IsInKillBox(player))
-            player->hurt(DamageSource::OUT_OF_WORLD, KILLBOX_DAMAGE);
+            player->hurt(DamageSource::CREATIVE_PLAYER, KILLBOX_DAMAGE);
     }
 
     if (mBlockRemover != NULL)
@@ -2364,37 +2369,40 @@ void MasterGameMode::PlaceSpectators(std::vector<boost::shared_ptr<ServerPlayer>
 void MasterGameMode::OnSpawn(boost::shared_ptr<ServerPlayer> player, boost::shared_ptr<ServerPlayer> owner,
                              bool joining)
 {
-    std::vector<boost::shared_ptr<ServerPlayer> > spawningPlayers;
-    spawningPlayers.push_back(player);
-
     if (!IsInRound())
     {
+        std::vector<boost::shared_ptr<ServerPlayer> > spawningPlayers;
+        spawningPlayers.push_back(player);
         PlacePlayers(&spawningPlayers, false, false);
-        UpdateClientsCameras(player);
-        return;
     }
-
-    if (gApp.getGameRuleDefinitions() != NULL)
+    else
     {
-        const unsigned int livesPerRound = GetMiniGame()->GetLivesPerRound();
-        if (livesPerRound != 0 && livesPerRound <= player->mGameMode->GetDeaths())
+        if (gApp.getGameRuleDefinitions() != NULL)
         {
-            Scoreboard* scoreboard = gMinecraftServer->getLevel(0)->GetScoreboard();
-            scoreboard->addPlayerToTeam(player->mXuid, scoreboard->getPlayerTeam(SPECTATOR_TEAM_NAME));
-            PlaceSpectators(&spawningPlayers);
+            const unsigned int livesPerRound = GetMiniGame()->GetLivesPerRound();
+            if (livesPerRound != 0 && livesPerRound <= player->mGameMode->GetDeaths())
+            {
+                Scoreboard* scoreboard = gMinecraftServer->getLevel(0)->GetScoreboard();
+                scoreboard->addPlayerToTeam(player->mXuid, scoreboard->getPlayerTeam(SPECTATOR_TEAM_NAME));
+                std::vector<boost::shared_ptr<ServerPlayer> > spawningPlayers;
+                spawningPlayers.push_back(player);
+                PlaceSpectators(&spawningPlayers);
+            }
+            else
+            {
+                std::vector<boost::shared_ptr<ServerPlayer> > spawningPlayers;
+                spawningPlayers.push_back(player);
+                PlacePlayers(&spawningPlayers, false, true);
+                ResetPlayersFlyingState(&spawningPlayers);
+                ResetPlayersEquipmentAndInventory(&spawningPlayers);
+            }
         }
-        else
-        {
-            PlacePlayers(&spawningPlayers, false, true);
-            ResetPlayersFlyingState(&spawningPlayers);
-            ResetPlayersEquipmentAndInventory(&spawningPlayers);
-        }
-    }
 
-    player->SetCamera(boost::shared_ptr<Entity>());
-    boost::shared_ptr<ServerPlayer> winner = GetRoundWinner();
-    if (winner != NULL && player != winner)
-        player->setGameMode(GameType::SPECTATOR);
+        player->SetCamera(boost::shared_ptr<Entity>());
+        boost::shared_ptr<ServerPlayer> winner = GetRoundWinner();
+        if (winner != NULL && player != winner)
+            player->setGameMode(GameType::SPECTATOR);
+    }
 
     UpdateClientsCameras(player);
 }
@@ -2654,12 +2662,12 @@ void MasterGameMode::StopAchievementExploit(const std::wstring& kickedPlayerName
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
          playerIt != players->end(); ++playerIt)
     {
-        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        const boost::shared_ptr<ServerPlayer>& player = *playerIt;
         if (!player->isAlive() || player->isSpectator())
             continue;
 
         ++activePlayerCount;
-        if (kickedPlayerName == player->getNetworkName())
+        if (!kickedPlayerActive && kickedPlayerName == player->getNetworkName())
             kickedPlayerActive = true;
     }
 
@@ -2885,34 +2893,40 @@ void MasterGameMode::ResetPlayer(boost::shared_ptr<ServerPlayer> player)
 void MasterGameMode::ReduceShowdownTime(int reduction, int minimumRemaining)
 {
     bool reduced = false;
-    if (HasTimer(eTimerID_TimeToReachEnd) && GetTimerRemainingTime(eTimerID_TimeToReachEnd) > minimumRemaining)
+    if (HasTimer(eTimerID_TimeToReachEnd))
     {
         const int remaining = GetTimerRemainingTime(eTimerID_TimeToReachEnd);
-        if (remaining - reduction < minimumRemaining)
+        if (remaining > minimumRemaining)
         {
-            reduction = remaining - minimumRemaining;
-            RestartTimer(eTimerID_TimeToReachEnd, minimumRemaining);
+            if (remaining - reduction < minimumRemaining)
+            {
+                reduction = remaining - minimumRemaining;
+                RestartTimer(eTimerID_TimeToReachEnd, minimumRemaining);
+            }
+            else
+            {
+                RestartTimer(eTimerID_TimeToReachEnd, remaining - reduction);
+            }
+            reduced = true;
         }
-        else
-        {
-            RestartTimer(eTimerID_TimeToReachEnd, remaining - reduction);
-        }
-        reduced = true;
     }
 
-    if (HasTimer(eTimerID_Showdown) && GetTimerRemainingTime(eTimerID_Showdown) > minimumRemaining)
+    if (HasTimer(eTimerID_Showdown))
     {
         const int remaining = GetTimerRemainingTime(eTimerID_Showdown);
-        if (remaining - reduction < minimumRemaining)
+        if (remaining > minimumRemaining)
         {
-            reduction = remaining - minimumRemaining;
-            RestartTimer(eTimerID_Showdown, minimumRemaining);
+            if (remaining - reduction < minimumRemaining)
+            {
+                reduction = remaining - minimumRemaining;
+                RestartTimer(eTimerID_Showdown, minimumRemaining);
+            }
+            else
+            {
+                RestartTimer(eTimerID_Showdown, remaining - reduction);
+            }
+            reduced = true;
         }
-        else
-        {
-            RestartTimer(eTimerID_Showdown, remaining - reduction);
-        }
-        reduced = true;
     }
 
     if (mShowdownStartTime != 0 && reduced)

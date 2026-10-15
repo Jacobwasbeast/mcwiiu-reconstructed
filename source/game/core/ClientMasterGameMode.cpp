@@ -48,6 +48,7 @@
 #include "vendor/_LoadingInputParams.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include <algorithm>
+#include <boost/unordered_set.hpp>
 
 namespace
 {
@@ -137,52 +138,51 @@ void ClientMasterGameMode::OnRoundWaitingToStart()
 
 void ClientMasterGameMode::OnRoundStart()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
     for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
     {
-        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-        boost::shared_ptr<Player> player = localPlayer;
-        if (!player)
+        boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+        if (player != NULL)
+        {
+            player->mInventory->m_selected = 0;
+            mLocalPlayerInRound[playerIndex] = true;
+        }
+        else
         {
             mLocalPlayerInRound[playerIndex] = false;
-            continue;
         }
-
-        player->mInventory->m_selected = 0;
-        mLocalPlayerInRound[playerIndex] = true;
     }
 
-    MiniGameDef* miniGame = const_cast<MiniGameDef*>(GetMiniGame());
-    if (miniGame != NULL && miniGame->GetId() == static_cast<int>(eMiniGameId_Tumble))
+    MiniGameDef::SoundSpec sound;
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (GetMiniGame()->GetId() == eMiniGameId_Tumble)
     {
         miniGame->SetDisabledEditActions(true);
-        static_cast<ConsoleSoundEngine*>(minecraft->mSoundEngine)->LimitMusicVolume();
+        static_cast<ConsoleSoundEngine*>(Minecraft::GetInstance()->mSoundEngine)->LimitMusicVolume();
     }
 
     ResetMapDistances();
 
-    if (miniGame != NULL && miniGame->HasFeatureStartCameraAnimation())
+    if (GetMiniGame()->HasFeatureStartCameraAnimation())
     {
         Random random;
         for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-            boost::shared_ptr<Player> player = localPlayer;
-            if (!player)
-                continue;
-
-            CameraController* controller = new CameraController(3);
-            if (random.nextBoolean())
+            boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+            if (player != NULL)
             {
-                controller->addNode(0.0, 0.0, -25.0, 35.0, 180.0, 0.0, 0.0f);
-                controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
+                CameraController* controller = new CameraController(3);
+                if (random.nextBoolean())
+                {
+                    controller->addNode(0.0, 0.0, -25.0, 35.0, 180.0, 0.0, 0.0f);
+                    controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
+                }
+                else
+                {
+                    controller->addNode(0.0, 0.0, -25.0, 35.0, -180.0, 0.0, 0.0f);
+                    controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
+                }
+                controller->attachToPlayer(player, true);
             }
-            else
-            {
-                controller->addNode(0.0, 0.0, -25.0, 35.0, -180.0, 0.0, 0.0f);
-                controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
-            }
-            controller->attachToPlayer(player, true);
         }
     }
 }
@@ -397,14 +397,26 @@ unsigned int ClientMasterGameMode::GetMapVote(int playerIndex, int vote)
 
 void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlist)
 {
-    playlist.clear();
-    std::vector<int> themes;
+    boost::unordered_set<int> themes;
     for (std::vector<MapSelectInfo>::const_iterator it = mPlaylist.begin(); it != mPlaylist.end(); ++it)
     {
-        if (std::find(themes.begin(), themes.end(), it->uniqueId) != themes.end())
-            continue;
-        themes.push_back(it->uniqueId);
-        playlist.push_back(*it);
+        const int texturePackId = it->texturePackId;
+        const std::wstring name = it->name;
+        const short themeId = LevelGenerationOptions::GetThemeFromUniqueId(it->uniqueId);
+        short mapSize = LevelGenerationOptions::GetMapSizeFromUniqueId(it->uniqueId);
+        if (!gApp.DebugArtToolsOn())
+        {
+            if (themes.find(themeId) != themes.end())
+                continue;
+            themes.insert(themeId);
+            mapSize = -1;
+        }
+
+        MapSelectInfo info;
+        info.uniqueId = LevelGenerationOptions::CreateUniqueId(themeId, mapSize);
+        info.name = name;
+        info.texturePackId = texturePackId;
+        playlist.push_back(info);
     }
 }
 
@@ -527,11 +539,13 @@ void ClientMasterGameMode::GetCurrentThemeVotesText(std::vector<HtmlString>& tex
     boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
     for (unsigned int index = 0; index < mThemeWordIds.size(); ++index)
     {
-        const int themeId = mThemeWordIds[index];
-        const wchar_t* name = GetString(themeId);
-        const int voteCount = totals[themeId];
-        const std::wstring label = formatwstr(L"%ls : %d", name, voteCount);
-        text.push_back(HtmlString(label, eMinecraftColour_NOTSET, false, false, 0));
+        const std::wstring name = GetString(mThemeWordIds.at(index));
+        if (totals.find(mThemeWordIds.at(index)) != totals.end())
+            text.push_back(HtmlString(formatwstr(L"%ls : %d", name.c_str(), totals[mThemeWordIds.at(index)]),
+                                      eMinecraftColour_NOTSET, false, false, 0));
+        else
+            text.push_back(
+                HtmlString(formatwstr(L"%ls : 0", name.c_str()), eMinecraftColour_NOTSET, false, false, 0));
     }
 }
 

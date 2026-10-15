@@ -1061,190 +1061,200 @@ void BuiltInLootTables::staticLootTable_WOODLAND_MANSION()
 void BuiltInLootTables::staticLootTable_ARMOR_SET_CHAIN()
 {
     std::vector<LootPool*>* pools = new std::vector<LootPool*>;
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* helmetEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* chestplateEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* leggingsEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* bootsEntries = new std::vector<LootPoolEntry*>;
     std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(new LootItem(Items::chainmailBoots, 1, 0, functions, NULL, NULL));
+    bootsEntries->push_back(new LootItem(Items::chainmailBoots, 1, 0, functions, NULL, NULL));
     std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* bootsPools = new std::vector<LootPool*>;
+    bootsPools->push_back(new LootPool(bootsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* bootsTable = new LootTableEntry(new LootTable(bootsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::chainmailLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    leggingsEntries->push_back(new LootItem(Items::chainmailLeggings, 1, 0, functions, NULL, bootsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* leggingsPools = new std::vector<LootPool*>;
+    leggingsPools->push_back(
+        new LootPool(leggingsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* leggingsTable = new LootTableEntry(new LootTable(leggingsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::chainmailChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    chestplateEntries->push_back(new LootItem(Items::chainmailChestplate, 1, 0, functions, NULL, leggingsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* chestplatePools = new std::vector<LootPool*>;
+    chestplatePools->push_back(
+        new LootPool(chestplateEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* chestplateTable = new LootTableEntry(new LootTable(chestplatePools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::chainmailHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    helmetEntries->push_back(new LootItem(Items::chainmailHelmet, 1, 0, functions, NULL, chestplateTable));
+    pools->push_back(new LootPool(helmetEntries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&ARMOR_SET_CHAIN, new LootTable(pools)));
 }
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_DIAMOND()
 {
     std::vector<LootPool*>* pools = new std::vector<LootPool*>;
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* helmetEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* chestplateEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* leggingsEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* bootsEntries = new std::vector<LootPoolEntry*>;
     std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(new LootItem(Items::diamondBoots, 1, 0, functions, NULL, NULL));
+    bootsEntries->push_back(new LootItem(Items::diamondBoots, 1, 0, functions, NULL, NULL));
     std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* bootsPools = new std::vector<LootPool*>;
+    bootsPools->push_back(new LootPool(bootsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* bootsTable = new LootTableEntry(new LootTable(bootsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::diamondLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    leggingsEntries->push_back(new LootItem(Items::diamondLeggings, 1, 0, functions, NULL, bootsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* leggingsPools = new std::vector<LootPool*>;
+    leggingsPools->push_back(
+        new LootPool(leggingsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* leggingsTable = new LootTableEntry(new LootTable(leggingsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::diamondChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    chestplateEntries->push_back(new LootItem(Items::diamondChestplate, 1, 0, functions, NULL, leggingsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* chestplatePools = new std::vector<LootPool*>;
+    chestplatePools->push_back(
+        new LootPool(chestplateEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* chestplateTable = new LootTableEntry(new LootTable(chestplatePools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::diamondHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    helmetEntries->push_back(new LootItem(Items::diamondHelmet, 1, 0, functions, NULL, chestplateTable));
+    pools->push_back(new LootPool(helmetEntries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&ARMOR_SET_DIAMOND, new LootTable(pools)));
 }
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_GOLD()
 {
     std::vector<LootPool*>* pools = new std::vector<LootPool*>;
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* helmetEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* chestplateEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* leggingsEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* bootsEntries = new std::vector<LootPoolEntry*>;
     std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(new LootItem(Items::goldenBoots, 1, 0, functions, NULL, NULL));
+    bootsEntries->push_back(new LootItem(Items::goldenBoots, 1, 0, functions, NULL, NULL));
     std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* bootsPools = new std::vector<LootPool*>;
+    bootsPools->push_back(new LootPool(bootsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* bootsTable = new LootTableEntry(new LootTable(bootsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::goldenLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    leggingsEntries->push_back(new LootItem(Items::goldenLeggings, 1, 0, functions, NULL, bootsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* leggingsPools = new std::vector<LootPool*>;
+    leggingsPools->push_back(
+        new LootPool(leggingsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* leggingsTable = new LootTableEntry(new LootTable(leggingsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::goldenChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    chestplateEntries->push_back(new LootItem(Items::goldenChestplate, 1, 0, functions, NULL, leggingsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* chestplatePools = new std::vector<LootPool*>;
+    chestplatePools->push_back(
+        new LootPool(chestplateEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* chestplateTable = new LootTableEntry(new LootTable(chestplatePools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::goldenHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    helmetEntries->push_back(new LootItem(Items::goldenHelmet, 1, 0, functions, NULL, chestplateTable));
+    pools->push_back(new LootPool(helmetEntries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&ARMOR_SET_GOLD, new LootTable(pools)));
 }
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_IRON()
 {
     std::vector<LootPool*>* pools = new std::vector<LootPool*>;
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* helmetEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* chestplateEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* leggingsEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* bootsEntries = new std::vector<LootPoolEntry*>;
     std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(new LootItem(Items::ironBoots, 1, 0, functions, NULL, NULL));
+    bootsEntries->push_back(new LootItem(Items::ironBoots, 1, 0, functions, NULL, NULL));
     std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* bootsPools = new std::vector<LootPool*>;
+    bootsPools->push_back(new LootPool(bootsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* bootsTable = new LootTableEntry(new LootTable(bootsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::ironLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    leggingsEntries->push_back(new LootItem(Items::ironLeggings, 1, 0, functions, NULL, bootsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* leggingsPools = new std::vector<LootPool*>;
+    leggingsPools->push_back(
+        new LootPool(leggingsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* leggingsTable = new LootTableEntry(new LootTable(leggingsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::ironChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    chestplateEntries->push_back(new LootItem(Items::ironChestplate, 1, 0, functions, NULL, leggingsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* chestplatePools = new std::vector<LootPool*>;
+    chestplatePools->push_back(
+        new LootPool(chestplateEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* chestplateTable = new LootTableEntry(new LootTable(chestplatePools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::ironHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    helmetEntries->push_back(new LootItem(Items::ironHelmet, 1, 0, functions, NULL, chestplateTable));
+    pools->push_back(new LootPool(helmetEntries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&ARMOR_SET_IRON, new LootTable(pools)));
 }
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_LEATHER()
 {
     std::vector<LootPool*>* pools = new std::vector<LootPool*>;
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
-    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* helmetEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* chestplateEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* leggingsEntries = new std::vector<LootPoolEntry*>;
+    std::vector<LootPoolEntry*>* bootsEntries = new std::vector<LootPoolEntry*>;
     std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(new LootItem(Items::leatherBoots, 1, 0, functions, NULL, NULL));
+    bootsEntries->push_back(new LootItem(Items::leatherBoots, 1, 0, functions, NULL, NULL));
     std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* bootsPools = new std::vector<LootPool*>;
+    bootsPools->push_back(new LootPool(bootsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* bootsTable = new LootTableEntry(new LootTable(bootsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::leatherLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    leggingsEntries->push_back(new LootItem(Items::leatherLeggings, 1, 0, functions, NULL, bootsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* leggingsPools = new std::vector<LootPool*>;
+    leggingsPools->push_back(
+        new LootPool(leggingsEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* leggingsTable = new LootTableEntry(new LootTable(leggingsPools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::leatherChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
+    chestplateEntries->push_back(new LootItem(Items::leatherChestplate, 1, 0, functions, NULL, leggingsTable));
     conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>;
-    pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    std::vector<LootPool*>* chestplatePools = new std::vector<LootPool*>;
+    chestplatePools->push_back(
+        new LootPool(chestplateEntries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    LootTableEntry* chestplateTable = new LootTableEntry(new LootTable(chestplatePools));
     functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
-    entries->push_back(
-        new LootItem(Items::leatherHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
+    helmetEntries->push_back(new LootItem(Items::leatherHelmet, 1, 0, functions, NULL, chestplateTable));
+    pools->push_back(new LootPool(helmetEntries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&ARMOR_SET_LEATHER, new LootTable(pools)));
 }
 

@@ -26,7 +26,7 @@ public:
         static const Type* SHORT;
         static const Type* UINT;
         static const Type* INT;
-        Type(int size, const std::wstring& name, int glType, EType type);
+        Type(int size, std::wstring name, int glType, EType type);
         int getSize() const;
         std::wstring getName() const;
         int getGlType() const;
@@ -59,7 +59,7 @@ public:
         static const Usage* BONE_MATRIX;
         static const Usage* BLEND_WEIGHT;
         static const Usage* PADDING;
-        Usage(const std::wstring& name, EUsage usage);
+        Usage(std::wstring name, EUsage usage);
         int getId() const;
         std::wstring getName() const;
 

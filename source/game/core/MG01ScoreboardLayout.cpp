@@ -132,12 +132,11 @@ not_null_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int 
 
     if (column != -1)
     {
-        const unsigned int columns = getNumberOfColumns();
-        if (column == columns - 2)
+        if (column == getNumberOfColumns() - 2)
         {
             item = not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondSword, 1, 0));
         }
-        else if (column == columns - 1 && type == EScoreboardType_Scoreboard)
+        else if (column == getNumberOfColumns() - 1 && type == EScoreboardType_Scoreboard)
         {
             item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
         }
