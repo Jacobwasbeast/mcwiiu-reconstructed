@@ -145,6 +145,9 @@ inline int Mth::ceil(float value)
 template <typename T>
 void Mth::shuffle(std::vector<T>* values, Random& random)
 {
+    if (values->empty())
+        return;
+
     for (int i = (int)values->size() - 1; i > 0; --i)
     {
         int j = random.nextInt(i);

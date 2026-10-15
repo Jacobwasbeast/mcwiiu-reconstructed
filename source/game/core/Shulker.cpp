@@ -36,7 +36,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/PistonBaseBlock.hpp"
 #include "game/world/block/PistonHeadBlock.hpp"
-#include "game/world/block/PistonMagicBlock.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
@@ -387,7 +386,7 @@ void Shulker::tick()
         {
             if (state->getBlock() == Blocks::piston_extension)
             {
-                const Direction* facing = state->getValue<const Direction*>(PistonMagicBlock::FACING);
+                const Direction* facing = state->getValue<const Direction*>(PistonBaseBlock::FACING);
                 if (mLevel->isEmptyBlock(attachPos->relative(facing)))
                 {
                     *attachPos = attachPos->relative(facing);

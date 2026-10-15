@@ -407,9 +407,10 @@ bool EndCityPieces::TowerSectionGenerator::generate(StructureManager* structureM
             EndCityPiece* bridge = addHelper(pieces, addPiece(structureManager, bridgePiece, it->second,
                                                               eMinecraftStructureTemplate_EndCity_BridgeEnd,
                                                               rotation->getRotated(it->first), true));
-            if (recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1, bridge, BlockPos(), pieces,
-                                  random))
-                bridgeWeight -= 1.0;
+            bridgeWeight -= recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1, bridge, BlockPos(),
+                                              pieces, random)
+                                ? 1.0
+                                : 0.0;
         }
         remaining -= 1.0;
     }
