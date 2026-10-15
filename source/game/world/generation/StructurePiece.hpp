@@ -122,7 +122,7 @@ public:
     virtual bool postProcess(Level* level, Random& random, BoundingBox* box) = 0;
 
     virtual BoundingBox* getBoundingBox();
-    virtual BlockPos getLocatorPosition();
+    virtual BlockPos* getLocatorPosition();
 
     virtual void placeBlock(Level* level, const BlockState* state, int x, int y, int z, BoundingBox* box);
     virtual const BlockState* getBlock(Level* level, int x, int y, int z, BoundingBox* box);

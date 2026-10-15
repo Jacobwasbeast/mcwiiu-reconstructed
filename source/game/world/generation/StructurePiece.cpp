@@ -171,9 +171,9 @@ StructurePiece* StructurePiece::findCollisionPiece(std::vector<StructurePiece*>*
     return NULL;
 }
 
-BlockPos StructurePiece::getLocatorPosition()
+BlockPos* StructurePiece::getLocatorPosition()
 {
-    return BlockPos(mBoundingBox->getCenter());
+    return new BlockPos(mBoundingBox->getCenter());
 }
 
 bool StructurePiece::edgesLiquid(Level* level, BoundingBox* box)

@@ -149,7 +149,7 @@ public:
     virtual void setAndBroadcastCustomCape(unsigned int);
     void OnEquipArmor(not_null_ptr<ItemInstance> item);
     void OnTakeFromAnvil(not_null_ptr<ItemInstance> item);
-    double getUnderwaterVisionClarity();
+    float getUnderwaterVisionClarity();
     void DoAutoAttackOnTouch(boost::shared_ptr<Entity>);
     double GetPercentageTraversed() const;
     void SetPercentageTraversed(double);

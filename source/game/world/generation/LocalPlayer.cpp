@@ -2708,7 +2708,7 @@ void LocalPlayer::OnTakeFromAnvil(not_null_ptr<ItemInstance> item)
     }
 }
 
-double LocalPlayer::getUnderwaterVisionClarity()
+float LocalPlayer::getUnderwaterVisionClarity()
 {
     float clarity;
     if (mWaterVisionClarity == mWaterVisionClarityO)
