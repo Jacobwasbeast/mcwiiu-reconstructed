@@ -320,8 +320,6 @@ public:
 
 extern Mesh* g_piaMesh;
 
-#if !defined(RECON_NATIVE)
-#endif
 
 }
 }
