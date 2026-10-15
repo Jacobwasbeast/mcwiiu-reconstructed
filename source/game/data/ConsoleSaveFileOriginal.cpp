@@ -12,11 +12,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
-#ifdef RECON_NATIVE
-#include "win32_memory.hpp"
-#else
 #include "platform/wiiu/WiiU_FileCache.hpp"
-#endif
 void __debugbreak();
 
 static void* s_saveData = NULL;
