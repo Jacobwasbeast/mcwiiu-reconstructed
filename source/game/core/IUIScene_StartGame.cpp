@@ -5,11 +5,6 @@
 #include <cwchar>
 #include <string>
 #include <vector>
-#if defined(RECON_NATIVE)
-#include <cerrno>
-#include <cstdio>
-#include <cstdlib>
-#endif
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/DLCTexturePack.hpp"
@@ -523,19 +518,6 @@ void IUIScene_StartGame::HostGame(unsigned int playerMask)
             {
                 Random* random = new Random(System::processTimeInNanoSecs());
                 m_seed = random->nextLong();
-#if defined(RECON_NATIVE)
-                const char* fixture = std::getenv("MC_WORLD_SEED");
-                if (fixture != NULL && *fixture != '\0')
-                {
-                    char* end = NULL;
-                    errno = 0;
-                    const long long fixtureSeed = std::strtoll(fixture, &end, 10);
-                    if (errno == 0 && end != fixture && *end == '\0')
-                        m_seed = fixtureSeed;
-                    else
-                        std::fprintf(stderr, "[native-world] invalid MC_WORLD_SEED: %s\n", fixture);
-                }
-#endif
             }
         }
         gApp.ClearTerrainFeaturePosition();

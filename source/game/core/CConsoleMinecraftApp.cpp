@@ -17,10 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sysapp/launch.h>
-#if defined(RECON_NATIVE)
-#include <stdarg.h>
-#include <wchar.h>
-#endif
 
 extern "C" void OSReport(const char*, ...);
 extern "C" void ProcUIShutdown();
@@ -124,23 +120,8 @@ uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled()
 {
     return m_drcCheckPlayerCountEnabled;
 }
-#if defined(RECON_NATIVE)
-extern "C" void native_report_stack(const char* tag);
-#endif
 void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 {
-#if defined(RECON_NATIVE)
-    {
-        wchar_t text[512];
-        va_list args;
-        va_start(args, message);
-        vswprintf(text, sizeof(text) / sizeof(text[0]), message, args);
-        va_end(args);
-        OSReport("[native-fatal-load] CConsoleMinecraftApp::FatalLoadError caller=%p %ls\n",
-                 __builtin_return_address(0), text);
-        native_report_stack("native-fatal-load");
-    }
-#endif
     gRenderer->InitialiseContext();
     unsigned int errorCode = GetLastFileErrorCodeForViewer();
     g_pInput->RequestErrorViewer(1, errorCode, NULL, NULL);
