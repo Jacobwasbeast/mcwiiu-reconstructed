@@ -222,7 +222,7 @@ bool ServerGamePacketListenerImpl::isLocal()
     return mConnection->getSocket()->isLocal();
 }
 
-uint32_t ServerGamePacketListenerImpl::countDelayedPackets()
+int ServerGamePacketListenerImpl::countDelayedPackets()
 {
     return mConnection->countDelayedPackets();
 }

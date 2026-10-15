@@ -83,7 +83,7 @@ public:
     void disconnect(DisconnectPacket::eDisconnectReason reason);
     void setShowOnMaps(bool show);
     bool isLocal();
-    uint32_t countDelayedPackets();
+    int countDelayedPackets();
     void queueSend(boost::shared_ptr<Packet> packet);
     void resetPosition();
     void teleport(
