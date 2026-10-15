@@ -144,10 +144,6 @@ void FJ_LoadCreateJoinMenu::SetActiveTab(int tab)
         m_root = getChildByName("JoinGame");
         m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
         SetFocus(m_joinTabFocus);
-#if defined(RECON_NATIVE)
-        if (m_joinTabFocus < 0 && getChildByName("JoinGame.JoinGameGamesList")->asFJ_List() != NULL)
-            getStage()->setFocus(getChildByName("JoinGame.JoinGameGamesList"));
-#endif
         if (m_joinTabFocus >= 0)
             OnFocusChange(true);
 
