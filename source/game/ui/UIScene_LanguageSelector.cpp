@@ -82,7 +82,7 @@ void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool pr
 void UIScene_LanguageSelector::handlePress(int controlId, int childId)
 {
     static const unsigned int languages[] = {0, 1, 3, 5, 4, 6, 9, 2, 7, 8, 17, 16, 12};
-    static const unsigned int locales[] = {0, 0, 0, 31, 0, 0, 0, 27, 0, 0, 0, 0, 0};
+    static const unsigned int locales[] = {0, 0, 0, 31, 0, 0, 27, 0, 0, 0, 0, 0, 0};
 
     if (controlId == 0)
     {
