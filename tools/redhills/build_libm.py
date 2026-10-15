@@ -10,7 +10,9 @@ keeps condition values local:
   the runtime is built from
 - the member list: the runtime's libm.a, each libm_a-<name>.o compiled from <name>.c, looked up in the
   configured powerpc machine directory first, then libm/common, math, complex and fenv
-- flags: the powerpc-eabi newlib_cflags of configure.host plus build_runtime16.py's CFLAGS_FOR_TARGET, in
+- flags: the powerpc-eabi newlib_cflags of configure.host, including the -fno-builtin it adds for every
+  target (without it clang turns exp2's pow(2.0, x) back into a call to exp2), plus build_runtime16.py's
+  CFLAGS_FOR_TARGET, in
   GNU C (gnu17: GCC 16's gnu23 default less its removal of K&R definitions, which w_drem.c uses;
   RedHills otherwise defaults to strict ANSI C, which hides finite and friends), and the include
   order of newlib's Makefile.am (libm/common, the configured target headers, then newlib's
@@ -35,7 +37,7 @@ SEARCH = ['libm/machine/powerpc', 'libm/common', 'libm/math', 'libm/complex', 'l
 NEWLIB_CFLAGS = ['-DHAVE_ASSERT_FUNC', '-DABORT_PROVIDED', '-DCUSTOM_MALLOC_LOCK', '-D__DYNAMIC_REENT__',
                  '-DGETREENT_PROVIDED', '-DREENTRANT_SYSCALLS_PROVIDED', '-D__DEFAULT_UTF8__']
 FLAGS = ['-target', 'powerpc-eabi', '-mcpu=750', '-std=gnu17', '-O2', '-ffunction-sections', '-fdata-sections', '-fshort-wchar',
-         '-w', '-nostdlibinc'] + NEWLIB_CFLAGS
+         '-fno-builtin', '-w', '-nostdlibinc'] + NEWLIB_CFLAGS
 
 
 def members(llvm_ar, runtime16):

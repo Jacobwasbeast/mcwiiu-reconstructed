@@ -405,9 +405,11 @@ def link(build, objects, archives, out):
 
 
 def build_library(build, args, name, script, extra):
-    """libstdc++.a or libm.a under <out>/<name>, rebuilt when the compiler is newer than it."""
+    """libstdc++.a or libm.a under <out>/<name>, rebuilt when the compiler or its build script is newer than it."""
     library = args.out / name / (name + '.a')
-    if library.is_file() and library.stat().st_mtime >= args.redhills.stat().st_mtime:
+    builder = ROOT / 'tools/redhills' / script
+    if library.is_file() and library.stat().st_mtime >= max(args.redhills.stat().st_mtime,
+                                                            builder.stat().st_mtime):
         return library
     result = subprocess.run([sys.executable, str(ROOT / 'tools/redhills' / script), '--redhills', str(args.redhills),
                              '--runtime16', str(build.runtime16), '--sources', str(args.sources),
