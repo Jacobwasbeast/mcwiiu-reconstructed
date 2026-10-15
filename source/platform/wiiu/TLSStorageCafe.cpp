@@ -5,7 +5,7 @@
 static const unsigned int TLS_SLOT_COUNT = 64;
 
 static unsigned int s_tlsAllocated[TLS_SLOT_COUNT];
-#if defined(__ghs__) || defined(RECON_NATIVE)
+#if defined(__ghs__)
 static __thread void* s_tlsValues[TLS_SLOT_COUNT];
 #else
 static const OSThreadSpecificID TLS_VALUES_SLOT = OS_THREAD_SPECIFIC_13;

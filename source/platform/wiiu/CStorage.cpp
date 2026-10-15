@@ -1039,13 +1039,7 @@ void CStorage::CreateSaveUniqueName()
 void CStorage::SetSaveTitle(const wchar_t* title)
 {
     CreateSaveUniqueName();
-#if defined(RECON_NATIVE)
-    std::memset(m_saveTitle, 0, sizeof(m_saveTitle));
-    const size_t titleLength = std::min(std::wcslen(title), sizeof(m_saveTitle) / sizeof(wchar_t) - 1);
-    std::memcpy(m_saveTitle, title, titleLength * sizeof(wchar_t));
-#else
     std::memcpy(m_saveTitle, title, 0x100);
-#endif
 }
 void* CStorage::AllocateSaveData(unsigned int size)
 {

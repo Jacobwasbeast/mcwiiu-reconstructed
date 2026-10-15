@@ -25,9 +25,6 @@
 #include "platform/wiiu/NetworkPlayerNintendo.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
-#if defined(RECON_NATIVE)
-#include "network_manager.hpp"
-#endif
 
 namespace nn
 {
@@ -386,16 +383,11 @@ void CPlatformNetworkManagerNintendo::Initialise(CGameNetworkManager* manager, i
     m_lanMode = false;
     m_enteringLanMode = false;
     m_leavingLanMode = false;
-#if defined(RECON_NATIVE)
-    m_onlineNetworkManager = 0;
-    m_networkManager = 0;
-#else
     m_onlineNetworkManager = new NQRNetworkManager_WiiU(this);
     gLanNetworkManager = new NQRNetworkManager_Lan_WiiU(this);
     m_networkManager = m_onlineNetworkManager;
     m_onlineNetworkManager->Initialise();
     gLanNetworkManager->Initialise();
-#endif
     m_suppressConnections = false;
     m_lastFriendSearchTime = 0;
     m_endSession = true;
@@ -414,26 +406,6 @@ void CPlatformNetworkManagerNintendo::Initialise(CGameNetworkManager* manager, i
     m_playerChangedCallbacks[2] = 0;
     m_playerChangedCallbacks[3] = 0;
     m_sessionsUpdatedCallbackData = 0;
-#if defined(RECON_NATIVE)
-    m_adhocMode = false;
-    m_enteringAdhocMode = false;
-    m_leavingAdhocMode = false;
-    m_worldSession = false;
-    m_reservedMode = false;
-    m_pendingPlayer = 0;
-    m_leaveError = false;
-    m_privateGame = false;
-    m_reservedSession = false;
-    m_matchmakingSession = false;
-    m_sessionMode = 0;
-    m_lastPlayerChangeTime = 0;
-    m_friendSearchState = 0;
-    m_sessionListState = 0;
-    for (int index = 0; index < 4; ++index)
-        m_playerChangedCallbackData[index] = 0;
-    m_networkManager = new NativeNetworkManager(this);
-    m_networkManager->Initialise();
-#endif
 }
 
 void CPlatformNetworkManagerNintendo::Terminate()
@@ -764,11 +736,7 @@ void CPlatformNetworkManagerNintendo::HandleSignInChange()
 
 bool CPlatformNetworkManagerNintendo::_RunNetworkGame()
 {
-#if defined(RECON_NATIVE)
-    if (m_networkManager->IsHost())
-#else
     if (IsHost())
-#endif
     {
         m_networkManager->StartGame();
         m_sessionData.m_bGameStarted = true;
@@ -1041,11 +1009,6 @@ bool CPlatformNetworkManagerNintendo::usingLanMode()
 
 bool CPlatformNetworkManagerNintendo::setLanMode(bool mode)
 {
-#if defined(RECON_NATIVE)
-    m_lanMode = mode;
-    m_enteringLanMode = false;
-    m_leavingLanMode = false;
-#else
     if (m_lanMode != mode)
     {
         if (mode)
@@ -1078,7 +1041,6 @@ bool CPlatformNetworkManagerNintendo::setLanMode(bool mode)
             }
         }
     }
-#endif
     return true;
 }
 

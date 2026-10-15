@@ -21,7 +21,7 @@ static C4JThreadImpl s_mainThread("Main thread");
 static OSFastMutex s_createSection;
 static OSFastMutex s_threadSection;
 static bool s_createSectionInitialized = false;
-#if defined(__ghs__) || defined(RECON_NATIVE)
+#if defined(__ghs__)
 __thread int g_commandBlockId = 0;
 #else
 static const OSThreadSpecificID COMMAND_BLOCK_ID_SLOT = OS_THREAD_SPECIFIC_12;

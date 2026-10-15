@@ -19,9 +19,6 @@
 #include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
-#if defined(RECON_NATIVE)
-#include "local_network.hpp"
-#endif
 
 namespace nn
 {
@@ -536,13 +533,9 @@ wchar_t* CProfile::GetMiiName(int quadrant)
 
 wchar_t* CProfile::GetGamertag(int quadrant)
 {
-#if defined(RECON_NATIVE)
-    return GetMiiName(quadrant);
-#else
     if (!IsSignedInLive(quadrant))
         return GetMiiName(quadrant);
     return (wchar_t*)mProfiles[quadrant].gamertag;
-#endif
 }
 
 std::wstring CProfile::GetDisplayName(int quadrant)
@@ -691,9 +684,6 @@ void CProfile::SetNetworkStatusWithoutSigninChange(bool online)
 
 void CProfile::TryToConnectOnline()
 {
-#if defined(RECON_NATIVE)
-    SetNetworkStatus(native_local_network::start(0));
-#endif
 }
 
 unsigned int CProfile::GetSignedInUsersMask()

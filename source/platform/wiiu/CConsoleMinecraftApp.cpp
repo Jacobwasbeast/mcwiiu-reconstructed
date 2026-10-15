@@ -115,7 +115,6 @@ int altMainThread(int, void*)
     return 0;
 }
 
-#if !defined(RECON_NATIVE)
 int _itoa_s(int value, char* buffer, unsigned int, int radix)
 {
     int result;
@@ -145,4 +144,3 @@ int _i64toa_s(long long value, char* buffer, unsigned int, int radix)
     }
     return -1;
 }
-#endif
