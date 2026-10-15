@@ -598,7 +598,7 @@ int Limit_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step, long long e
     eventSystem->m_limits = list->m_self;
 
     const char* cursor = step->m_data.m_limit.m_limits;
-    while (*cursor != ' ')
+    while (*cursor != '\0')
     {
         const char* separator = strstr(cursor, LIMIT_FIELD_SEPARATOR);
         if (separator == NULL)
@@ -608,7 +608,7 @@ int Limit_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step, long long e
         }
 
         const char* digits = separator + 1;
-        if (separator[1] == ' ' || (unsigned int)(separator[1] - '0') >= 10)
+        if (separator[1] == '\0' || (unsigned int)(separator[1] - '0') >= 10)
         {
             ErrorHandler(ERROR_TYPE_BAD_STRING_PASSED_TO_SET_LIMITS, eventId, NULL);
             return 0;
@@ -629,9 +629,9 @@ int Limit_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step, long long e
         entry->m_count = 0;
         entry->m_next = list->m_entries;
         memcpy(entry->m_query, cursor, length);
-        entry->m_query[length] = ' ';
+        entry->m_query[length] = '\0';
         list->m_entries = entryHandle;
-        if (*digits != ' ')
+        if (*digits != '\0')
         {
             ++digits;
         }

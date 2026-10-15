@@ -8,7 +8,7 @@
 
 RidingMinecartSoundInstance::RidingMinecartSoundInstance(boost::shared_ptr<Player> player,
                                                          boost::shared_ptr<Minecart> minecart)
-    : AbstractTickableSoundInstance(SoundEvents::MINECART_RIDING, SoundSource::eSoundSource_Neutral)
+    : AbstractTickableSoundInstance(SoundEvents::MINECART_INSIDE, SoundSource::eSoundSource_Neutral)
 {
     this->player = player;
     this->minecart = minecart;
