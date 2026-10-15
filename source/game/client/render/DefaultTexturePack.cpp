@@ -74,11 +74,7 @@ void DefaultTexturePack::loadCustomModels()
     }
     else
     {
-#if defined(RECON_NATIVE)
-        OSReport("[native] optional default texture-pack models.bin unavailable; continuing without custom models\n");
-#else
         gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default models", 191);
-#endif
     }
 }
 

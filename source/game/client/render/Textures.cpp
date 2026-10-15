@@ -910,17 +910,7 @@ void Textures::replaceTextureDirect(arrayWithLength<int> pixels, int width, int 
     GlStateManager::texParameteri(2, 0);
     GlStateManager::texParameteri(3, 1);
     GlStateManager::texParameteri(4, 1);
-#ifdef RECON_NATIVE
-    std::vector<unsigned int> nativePixels(pixels.length);
-    for (unsigned int i = 0; i < pixels.length; ++i)
-    {
-        unsigned int value = static_cast<unsigned int>(pixels.data[i]);
-        nativePixels[i] = (value >> 24) | ((value >> 8) & 0x0000ff00u) | ((value << 8) & 0x00ff0000u) | (value << 24);
-    }
-    gRenderer->TextureDataUpdate(0, 0, width, height, nativePixels.data(), 0);
-#else
     gRenderer->TextureDataUpdate(0, 0, width, height, pixels.data, 0);
-#endif
 }
 
 void Textures::replaceTextureDirect(arrayWithLength<short> pixels, int width, int height, int texture)

@@ -37,13 +37,7 @@ int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int**
         unsigned int* pixel = (unsigned int*)*pixels;
         for (int i = 0; i < *width * *height; ++i)
         {
-#ifdef RECON_NATIVE
-            const unsigned char* rgba = reinterpret_cast<const unsigned char*>(pixel);
-            *pixel = (static_cast<unsigned int>(rgba[3]) << 24) | (static_cast<unsigned int>(rgba[0]) << 16)
-                     | (static_cast<unsigned int>(rgba[1]) << 8) | rgba[2];
-#else
             TextureUtil::ByteFlipRGBAToARGB(*pixel);
-#endif
             ++pixel;
         }
     }
@@ -171,13 +165,7 @@ void* TextureUtil::decodeJpeg(void* data, int length, int* width, int* height)
             for (int x = 0; x < imageWidth; x++)
             {
                 unsigned char* pixel = pixels + (y * imageWidth + x) * 4;
-#ifdef RECON_NATIVE
-                unsigned int colour = (static_cast<unsigned int>(pixel[0]) << 24)
-                                      | (static_cast<unsigned int>(pixel[1]) << 16)
-                                      | (static_cast<unsigned int>(pixel[2]) << 8) | pixel[3];
-#else
                 unsigned int colour = *(unsigned int*)pixel;
-#endif
 
                 pixel[0] = (unsigned char)colour;
                 pixel[1] = (unsigned char)(colour >> 8);
