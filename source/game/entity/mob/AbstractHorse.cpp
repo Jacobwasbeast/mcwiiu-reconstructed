@@ -490,9 +490,7 @@ boost::shared_ptr<AbstractHorse> AbstractHorse::getClosestMommy(const boost::sha
             closest = candidate;
         }
     }
-#if !defined(RECON_NATIVE)
     delete entities;
-#endif
     return boost::static_pointer_cast<AbstractHorse>(closest);
 }
 
