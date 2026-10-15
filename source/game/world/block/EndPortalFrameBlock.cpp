@@ -137,7 +137,7 @@ BlockPattern* EndPortalFrameBlock::getOrCreatePortalShape()
 {
     if (END_PORTAL_SHAPE == NULL)
     {
-        std::wstring rows[5] = {L"?vvv?", L">???<", L">???<", L">???<", L"?^^^?"};
+        std::wstring rows[5] = {L"?vvv?", L">?\?\?<", L">?\?\?<", L">?\?\?<", L"?^^^?"};
         BlockStatePredicate* south = BlockStatePredicate::forBlock(Blocks::end_portal_frame);
         south = south->where(
             EYE, new BlockStatePredicate::PredicateConversion<bool>(new Predicates<bool>::EqualToValuePredicate(true)));

@@ -47,11 +47,8 @@ void DragonEggBlock::checkSlide(Level* level, const BlockPos& pos)
     }
     level->removeBlock(pos);
     BlockPos target = pos;
-    while (FallingBlock::isFree(level->getBlockState(target)))
+    for (; FallingBlock::isFree(level->getBlockState(target)) && target.y > 0; target = target.below())
     {
-        if (target.y < 1)
-            return;
-        target = target.below();
     }
     if (target.y > 0)
         level->setBlock(target, defaultBlockState(), Block::UPDATE_CLIENTS, false);
@@ -136,18 +133,14 @@ void DragonEggBlock::generateTeleportParticles(Level* level, int x, int y, int z
         for (int j = 0; j < 2; ++j)
         {
             double along = level->mRandom->nextDouble();
-            float xa = level->mRandom->nextFloat();
-            float ya = level->mRandom->nextFloat();
-            float za = level->mRandom->nextFloat();
-            double jitterX = level->mRandom->nextDouble();
-            double jitterY = level->mRandom->nextDouble();
-            double jitterZ = level->mRandom->nextDouble();
+            float xa = (level->mRandom->nextFloat() - 0.5f) * 0.2f;
+            float ya = (level->mRandom->nextFloat() - 0.5f) * 0.2f;
+            float za = (level->mRandom->nextFloat() - 0.5f) * 0.2f;
+            double px = (double)x + (double)dx * along + (level->mRandom->nextDouble() - 0.5) * 1.0 + 0.5;
+            double py = (double)y + (double)dy * along + level->mRandom->nextDouble() * 1.0 - 0.5;
+            double pz = (double)z + (double)dz * along + (level->mRandom->nextDouble() - 0.5) * 1.0 + 0.5;
             arrayWithLength<int> params;
-            level->addParticle(PARTICLE_PORTAL, 0.5 + ((jitterX - 0.5) * 1.0 + ((double)dx * along + (double)x)),
-                               jitterY * 1.0 + ((double)dy * along + (double)y) - 0.5,
-                               0.5 + ((jitterZ - 0.5) * 1.0 + ((double)dz * along + (double)z)),
-                               (double)((xa - 0.5f) * 0.2f), (double)((ya - 0.5f) * 0.2f), (double)((za - 0.5f) * 0.2f),
-                               params);
+            level->addParticle(PARTICLE_PORTAL, px, py, pz, xa, ya, za, params);
         }
     }
 }
