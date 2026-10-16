@@ -72,9 +72,12 @@ C_UNITS = {'vendor/dlmalloc.cpp'}
 EDG_RUNTIME = re.compile(r'^cafe/libsedg/')
 TARGET = ['-target', 'powerpc-eabi', '-mcpu=750', '-O2', '-ffunction-sections', '-fdata-sections',
           '-fno-delete-null-pointer-checks']
+# Boost's configuration does not know the Cafe target and would build shared_ptr without threads; the
+# original's reference counts are atomic (lwarx/stwcx.), so BOOST_SP_ENABLE_THREADS selects boost's PowerPC
+# counter, which emits the same sequence.
 SEMANTIC = ['-DNDEBUG', '-DNDEV=1', '-DCAFE=2', '-DPLATFORM=CAFE', '-DEPPC', '-DBOOST_SP_NO_SYNC',
-            '-DBOOST_ENABLE_ASSERT_HANDLER', '-DBOOST_NO_EXCEPTIONS', '-DESPRESSO', '-D__WIIU__', '-D__WUT__',
-            '-D__BASE__=__FILE_NAME__']
+            '-DBOOST_SP_ENABLE_THREADS', '-DBOOST_ENABLE_ASSERT_HANDLER', '-DBOOST_NO_EXCEPTIONS', '-DESPRESSO',
+            '-D__WIIU__', '-D__WUT__', '-D__BASE__=__FILE_NAME__']
 PNG_SOURCES = ['png.c', 'pngerror.c', 'pngget.c', 'pngmem.c', 'pngpread.c', 'pngread.c', 'pngrio.c', 'pngrtran.c',
                'pngrutil.c', 'pngset.c', 'pngtrans.c', 'pngwio.c', 'pngwtran.c', 'pngwutil.c']
 ZLIB_SOURCES = ['adler32.c', 'compress.c', 'crc32.c', 'deflate.c', 'infback.c', 'inffast.c', 'inflate.c',
