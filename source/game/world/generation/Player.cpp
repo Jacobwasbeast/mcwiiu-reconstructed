@@ -1719,13 +1719,13 @@ _SkinAdjustments Player::getSkinAdjustmentsById(uint32_t id)
         case 0x23a:
         case 0x23d:
         case 0x247:
-            adjustments.mXMLVersion = 2;
-            break;
-        case 500:
-            adjustments.mXMLVersion = 5;
+            adjustments.mAnimFlags = 2;
             break;
         case 0x1fa:
-            adjustments.mXMLVersion = 6;
+            adjustments.mAnimFlags = 6;
+            break;
+        case 500:
+            adjustments.mAnimFlags = 5;
             break;
         }
     }
