@@ -703,16 +703,15 @@ int Level::getEmissionCached(unsigned int* cache, Block* block, const BlockPos& 
 
     if ((entry & 0xFFFF) == key)
     {
-        cache[index] = entry | 0x60000000 | ((unsigned int)(emission & 0xF) << 16)
-                       | ((unsigned int)(blocking & 0xF) << 20);
+        entry = entry | 0x60000000 | ((unsigned int)(emission & 0xF) << 16) | ((unsigned int)(blocking & 0xF) << 20);
     }
     else
     {
-        cache[index] = key | 0x60000000 | ((unsigned int)(emission & 0xF) << 16)
-                       | ((unsigned int)(blocking & 0xF) << 20);
+        entry = key | 0x60000000 | ((unsigned int)(emission & 0xF) << 16) | ((unsigned int)(blocking & 0xF) << 20);
     }
 
-    return emission & 0xF;
+    cache[index] = entry;
+    return (entry >> 16) & 0xF;
 }
 
 int Level::getExpectedLight(unsigned int* cache, const BlockPos& pos, LightLayer::variety layer, bool ignoreEmission)
@@ -4611,19 +4610,9 @@ std::vector<boost::shared_ptr<Entity> >* Level::getEntitiesOfClass(
     bool excludeInvisiblePlayers)
 {
     int minChunkX = Mth::floor((box->mMinX - 2.0) * 0.0625);
-    double upperX = (box->mMaxX + 2.0) * 0.0625;
-    int maxChunkX = static_cast<int>(upperX);
-    if (static_cast<float>(maxChunkX) < static_cast<float>(upperX))
-    {
-        ++maxChunkX;
-    }
+    int maxChunkX = Mth::ceil(static_cast<float>((box->mMaxX + 2.0) * 0.0625));
     int minChunkZ = Mth::floor((box->mMinZ - 2.0) * 0.0625);
-    double upperZ = (box->mMaxZ + 2.0) * 0.0625;
-    int maxChunkZ = static_cast<int>(upperZ);
-    if (static_cast<float>(maxChunkZ) < static_cast<float>(upperZ))
-    {
-        ++maxChunkZ;
-    }
+    int maxChunkZ = Mth::ceil(static_cast<float>((box->mMaxZ + 2.0) * 0.0625));
     std::vector<boost::shared_ptr<Entity> >* result = new std::vector<boost::shared_ptr<Entity> >();
     EnterCriticalSection(&LevelChunk::m_csEntities);
     for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX)
