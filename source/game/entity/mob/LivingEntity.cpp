@@ -1396,13 +1396,13 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
         setSecondsOnFire(5);
     }
 
-    if (mLevel->mIsClientSide)
-    {
-        return false;
-    }
-
     if (freshHurt)
     {
+        if (mLevel->mIsClientSide)
+        {
+            return false;
+        }
+
         if (blocked)
         {
             mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::ATTACK_BLOCKED, 0);
@@ -1449,7 +1449,7 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
         }
         else
         {
-            mHurtDir = (float)((int)(Math::random() * 2.0) * 180);
+            mHurtDir = (float)(int)(Math::random() * 2.0 * 180.0);
         }
     }
 
@@ -1469,11 +1469,11 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
             die(source);
         }
     }
-    else if (freshHurt)
+    else
     {
         const SoundEvent* hurtSound = getHurtSound(source);
 
-        if (hurtSound != NULL)
+        if (freshHurt && hurtSound != NULL)
         {
             playSound(hurtSound, getSoundVolume(), getVoicePitch());
         }
@@ -1925,7 +1925,13 @@ boost::shared_ptr<LivingEntity> LivingEntity::getKillCredit()
     }
 
     boost::shared_ptr<LivingEntity> attacker = mLastHurtByMob.lock();
-    return attacker;
+
+    if (attacker)
+    {
+        return attacker;
+    }
+
+    return boost::shared_ptr<LivingEntity>();
 }
 
 float LivingEntity::getMaxHealth()
@@ -3836,7 +3842,9 @@ void LivingEntity::pushEntities()
         }
     }
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >::iterator itEnd = entities->end();
+
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != itEnd; ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
         entity->push(shared_from_this());
@@ -3929,7 +3937,8 @@ float LivingEntity::getAttackAnim(float partialTicks)
 
 AABB* LivingEntity::getSweptVolume()
 {
-    return AABB::newTemp(mX, mY, mZ, mXOld, mYOld, mZOld);
+    return AABB::newTemp(std::min(mXOld, mX), std::min(mYOld, mY), std::min(mZOld, mZ), std::max(mXOld, mX),
+                         std::max(mYOld, mY), std::max(mZOld, mZ));
 }
 
 bool LivingEntity::isEffectiveAi()
