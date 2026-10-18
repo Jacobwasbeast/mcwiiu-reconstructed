@@ -748,15 +748,13 @@ void ServerPlayer::addWalkers(DataFixerUpper* dataFixer)
     public:
         CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version)
         {
-            const std::wstring rootVehicle(L"RootVehicle");
-            if (tag->contains(rootVehicle, Tag::TAG_COMPOUND))
+            if (tag->contains(L"RootVehicle", Tag::TAG_COMPOUND))
             {
-                CompoundTag* root = tag->getCompound(rootVehicle);
-                const std::wstring entity(L"Entity");
-                if (root->contains(entity, Tag::TAG_COMPOUND))
+                CompoundTag* root = tag->getCompound(L"RootVehicle");
+                if (root->contains(L"Entity", Tag::TAG_COMPOUND))
                 {
-                    root->put(entity,
-                              fixer->update(DataFixTypes::eDataFixTypes_Entity, root->getCompound(entity), version));
+                    root->put(L"Entity",
+                              fixer->update(DataFixTypes::eDataFixTypes_Entity, root->getCompound(L"Entity"), version));
                 }
             }
             return tag;
