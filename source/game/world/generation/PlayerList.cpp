@@ -357,7 +357,6 @@ void PlayerList::validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> pla
     const double maxNetherSpawnY = 125.0;
     const double halfBlock = 0.5;
     const double blockHeight = 1.0;
-    const double respawnYOffset = 0.1;
 
     const bool forced = player->isRespawnForced() != 0;
     ServerLevel* level = mServer->getLevel(player->mDimension);
@@ -419,8 +418,7 @@ void PlayerList::validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> pla
                 mServer->getLevel(player->mDimension), *respawnPos, forced);
             if (validPos != NULL)
             {
-                player->moveTo(validPos->x + halfBlock, validPos->y + respawnYOffset,
-                               validPos->z + halfBlock, 0.0f, 0.0f);
+                player->moveTo(validPos->x + 0.5f, validPos->y + 0.1f, validPos->z + 0.5f, 0.0f, 0.0f);
                 player->setRespawnPosition(new BlockPos(*respawnPos), forced);
             }
             delete validPos;
@@ -1138,7 +1136,7 @@ void PlayerList::toggleDimension(boost::shared_ptr<ServerPlayer> player, int dim
     oldLevel->removeEntityImmediately(player);
     player->mRemoved = false;
     repositionAcrossDimension(player, oldDimension, oldLevel, newLevel);
-    changeDimension(player, newLevel);
+    changeDimension(player, oldLevel);
     player->mGameMode->setLevel(newLevel);
 
     INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();

@@ -5,6 +5,7 @@
 #include "game/entity/mob/Horse.hpp"
 #include "game/entity/projectile/Arrow.hpp"
 #include "game/core/Difficulty.hpp"
+#include "game/core/InteractionResult.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
@@ -3864,9 +3865,9 @@ uint32_t Player::interactOn(boost::shared_ptr<Entity> entity, InteractionHand::E
     {
         boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(entity);
         if (!container)
-            return 1;
+            return InteractionResult::eInteractionResult_Pass;
         openContainer(container);
-        return 0;
+        return InteractionResult::eInteractionResult_Success;
     }
 
     not_null_ptr<ItemInstance> beforeItem = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
@@ -3877,7 +3878,7 @@ uint32_t Player::interactOn(boost::shared_ptr<Entity> entity, InteractionHand::E
         {
             item->setCount(beforeItem->getCount());
         }
-        return 1;
+        return InteractionResult::eInteractionResult_Success;
     }
 
     if (!item->isEmpty() && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
@@ -3892,10 +3893,10 @@ uint32_t Player::interactOn(boost::shared_ptr<Entity> entity, InteractionHand::E
             {
                 setItemInHand(hand, ItemInstance::EMPTY);
             }
-            return 1;
+            return InteractionResult::eInteractionResult_Success;
         }
     }
-    return 0;
+    return InteractionResult::eInteractionResult_Pass;
 }
 
 void Player::attack(boost::shared_ptr<Entity> entity)
