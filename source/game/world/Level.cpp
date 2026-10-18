@@ -110,7 +110,7 @@ Level::~Level()
         delete mPathListener;
     }
 
-    delete[] mLightUpdateQueue;
+    delete mRandom;
 
     if (mDimension != NULL)
     {
@@ -127,7 +127,7 @@ Level::~Level()
         delete mLevelData;
     }
 
-    delete mRandom;
+    delete[] mLightUpdateQueue;
 
     if (mWorldBorder != NULL)
     {
@@ -168,11 +168,9 @@ void Level::_init()
     mOldThunderLevel = 0.0f;
 
     mRandom = new Random();
-    mVillages.reset();
+    mLevelStorage.reset();
     mScheduledUpdatesAreImmediate = false;
     mChunkSource = NULL;
-    mChunkCache = NULL;
-    mChunkCacheSize = 0;
     mDimension = NULL;
 
     mLevelData = NULL;
@@ -2279,12 +2277,22 @@ HitResult* Level::clip(
     boost::unordered_set<Block*, boost::hash<Block*>, std::equal_to<Block*>, std::allocator<Block*> >* alwaysClipBlocks,
     bool clipExtraBlocks)
 {
-    int targetX = Mth::fastFloor(to->x);
-    int targetY = Mth::fastFloor(to->y);
-    int targetZ = Mth::fastFloor(to->z);
-    int currentX = Mth::fastFloor(from->x);
-    int currentY = Mth::fastFloor(from->y);
-    int currentZ = Mth::fastFloor(from->z);
+    if (Mth::isNaN(from->x) || Mth::isNaN(from->y) || Mth::isNaN(from->z))
+    {
+        return NULL;
+    }
+
+    if (Mth::isNaN(to->x) || Mth::isNaN(to->y) || Mth::isNaN(to->z))
+    {
+        return NULL;
+    }
+
+    int targetX = Mth::floor(to->x);
+    int targetY = Mth::floor(to->y);
+    int targetZ = Mth::floor(to->z);
+    int currentX = Mth::floor(from->x);
+    int currentY = Mth::floor(from->y);
+    int currentZ = Mth::floor(from->z);
 
     MutableBlockPos current(currentX, currentY, currentZ);
     MutableBlockPos target(targetX, targetY, targetZ);
@@ -2294,7 +2302,8 @@ HitResult* Level::clip(
     Block* block = state->getBlock();
     Block* extraBlock = extraState->getBlock();
 
-    if (!ignoreBlocksWithoutShape || state->getClipAABB(this, current) != NULL || (testUseBlocks && block->TestUse())
+    if (!ignoreBlocksWithoutShape || state->getClipAABB(this, current) != Block::NULL_AABB
+        || (testUseBlocks && block->TestUse())
         || (alwaysClipBlocks != NULL && alwaysClipBlocks->find(block) != alwaysClipBlocks->end()))
     {
         if (block->mayPick(state, stopOnLiquid))
@@ -2322,6 +2331,12 @@ HitResult* Level::clip(
 
     while (true)
     {
+        if (Mth::isNaN(from->x) || Mth::isNaN(from->y) || Mth::isNaN(from->z))
+        {
+            delete lastUncollidable;
+            return NULL;
+        }
+
         if (currentX == targetX && currentY == targetY && currentZ == targetZ)
         {
             if (returnLastUncollidableBlock)
@@ -2434,9 +2449,9 @@ HitResult* Level::clip(
             from = Vec3::newTemp(from->x + deltaX * partZ, from->y + deltaY * partZ, planeZ);
         }
 
-        currentX = Mth::fastFloor(from->x) - ((side == Direction::EAST) ? 1 : 0);
-        currentY = Mth::fastFloor(from->y) - ((side == Direction::UP) ? 1 : 0);
-        currentZ = Mth::fastFloor(from->z) - ((side == Direction::SOUTH) ? 1 : 0);
+        currentX = Mth::floor(from->x) - ((side == Direction::EAST) ? 1 : 0);
+        currentY = Mth::floor(from->y) - ((side == Direction::UP) ? 1 : 0);
+        currentZ = Mth::floor(from->z) - ((side == Direction::SOUTH) ? 1 : 0);
         current.set(currentX, currentY, currentZ);
 
         state = getBlockState(current);
@@ -2445,7 +2460,7 @@ HitResult* Level::clip(
         extraBlock = extraState->getBlock();
 
         if (!ignoreBlocksWithoutShape || state->getMaterial() == Material::PORTAL
-            || state->getClipAABB(this, current) != NULL || (testUseBlocks && block->TestUse())
+            || state->getClipAABB(this, current) != Block::NULL_AABB || (testUseBlocks && block->TestUse())
             || (alwaysClipBlocks != NULL && alwaysClipBlocks->find(block) != alwaysClipBlocks->end()))
         {
             if (block->mayPick(state, stopOnLiquid))
@@ -3768,7 +3783,10 @@ void Level::addAllPendingBlockEntities(std::vector<boost::shared_ptr<BlockEntity
     EnterCriticalSection(&mBlockEntityMutex);
     if (mProcessingBlockEntities)
     {
-        mPendingBlockEntities.insert(mPendingBlockEntities.end(), entities.begin(), entities.end());
+        for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+        {
+            mPendingBlockEntities.push_back(*it);
+        }
     }
     else
     {
@@ -4079,7 +4097,8 @@ void Level::addEntities(std::vector<boost::shared_ptr<Entity> >* entities)
     mEntities.insert(mEntities.end(), entities->begin(), entities->end());
     bool checkDuplicates = false;
     std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-    while (it != entities->end())
+    std::vector<boost::shared_ptr<Entity> >::iterator itEnd = entities->end();
+    while (it != itEnd)
     {
         entityAdded(*it);
         if ((*it)->GetType() == EntityType::ENDER_DRAGON)
@@ -4559,19 +4578,9 @@ std::vector<boost::shared_ptr<Entity> >* Level::getEntities(boost::shared_ptr<En
     std::vector<boost::shared_ptr<Entity> >* result = entities != NULL ? entities : &mEntityQueryResult;
     result->clear();
     int minChunkX = Mth::floor((box->mMinX - 2.0) * 0.0625);
-    double upperX = (box->mMaxX + 2.0) * 0.0625;
-    int maxChunkX = static_cast<int>(upperX);
-    if (static_cast<float>(maxChunkX) < static_cast<float>(upperX))
-    {
-        ++maxChunkX;
-    }
+    int maxChunkX = Mth::floor((box->mMaxX + 2.0) * 0.0625);
     int minChunkZ = Mth::floor((box->mMinZ - 2.0) * 0.0625);
-    double upperZ = (box->mMaxZ + 2.0) * 0.0625;
-    int maxChunkZ = static_cast<int>(upperZ);
-    if (static_cast<float>(maxChunkZ) < static_cast<float>(upperZ))
-    {
-        ++maxChunkZ;
-    }
+    int maxChunkZ = Mth::floor((box->mMaxZ + 2.0) * 0.0625);
     EnterCriticalSection(&LevelChunk::m_csEntities);
     for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX)
     {
