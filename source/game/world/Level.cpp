@@ -638,22 +638,25 @@ int Level::getBrightnessCached(unsigned int* cache, LightLayer::variety layer, i
         }
 
         int brightness = getBrightness(layer, BlockPos(x, y, z));
-        cache[index] = entry | ((unsigned int)brightness << 24) | 0x10000000;
-        return brightness & 0xF;
+        entry = entry | ((unsigned int)brightness << 24) | 0x10000000;
     }
-
-    if ((entry & 0x80000000) != 0)
+    else
     {
-        setBrightness(layer,
-                      BlockPos((int)((((entry >> 6) & 0x3F0) | (x & 0xF)) << 22) >> 22,
-                               ((entry >> 2) & 0xF0) | (y & 0xF),
-                               (int)((((entry & 0x3F) << 4) | (z & 0xF)) << 22) >> 22),
-                      (entry >> 24) & 0xF, true);
+        if ((entry & 0x80000000) != 0)
+        {
+            setBrightness(layer,
+                          BlockPos((int)((((entry >> 6) & 0x3F0) | (x & 0xF)) << 22) >> 22,
+                                   ((entry >> 2) & 0xF0) | (y & 0xF),
+                                   (int)((((entry & 0x3F) << 4) | (z & 0xF)) << 22) >> 22),
+                          (entry >> 24) & 0xF, true);
+        }
+
+        int brightness = getBrightness(layer, BlockPos(x, y, z));
+        entry = key | 0x10000000 | ((unsigned int)brightness << 24);
     }
 
-    int brightness = getBrightness(layer, BlockPos(x, y, z));
-    cache[index] = key | 0x10000000 | ((unsigned int)brightness << 24);
-    return brightness & 0xF;
+    cache[index] = entry;
+    return (entry >> 24) & 0xF;
 }
 
 bool Level::canSeeSky(const BlockPos& pos)
@@ -866,16 +869,15 @@ int Level::getBlockingCached(unsigned int* cache, LightLayer::variety layer, Blo
 
     if ((entry & 0xFFFF) == key)
     {
-        cache[index] = entry | 0x60000000 | ((unsigned int)(emission & 0xF) << 16)
-                       | ((unsigned int)(blocking & 0xF) << 20);
+        entry = entry | 0x60000000 | ((unsigned int)(emission & 0xF) << 16) | ((unsigned int)(blocking & 0xF) << 20);
     }
     else
     {
-        cache[index] = key | 0x60000000 | ((unsigned int)(emission & 0xF) << 16)
-                       | ((unsigned int)(blocking & 0xF) << 20);
+        entry = key | 0x60000000 | ((unsigned int)(emission & 0xF) << 16) | ((unsigned int)(blocking & 0xF) << 20);
     }
 
-    return blocking & 0xF;
+    cache[index] = entry;
+    return (entry >> 20) & 0xF;
 }
 
 void Level::initCachePartial(unsigned int* cache, int x, int y, int z)
@@ -4138,11 +4140,11 @@ void Level::ensureAdded(boost::shared_ptr<Entity> entity)
     int chunkX = Mth::floor(entity->mX * 0.0625);
     int chunkZ = Mth::floor(entity->mZ * 0.0625);
 
-    for (int x = chunkX - 2; x <= chunkX + 2; ++x)
+    for (int dx = -2; dx <= 2; ++dx)
     {
-        for (int z = chunkZ - 2; z <= chunkZ + 2; ++z)
+        for (int dz = -2; dz <= 2; ++dz)
         {
-            getChunk(x, z);
+            getChunk(chunkX + dx, chunkZ + dz);
         }
     }
 
@@ -4691,19 +4693,20 @@ boost::shared_ptr<Entity> Level::getClosestEntityOfClass(const std::type_info& t
     boost::shared_ptr<Entity> closest;
     double closestDistance = DBL_MAX;
     std::vector<boost::shared_ptr<Entity> >* entities = getEntitiesOfClass(type, box);
-    std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-    while (it != entities->end())
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        if (*it != excluded)
+        boost::shared_ptr<Entity> entity = *it;
+        if (entity == excluded)
         {
-            double distance = excluded->distanceToSqr(*it);
-            if (distance <= closestDistance)
-            {
-                closest = *it;
-                closestDistance = distance;
-            }
+            continue;
         }
-        ++it;
+        double distance = excluded->distanceToSqr(entity);
+        if (distance > closestDistance)
+        {
+            continue;
+        }
+        closest = entity;
+        closestDistance = distance;
     }
     delete entities;
     return closest;
