@@ -89,7 +89,7 @@ template <typename T>
 T _fromString(const std::wstring& value)
 {
     std::wistringstream stream(value);
-    T result = T();
+    T result;
     stream >> result;
     return result;
 }
@@ -106,7 +106,7 @@ template <typename T>
 T _fromHEXString(const std::wstring& value)
 {
     std::wistringstream stream(value);
-    T result = T();
+    T result;
     stream >> std::hex >> result;
     return result;
 }
