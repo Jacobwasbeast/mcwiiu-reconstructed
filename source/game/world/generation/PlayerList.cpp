@@ -114,12 +114,9 @@ bool PlayerList::canReceiveAllPackets(const boost::shared_ptr<ServerPlayer>& pla
 
 bool PlayerList::isOp(boost::shared_ptr<ServerPlayer> player)
 {
-    if (!player || gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) == 0)
-        return false;
-    INetworkPlayer* networkPlayer = player->mConnection != NULL
-        ? player->mConnection->getNetworkPlayer() : NULL;
-    return player->isModerator() ||
-           (networkPlayer != NULL && networkPlayer->IsHost());
+    const bool cheatsEnabled = gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) != 0;
+    INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
+    return cheatsEnabled && (player->isModerator() || (networkPlayer != NULL && networkPlayer->IsHost()));
 }
 
 int PlayerList::getViewDistance()
@@ -333,14 +330,10 @@ void PlayerList::remove(boost::shared_ptr<ServerPlayer> player)
     level->getChunkMap()->remove(player);
     level->getChunkMap()->onPlayerLeave(player);
 
-    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-    while (it != mPlayers.end())
-    {
-        if (*it == player)
-            it = mPlayers.erase(it);
-        else
-            ++it;
-    }
+    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it =
+        std::find(mPlayers.begin(), mPlayers.end(), player);
+    if (it != mPlayers.end())
+        mPlayers.erase(it);
 
     removePlayerFromReceiving(player, true, 0);
     player->mConnection = boost::shared_ptr<ServerGamePacketListenerImpl>();
@@ -695,14 +688,10 @@ void PlayerList::placeNewPlayer(Connection* connection, boost::shared_ptr<Server
         level->getGameTime(), level->getDayTime(), level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT))));
 
     std::vector<MobEffectInstance*>* effects = player->getActiveEffects();
-    if (effects != NULL)
-    {
-        std::vector<MobEffectInstance*>::iterator it;
-        for (it = effects->begin(); it != effects->end(); ++it)
-            connectionListener->send(boost::shared_ptr<Packet>(
-                new ClientboundUpdateMobEffectPacket(player->getId(), *it)));
-        delete effects;
-    }
+    for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
+        connectionListener->send(boost::shared_ptr<Packet>(
+            new ClientboundUpdateMobEffectPacket(player->getId(), *it)));
+    delete effects;
 
     player->initMenu();
     if (playerTag != NULL && playerTag->contains(L"RootVehicle", Tag::TAG_COMPOUND))
@@ -794,14 +783,14 @@ boost::shared_ptr<ServerPlayer> PlayerList::getPlayerForLogin(ServerConnectionLi
                                                               const std::wstring& name,
                                                               PlayerUID uid, PlayerUID oldUid)
 {
-    if (getMaxPlayers() <= static_cast<int>(mPlayers.size()))
+    if (mPlayers.size() >= static_cast<unsigned int>(getMaxPlayers()))
     {
         listener->disconnect(DisconnectPacket::eDisconnectReason_GameFull);
         return boost::shared_ptr<ServerPlayer>();
     }
-    ServerPlayerGameMode* gameMode = new ServerPlayerGameMode(mServer->getLevel(0), mGameMode);
-    boost::shared_ptr<ServerPlayer> newPlayer(
-        new ServerPlayer(mServer, mServer->getLevel(0), name, gameMode));
+    boost::shared_ptr<ServerPlayer> newPlayer(new ServerPlayer(
+        mServer, mServer->getLevel(0), name,
+        new ServerPlayerGameMode(mServer->getLevel(0), gMinecraftServer->mMasterGameMode)));
     newPlayer->setXuid(uid);
     newPlayer->mOnlineXuid = oldUid;
 
@@ -877,7 +866,7 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
 
     boost::shared_ptr<ServerPlayer> replacement(new ServerPlayer(
         mServer, mServer->getLevel(player->mDimension), player->getName(),
-        new ServerPlayerGameMode(mServer->getLevel(player->mDimension), mGameMode)));
+        new ServerPlayerGameMode(mServer->getLevel(player->mDimension), gMinecraftServer->mMasterGameMode)));
     replacement->mConnection = player->mConnection;
     replacement->restoreFrom(player, conqueredEnd);
 
@@ -1217,7 +1206,8 @@ void PlayerList::tick()
         for (unsigned int i = 0; i < mPlayers.size(); ++i)
         {
             boost::shared_ptr<ServerPlayer> player = mPlayers.at(i);
-            if (player && gProfile->AreXUIDSEqual(player->mOnlineXuid, uid))
+            const PlayerUID onlineXuid = player->mOnlineXuid;
+            if (player && gProfile->AreXUIDSEqual(onlineXuid, uid))
             {
                 kicked = player;
                 break;
@@ -1234,12 +1224,12 @@ void PlayerList::tick()
     }
     LeaveCriticalSection(&mPlayersToKickLock);
 
-    for (int dimension = 0; dimension < 3; ++dimension)
+    for (int dimension = 0; dimension < 2; ++dimension)
     {
         for (unsigned int i = 0; i < mReceivingPlayers[dimension].size(); ++i)
         {
             boost::shared_ptr<ServerPlayer> player = mReceivingPlayers[dimension][i];
-            if (player && player->mRemoved)
+            if (player->mRemoved)
             {
                 boost::shared_ptr<ServerPlayer> replacement = findAlivePlayerOnSystem(player);
                 if (replacement)
@@ -1251,17 +1241,12 @@ void PlayerList::tick()
 
 bool PlayerList::isTrackingBlock(const BlockPos& pos, const Dimension* dimension)
 {
-    if (!mServer || !dimension)
-        return false;
-    ServerLevel* level = mServer->getLevel(dimension->getType()->getId());
-    return level != NULL && level->getChunkMap()->isTrackingBlock(pos.x, pos.y, pos.z);
+    return mServer->getLevel(dimension->getType()->getId())->getChunkMap()->isTrackingBlock(pos.x, pos.y, pos.z);
 }
 
 void PlayerList::prioritiseBlockChanges(const BlockPos& pos, int dimension)
 {
-    ServerLevel* level = mServer->getLevel(dimension);
-    if (level != NULL)
-        level->getChunkMap()->prioritiseBlockChanges(pos.x, pos.y, pos.z);
+    mServer->getLevel(dimension)->getChunkMap()->prioritiseBlockChanges(pos.x, pos.y, pos.z);
 }
 
 void PlayerList::broadcastAll(boost::shared_ptr<Packet> packet, int dimension)
@@ -1330,11 +1315,10 @@ void PlayerList::broadcastPlaylistInfo(std::vector<LevelRules::LevelRulesetGroup
         return;
     mGameMode->UpdateRulePlayList(groups);
     mGameMode->GeneratePlaylistSyncInfo();
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-         it != mPlayers.end(); ++it)
+    for (unsigned int i = 0; i < mPlayers.size(); ++i)
     {
-        if (*it)
-            mGameMode->SendPlaylistInfo(*it);
+        boost::shared_ptr<ServerPlayer> player = mPlayers[i];
+        mGameMode->SendPlaylistInfo(player);
     }
 }
 

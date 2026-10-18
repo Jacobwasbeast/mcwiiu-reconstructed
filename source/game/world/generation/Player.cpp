@@ -148,7 +148,7 @@ Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mA
     MemSect(0);
     mContainerMenu = mInventoryMenu;
     BlockPos spawn = level->getSharedSpawnPos();
-    moveTo(spawn.x + 0.5, spawn.y + 1.0, spawn.z + 0.5, 0.0f, 0.0f);
+    moveTo(spawn.x + 0.5, spawn.y + 1, spawn.z + 0.5, 0.0f, 0.0f);
     mField0x7d8 = 1;
     mCustomSkin = 0;
     mCustomCape = 0;
@@ -188,10 +188,8 @@ Player::~Player()
     mRespawnPosition = NULL;
     if (mOwnsCameraController)
         delete mCameraController;
-    if (mField0x7c8.size() != 0)
-        delete[] &mField0x7c8[0];
-    if (mField0x76c.size() != 0)
-        delete[] &mField0x76c[0];
+    delete[] mField0x7c8.items.data;
+    delete[] mField0x76c.items.data;
     delete mField0x738;
 }
 
@@ -1752,21 +1750,21 @@ std::wstring Player::getCapePathFromId(uint32_t id)
 
 uint32_t Player::getCapeIdFromPath(const std::wstring& path)
 {
-    if (path.length() < 14)
-        return 0;
-    bool downloadable = path.compare(0, 3, L"dlc") == 0;
-    std::wstring value = path.substr(7);
-    std::wstring::size_type extension = value.find(L'.');
-    if (extension != std::wstring::npos)
-        value.erase(extension);
-
     uint32_t id = 0;
-    std::wistringstream parser(value);
+    if (path.length() < 14)
+        return id;
+    bool downloadable = path.substr(0, 3).compare(L"dlc") == 0;
+    std::wstring value = path.substr(7, path.length());
+    value = value.substr(0, value.find(L'.'));
+
+    std::wstringstream parser;
     if (downloadable)
-        parser >> std::dec >> id;
+        parser << std::dec << value.c_str();
     else
-        parser >> std::hex >> id;
-    return (id & 0x7fffffff) | (downloadable ? 0x80000000 : 0);
+        parser << std::hex << value.c_str();
+    parser >> id;
+    id = (id & 0x7fffffff) | (downloadable ? 0x80000000 : 0);
+    return id;
 }
 
 NonNullList<not_null_ptr<ItemInstance> > Player::getHandSlots()
@@ -2932,7 +2930,7 @@ void Player::checkMovementStatistiscs(double x, double y, double z)
 
     if (underWater)
     {
-        int distance = static_cast<int>(Math::round(std::sqrt(z * z + x * x + y * y) * 100.0));
+        int distance = static_cast<int>(Math::round(std::sqrt(x * x + y * y + z * z) * 100.0));
         if (distance > 0)
         {
             mDiveDistanceCm += distance;
@@ -3262,7 +3260,8 @@ BlockPos* Player::checkBedValidRespawnPosition(Level* level, const BlockPos& pos
     chunkSource->create((position.x - 3) >> 4, (position.z + 3) >> 4);
     chunkSource->create((position.x + 3) >> 4, (position.z + 3) >> 4);
 
-    if (level->getBlockState(position)->getBlock() == Blocks::bed)
+    Block* block = level->getBlockState(position)->getBlock();
+    if (block == Blocks::bed)
     {
         return BedBlock::findStandUpPosition(level, position, 0);
     }
@@ -3272,7 +3271,7 @@ BlockPos* Player::checkBedValidRespawnPosition(Level* level, const BlockPos& pos
         return NULL;
     }
 
-    bool freeAtFeet = level->getBlockState(position)->getBlock()->isPossibleToRespawnInThis();
+    bool freeAtFeet = block->isPossibleToRespawnInThis();
     bool freeAtHead = level->getBlockState(position.above())->getBlock()->isPossibleToRespawnInThis();
     if (freeAtFeet && freeAtHead)
     {
@@ -3285,7 +3284,7 @@ void Player::fjCheckSuperSonic(double oldX, double oldY, double oldZ, double new
 {
     static double minSpeedSqr = std::pow(2.0, 2);
 
-    double speedSqr = mYd * mYd + mXd * mXd + mZd * mZd;
+    double speedSqr = mXd * mXd + mYd * mYd + mZd * mZd;
     double blocksPerSecond = std::sqrt(speedSqr) * 20.0;
     if (speedSqr <= minSpeedSqr)
     {
@@ -3323,7 +3322,7 @@ void Player::fjCheckSuperSonic(double oldX, double oldY, double oldZ, double new
 
     BlockPos previous(0, -1, 0);
     int speed = (int)blocksPerSecond;
-    for (double t = 0.0; t != 1.0; t = std::min(t + step, 1.0))
+    for (double t = 0.0; t != 1.0; t = std::min(1.0, t + step))
     {
         BlockPos pos((newX - oldX) * t + oldX, (newY - oldY) * t + oldY, (newZ - oldZ) * t + oldZ);
         if (pos != previous)
