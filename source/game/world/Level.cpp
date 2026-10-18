@@ -2773,7 +2773,7 @@ void Level::removeListener(LevelListener* listener)
 
 bool Level::isInsideWorldBorder(boost::shared_ptr<Entity> entity)
 {
-    const AABB* constraints = mDimension->getPlayerConstraints(BlockPos(entity));
+    const AABB* constraints = entity != NULL ? mDimension->getPlayerConstraints(BlockPos(entity)) : NULL;
     double minX = constraints->mMinX;
     double maxX = constraints->mMaxX;
     double minZ = constraints->mMinZ;
@@ -3616,18 +3616,9 @@ std::vector<boost::shared_ptr<Player> >* Level::getPlayers(unsigned long long fl
     while (it != mPlayers.end())
     {
         boost::shared_ptr<Player> player = *it;
-        if (player != NULL)
+        if (eTYPE_DERIVED_FROM(flags, player->GetType()) && predicate->apply(player))
         {
-            unsigned long long type = player->GetType();
-            unsigned long long required = flags;
-            bool matches = (flags & 0x3FULL) == 0
-                               ? ((type & (required >> 32)) == (required >> 32)
-                                  && (type & (required & 0xFFFFFFFFULL)) == (required & 0xFFFFFFFFULL))
-                               : type == required;
-            if (matches && (predicate == NULL || predicate->apply(player)))
-            {
-                result->push_back(player);
-            }
+            result->push_back(player);
         }
         ++it;
     }
@@ -4639,19 +4630,9 @@ bool Level::hasEntitiesOfClass(const std::type_info& type, const AABB* box,
                                const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers)
 {
     int minChunkX = Mth::floor((box->mMinX - 2.0) * 0.0625);
-    double upperX = (box->mMaxX + 2.0) * 0.0625;
-    int maxChunkX = static_cast<int>(upperX);
-    if (static_cast<float>(maxChunkX) < static_cast<float>(upperX))
-    {
-        ++maxChunkX;
-    }
+    int maxChunkX = Mth::ceil(static_cast<float>((box->mMaxX + 2.0) * 0.0625));
     int minChunkZ = Mth::floor((box->mMinZ - 2.0) * 0.0625);
-    double upperZ = (box->mMaxZ + 2.0) * 0.0625;
-    int maxChunkZ = static_cast<int>(upperZ);
-    if (static_cast<float>(maxChunkZ) < static_cast<float>(upperZ))
-    {
-        ++maxChunkZ;
-    }
+    int maxChunkZ = Mth::ceil(static_cast<float>((box->mMaxZ + 2.0) * 0.0625));
     std::vector<boost::shared_ptr<Entity> >* found = new std::vector<boost::shared_ptr<Entity> >();
     EnterCriticalSection(&LevelChunk::m_csEntities);
     for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX)
@@ -5128,7 +5109,7 @@ bool Level::isInLava(Entity* entity, AABB* box)
             for (int z = minZ; z < maxZ; ++z)
             {
                 Block* block = Block::byId(getElement(entity->mTickCache, x, y, z) >> 4);
-                if (block != NULL && block->mMaterial == Material::LAVA)
+                if (block->mMaterial == Material::LAVA)
                 {
                     entity->mLavaCacheResult = true;
                     return true;
