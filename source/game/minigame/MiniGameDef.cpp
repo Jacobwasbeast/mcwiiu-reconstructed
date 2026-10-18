@@ -1201,7 +1201,7 @@ void MiniGameDef::parseHostOptionSettings(const XmlObject& object)
         }
         else if (type < 3)
         {
-            std::vector<std::wstring> splitValues = stringSplit(childObject->asString(), L' ');
+            std::vector<std::wstring> splitValues = stringSplit(childObject->asString().c_str(), L' ');
             for (unsigned int index = 0; index < splitValues.size(); ++index)
             {
                 int value = _fromString<int>(splitValues[index]);
@@ -2763,16 +2763,17 @@ std::wstring MiniGameDef::GetMapSizeOverrideText(int value) const
 
 std::wstring MiniGameDef::getTextureName() const
 {
-    if (mId != eMiniGameId_Lobby)
+    switch (mId)
     {
-        if (mId == eMiniGameId_Battle)
-            return L"BattleModeIcon";
-        if (mId < eMiniGameId_Glide)
-            return L"MG02icon";
-        if (mId == eMiniGameId_Glide)
-            return L"MG03icon";
+    case eMiniGameId_Battle:
+        return L"BattleModeIcon";
+    case eMiniGameId_Tumble:
+        return L"MG02icon";
+    case eMiniGameId_Glide:
+        return L"MG03icon";
+    default:
+        return L"MinecraftBroken";
     }
-    return L"MinecraftBroken";
 }
 std::wstring MiniGameDef::getIcon() const
 {
