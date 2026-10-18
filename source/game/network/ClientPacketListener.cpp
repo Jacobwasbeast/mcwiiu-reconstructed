@@ -2693,7 +2693,8 @@ void ClientPacketListener::handleSetEntityPassengersPacket(boost::shared_ptr<Cli
         boost::shared_ptr<Entity> vehicle = m_level->getEntity(packet->getVehicle());
         if (vehicle != 0)
         {
-            vehicle->hasIndirectPassenger(m_minecraft->mLocalPlayers[m_playerId]);
+            boost::shared_ptr<MultiplayerLocalPlayer> player = m_minecraft->mLocalPlayers[m_playerId];
+            vehicle->hasIndirectPassenger(player);
             vehicle->ejectPassengers();
             arrayWithLength<int> passengers = packet->getPassengers();
             for (unsigned int i = 0; i < passengers.length; ++i)
@@ -2878,12 +2879,8 @@ void ClientPacketListener::handleSetHealth(boost::shared_ptr<ClientboundSetHealt
 
 void ClientPacketListener::handleSetExperience(boost::shared_ptr<ClientboundSetExperiencePacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player != 0)
-        player->setExperienceValues(packet->getExperienceProgress(), packet->getTotalExperience(),
-                                    packet->getExperienceLevel());
+    m_minecraft->mLocalPlayers[m_playerId]->setExperienceValues(
+        packet->getExperienceProgress(), packet->getTotalExperience(), packet->getExperienceLevel());
 }
 
 void ClientPacketListener::handleRespawn(boost::shared_ptr<ClientboundRespawnPacket> packet)
@@ -3195,8 +3192,6 @@ void ClientPacketListener::handleContainerSetData(boost::shared_ptr<ClientboundC
 
 void ClientPacketListener::handleSetEquippedItem(boost::shared_ptr<ClientboundSetEquippedItemPacket> packet)
 {
-    if (packet == 0)
-        return;
     boost::shared_ptr<Entity> entity = getEntity(packet->getEntity());
     if (entity != 0)
         entity->setItemSlot(packet->getSlot(), packet->getItem());
@@ -3568,10 +3563,9 @@ void ClientPacketListener::handleSoundEvent(boost::shared_ptr<ClientboundSoundPa
     }
     else if (soundInstance == ClientboundSoundPacket::eSoundInstances_FollowLocalPlayer)
     {
-        boost::shared_ptr<Player> player = m_minecraft->mLocalPlayers[m_playerId];
-        m_minecraft->mSoundEngine->ConsoleSoundEngine::play(
-            new FollowPlayerSoundInstance(player, packet->getSound(), static_cast<float>(packet->getVolume()),
-                                          static_cast<float>(packet->getPitch()), packet->getLooping()));
+        m_minecraft->mSoundEngine->ConsoleSoundEngine::play(new FollowPlayerSoundInstance(
+            m_minecraft->mLocalPlayers[m_playerId], packet->getSound(), static_cast<float>(packet->getVolume()),
+            static_cast<float>(packet->getPitch()), packet->getLooping()));
     }
     else if (soundInstance == ClientboundSoundPacket::eSoundInstances_FollowEntity)
     {
@@ -3650,15 +3644,13 @@ void ClientPacketListener::handleServerSettingsChanged(boost::shared_ptr<ServerS
 
 void ClientPacketListener::handleTexture(boost::shared_ptr<TexturePacket> packet)
 {
-    if (packet == 0)
-        return;
     if (packet->length == 0)
     {
         unsigned char* data = 0;
         unsigned int length = 0;
         gApp.GetMemFileDetails(packet->textureName, &data, &length);
         if (length != 0)
-            send(boost::shared_ptr<Packet>(new TexturePacket(packet->textureName, data, length)));
+            send(boost::shared_ptr<TexturePacket>(new TexturePacket(packet->textureName, data, length)));
     }
     else
     {
@@ -3961,8 +3953,6 @@ void ClientPacketListener::handleUpdateAttributes(boost::shared_ptr<ClientboundU
 
 void ClientPacketListener::updateTutorialOnGameMode(eTutorial_GameMode gameMode)
 {
-    if (m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
     MultiPlayerGameMode* mode = m_minecraft->mGameModes[m_playerId];
     if (mode != 0 && mode->getTutorial() != 0)
         mode->getTutorial()->onGameModeChange(gameMode);
