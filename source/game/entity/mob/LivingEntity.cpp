@@ -24,7 +24,7 @@
 #include "game/core/ModifiableAttributeMap.hpp"
 #include "game/core/CombatRules.hpp"
 #include "game/core/CombatTracker.hpp"
-#include "game/core/Drowned.hpp"
+#include "game/core/Dolphin.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/DifficultyInstance.hpp"
@@ -965,11 +965,6 @@ void LivingEntity::tickEffects()
                 onEffectRemoved(effectInstance);
                 --effectCount;
                 delete effectInstance;
-
-                if (mActiveEffects.size() != effectCount)
-                {
-                    break;
-                }
             }
         }
         else
@@ -980,6 +975,11 @@ void LivingEntity::tickEffects()
             }
 
             ++it;
+        }
+
+        if (mActiveEffects.size() != effectCount)
+        {
+            break;
         }
     }
 
@@ -1011,7 +1011,7 @@ void LivingEntity::tickEffects()
 
         if (ambient)
         {
-            spawn = spawn && mRandom->nextInt(5) == 0;
+            spawn &= mRandom->nextInt(5) == 0;
         }
 
         if (spawn)
@@ -2798,10 +2798,10 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             {
                 mWaterTravelCheckTicks = 60;
                 AABB* searchBox = mBoundingBox->grow(5.0);
-                std::vector<boost::shared_ptr<Entity> >* drownedEntities = mLevel->getEntitiesOfClass(typeid(Drowned),
-                                                                                                      searchBox);
-                mWaterTravelSpeedFactor = drownedEntities->empty() ? 1.0f : 2.0f;
-                delete drownedEntities;
+                std::vector<boost::shared_ptr<Entity> >* dolphins =
+                    mLevel->getEntitiesOfClass(typeid(Dolphin), searchBox);
+                mWaterTravelSpeedFactor = dolphins->empty() ? 1.0f : 2.0f;
+                delete dolphins;
 
                 moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
                 move(eMoverType_Self, mXd, mYd, mZd, false);
@@ -3484,9 +3484,12 @@ void LivingEntity::tick()
 
     mORun = mRun;
 
+    float run = 0.0f;
+
     if (travelled > 0.0025000002f)
     {
-        travelled = sqrtf(travelled) * 3.0f;
+        run = 1.0f;
+        headTurn = sqrtf(travelled) * 3.0f;
 
         float wanted = (float)atan2(dz, dx) * 57.295776f - 90.0f;
         float diff = Mth::abs(Mth::wrapDegrees(mYRot) - wanted);
@@ -3500,10 +3503,6 @@ void LivingEntity::tick()
             bodyRot = wanted;
         }
     }
-    else
-    {
-        travelled = 0.0f;
-    }
 
     if (mAttackAnim > 0.0f)
     {
@@ -3512,10 +3511,10 @@ void LivingEntity::tick()
 
     if (!mOnGround)
     {
-        travelled = 0.0f;
+        run = 0.0f;
     }
 
-    mRun = mRun + (travelled - mRun) * 0.3f;
+    mRun = mRun + (run - mRun) * 0.3f;
 
     headTurn = tickHeadTurn(bodyRot, headTurn);
 
@@ -4027,7 +4026,9 @@ void LivingEntity::updatingUsingItem()
         return;
     }
 
-    if (getItemInHand(getUsedItemHand()) == mUseItem)
+    not_null_ptr<ItemInstance> itemInHand = getItemInHand(getUsedItemHand());
+
+    if (itemInHand == mUseItem)
     {
         int remaining = getUseItemRemainingTicks();
 
