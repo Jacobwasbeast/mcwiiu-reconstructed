@@ -1322,13 +1322,11 @@ void ClientPacketListener::handleMoveEntitySmall(boost::shared_ptr<MoveEntityPac
 
 void ClientPacketListener::handleRemoveEntity(boost::shared_ptr<ClientboundRemoveEntitiesPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
-        return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0)
-        return;
-    for (unsigned int i = 0; i < packet->entityIds.length; ++i)
-        level->removeEntity(packet->entityIds.data[i]);
+    if (m_level != 0)
+    {
+        for (unsigned int i = 0; i < packet->entityIds.length; ++i)
+            m_level->removeEntity(packet->entityIds.data[i]);
+    }
 }
 
 void ClientPacketListener::handleMovePlayer(boost::shared_ptr<ClientboundPlayerPositionPacket> packet)
@@ -2583,11 +2581,10 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
         gProfile->GetXUID(m_playerId, &offlineUid, false);
 
         const bool friendsOnly = CGameNetworkManager::sInstance.IsFriendsOnlyUGC(m_playerId);
-        boost::shared_ptr<Packet> login(new ClientboundLoginPacket(
+        send(boost::shared_ptr<ClientboundLoginPacket>(new ClientboundLoginPacket(
             m_minecraft->mUser->name, 0x13c, offlineUid, onlineUid, friendsOnly, packet->mSeed,
             GameSettings::GetPlayerSkinId(m_playerId), GameSettings::GetPlayerCapeId(m_playerId),
-            gProfile->IsGuest(m_playerId), false));
-        send(login);
+            gProfile->IsGuest(m_playerId), false)));
 
         if (!CGameNetworkManager::sInstance.IsHost())
             m_minecraft->mProgressRenderer->progressStagePercentage(50);
@@ -3524,6 +3521,7 @@ void ClientPacketListener::handlePlayerInfo(boost::shared_ptr<PlayerInfoPacket> 
             {
                 player->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mPrivileges);
                 displayPrivilegeChanges(player, privileges);
+                break;
             }
         }
     }
@@ -3604,16 +3602,10 @@ void ClientPacketListener::handleBossUpdate(boost::shared_ptr<ClientboundBossEve
 
 void ClientPacketListener::handleItemCooldown(boost::shared_ptr<ClientboundCooldownPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player != 0 && player->getCooldowns() != 0)
-    {
-        if (packet->getDuration() == 0)
-            player->getCooldowns()->removeCooldown(packet->getItem());
-        else
-            player->getCooldowns()->addCooldown(packet->getItem(), packet->getDuration());
-    }
+    if (packet->getDuration() == 0)
+        m_minecraft->mLocalPlayers[m_playerId]->getCooldowns()->removeCooldown(packet->getItem());
+    else
+        m_minecraft->mLocalPlayers[m_playerId]->getCooldowns()->addCooldown(packet->getItem(), packet->getDuration());
 }
 
 void ClientPacketListener::handleCustomPayload(boost::shared_ptr<ClientboundCustomPayloadPacket> packet)
