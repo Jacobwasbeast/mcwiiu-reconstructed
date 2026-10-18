@@ -2150,12 +2150,12 @@ int LevelChunk::setBlocksAndData(arrayWithLength<unsigned char> input, int x, in
         if (y < 128)
             offset += mBlockLight->setDataRegion(input, x, y, z, width, height < 128 ? height : 128, depth, offset);
         if (height > 128)
-            offset += mBlockLightUpper->setDataRegion(input, x, y < 128 ? 0 : y - 128, z, width, height - 128, depth,
-                                                      offset);
+            offset += mBlockLightUpper->setDataRegion(input, x, y - 128 < 0 ? 0 : y - 128, z, width, height - 128,
+                                                      depth, offset);
         if (y < 128)
             offset += mSkyLight->setDataRegion(input, x, y, z, width, height < 128 ? height : 128, depth, offset);
         if (height > 128)
-            offset += mSkyLightUpper->setDataRegion(input, x, y < 128 ? 0 : y - 128, z, width, height - 128, depth,
+            offset += mSkyLightUpper->setDataRegion(input, x, y - 128 < 0 ? 0 : y - 128, z, width, height - 128, depth,
                                                     offset);
         std::memcpy(mBiomes.data, input.data + offset, mBiomes.length);
         offset += mBiomes.length;
