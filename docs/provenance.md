@@ -1,34 +1,40 @@
 # Provenance
 
-## Where this source comes from
+## Where the source comes from
 
-This repository is a matching decompilation of the Wii U build of the
-title: source written by reading the original executable's compiled code
-and refined until it compiles to the same code.
+This repository is a decompilation of the Wii U build of the game. The
+source is derived from the original executable: it is written by reading the
+executable's machine code, then A/B tested against the original function by
+function and refined until each function matches.
 
-The Wii U build ships unstripped. Its symbol table names every function and
-every class, its run-time type information records the class hierarchy, and
-its constructors and string tables record class layouts and the text the
-game uses. That metadata gives the source its shape: names, signatures and
-layouts. The bodies of the functions come from the compiled code itself,
-read as disassembly and as intermediate listings generated from it, which
-show what each function does.
+The Wii U build ships unstripped, which gives the source its shape:
 
-All of the source is written by AI agents (see `overview.md`). Each class
-was reconstructed as a unit by a worker agent reading the evidence for that
-class, including its compiled code, deciding what the original source must
-have looked like, and writing it in the style described in
-`conventions.md`. Each function is then compiled and compared with the
-original (see `measuring.md`), and the difference is worked down until the
-two match. The Xbox 360 TU75 build of the same codebase served as the
-behavioural reference when the Wii U evidence alone left a question open.
+- the symbol table names every function and class;
+- the run-time type information records the class hierarchy;
+- constructors and string tables record class layouts and the text the game
+  uses.
 
-The source is therefore derived from the original executable. What it is
-not is tool output: no file is emitted by a decompiler or produced by
-transforming the binary, and every file is written by hand in the
-project's own style.
+The function bodies come from the machine code itself, read as disassembly
+and as intermediate listings generated from it.
 
-## What this repository deliberately excludes
+Each class family was reconstructed as a unit by a worker agent (see
+`overview.md`). The agent read the evidence for the class, including its
+machine code, worked out what the original source must have looked like,
+and wrote it in the style set out in `conventions.md`. Each function was
+then A/B tested against the original and refined until the two matched.
+Where the Wii U evidence alone left a question open, the Xbox 360 TU75
+build of the same codebase was used as the reference for behaviour.
+
+## Written source, not tool output
+
+No file under `source/` is the output of a decompiler or of any other tool
+run on the binary. Disassembly and listings were read as evidence; the
+source was written from what they showed. The working repository that held
+that evidence and the reconstruction workflow is kept separate. Only the
+resulting source, and the tooling needed to build it from your own copy of
+the game, is published here.
+
+## What this repository excludes
 
 - The game binaries, in any form.
 - Game assets: textures, models, sounds, fonts, UI movies, language files,
@@ -38,41 +44,43 @@ project's own style.
 - Compiler and linker metadata recovered from the build.
 - The tooling that consumed those inputs.
 
-The reconstruction workflow that produced this tree, and the evidence it
-read, lived in a separate working repository. Only the resulting source,
-and the tooling needed to build it from your own copy of the game, was
-carried across. No file under `source/` is the output of a decompiler or
-other tool run on the binary; every file is authored text, written with
-reference to the original's compiled code as described above.
-
-## Rights
+## Licensing
 
 The game, its code and its content belong to their owners. Because the
-reconstructed source is derived from the original executable, the licence
-in `LICENSE` covers what this project contributes of its own - the build,
-packaging and measuring tooling under `tools/` and the project's changes to
-other projects' code - and grants no rights to Minecraft: Wii U Edition
-itself. Build it only from your own copy of the game.
+reconstructed source is derived from the original executable, the GPL in
+`LICENSE` does not cover it. The GPL covers this project's own tooling: the
+build, packaging and measuring tools under `tools/`. Nothing in this
+repository grants any rights to Minecraft: Wii U Edition. Build it only from
+your own copy of the game.
 
-## Third-party code
+Code from other projects keeps its own license, including the altered
+libpng and curl files in `tools/build/overrides/`. The README lists them.
 
-`source/vendor/` reconstructs the internals of libraries the title links
-against, because those libraries were built into the executable with their
-names intact and game code calls into them. They are kept separate from the
-game so that the boundary is explicit. If a maintained upstream for any of
-them becomes available, the reconstructed copy should be replaced by that
-upstream rather than maintained here.
+## Third-party libraries
 
-The Mii face library is the one case where such an upstream exists:
-aboood40091's FFL decompilation. Its code is never copied into this
-repository. It is referenced as the `source/nn/ffl` submodule, a fork of
-that project that carries this reconstruction's changes as separate
-commits, so upstream's authorship stays with upstream.
+`source/vendor/` and the library parts of `source/nn/` reconstruct the
+internals of libraries the game links, because those libraries were built
+into the executable with their names intact and the game calls into them.
+They are kept apart from the game code so the boundary is explicit. If a
+maintained upstream becomes available for any of them, that upstream should
+replace the reconstructed copy.
+
+The Mii face library is the one case where an upstream already exists:
+aboood40091's FFL decompilation. Its code is not copied into this
+repository. It is included as the `source/nn/ffl` submodule, a fork of that
+project with this reconstruction's changes as separate commits, so
+upstream's authorship stays with upstream.
 
 ## Contributions
 
-Contributions must follow the same rule: source written by hand from
-understanding, which may be gained by reading the original's compiled code,
-but never pasted from a decompiler, and never accompanied by binaries or
-assets.
-A pull request that adds anything from the excluded list will be closed.
+Anyone can contribute, with or without AI tools. The rules:
+
+- Write source from your understanding of the original. You may gain that
+  understanding by reading the original's machine code, but never paste
+  decompiler output.
+- If you use AI tools, do not add co-author trailers (such as
+  `Co-Authored-By`) for them. You are the author of what you submit and take
+  full responsibility for it.
+- Follow `conventions.md`.
+- Never include binaries, assets or anything from the excluded list above.
+  A pull request that does will be closed.

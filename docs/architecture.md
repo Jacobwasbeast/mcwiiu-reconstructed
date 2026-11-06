@@ -1,10 +1,10 @@
 # Architecture
 
-The title is one C++ codebase with a platform abstraction in the middle.
-The game core above the seam is platform-pure. The platform backend below
-it is the only code that talks to the Cafe OS, the GX2 graphics API, the
-VPAD/WPAD controllers and Nintendo's online services. The reconstruction
-keeps that shape, and the directory layout is the seam made visible.
+The game is one C++ codebase split by a platform seam. The game core above
+the seam has no platform code. The platform backend below it is the only
+code that talks to the Cafe OS, the GX2 graphics API, the VPAD/WPAD
+controllers and Nintendo's online services. The reconstruction keeps that
+split, and the directory layout follows it.
 
 ## Include root
 
@@ -46,13 +46,12 @@ file under `game/` does.
 
 ## `source/vendor/` - third-party internals
 
-Internals of libraries the title links against and that the build exposes
-with full names: the Miles sound system (`Miles*`), the Bink audio decoder
+Internals of libraries the game links, whose names the build keeps: the Miles sound system (`Miles*`), the Bink audio decoder
 (`BinkA*`), the voice-chat codec (`VCT*`, `TmcHandsFree`), the game's
 dlmalloc heap, stb_truetype, the file-local helpers of the online libraries
 (the `__N_*` files, named after the unit they belonged to) and small
-SDK-facing structures. They are kept apart so that game code is never
-mistaken for library code.
+SDK-facing structures. They are kept apart so game code is never mistaken
+for library code.
 
 ## `source/nn/` - Nintendo library internals
 
@@ -102,7 +101,7 @@ remaining classes the SDK headers provided.
 
 ## The seam rule
 
-A function belongs below the seam if, and only if, its call graph reaches
-an operating-system import. Anything above the seam that calls a platform
-function directly is a defect in the reconstruction and is fixed at the seam
-rather than kept.
+A function belongs below the seam if and only if its call graph reaches an
+operating-system import. Code above the seam that calls a platform function
+directly is a reconstruction bug, and is fixed at the seam rather than
+kept.

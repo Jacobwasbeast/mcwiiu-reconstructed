@@ -1,7 +1,7 @@
 # Source conventions
 
-These are the rules every file under `source/` follows. They exist so the
-tree reads as one codebase rather than as thousands of independent efforts.
+Every file under `source/` follows these rules, so the tree reads as one
+codebase. Contributions must follow them too.
 
 ## Language level
 
@@ -11,10 +11,10 @@ tree reads as one codebase rather than as thousands of independent efforts.
 - boost 1.x for smart pointers, unordered containers and hashing
   (`boost::shared_ptr`, `boost::unordered_map`, `boost::hash`). The standard
   library covers everything else.
-- No compiler extensions and no `#pragma pack`, except where the original
-  used a processor instruction directly (the time base, byte-reversed loads,
-  paired-single maths): that code sits behind a compiler check, with a
-  version for each compiler that does the same thing.
+- No compiler extensions and no `#pragma pack`. The one exception is where
+  the original used a processor instruction directly (the time base,
+  byte-reversed loads, paired-single maths): that code sits behind a
+  compiler check, with an equivalent version for each compiler.
 
 ## One family, two files
 
@@ -46,7 +46,8 @@ tree reads as one codebase rather than as thousands of independent efforts.
   A declaration with no definition is used only where the original build
   itself has none.
 - No machine-generated idioms: no raw memory loads and stores standing in
-  for member access, no hand-built vtables, no decompiler identifiers.
+  for member access, no vtables built manually in code, no decompiler
+  identifiers.
 
 ## Layout and includes
 

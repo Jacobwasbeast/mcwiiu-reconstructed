@@ -1,8 +1,8 @@
 # Building
 
-The build turns this source into `Minecraft.Client.rpx`, the game's Wii U
-executable, and packages it as a title folder that Cemu runs. Three
-commands do the whole job:
+The build compiles this source into `Minecraft.Client.rpx`, the game's Wii U
+executable, and packages it as a title folder Cemu can run. It takes three
+commands:
 
 ```
 python tools/prepare.py --base <base game dump> --update <update v688 dump>
@@ -35,26 +35,27 @@ python tools/package.py --update <update v688 dump>
 
 ## 1. Game files from your own dumps
 
-The build needs two things this repository never contains: the compiled
-GX2 shaders and the game's content. `tools/prepare.py` makes both from your
-dumps:
+The build needs two things this repository never contains: compiled GX2
+shaders and data, and the game's content. `tools/prepare.py` extracts both
+from your dumps:
 
 ```
 python tools/prepare.py --base <base game dump> --update <update v688 dump>
 ```
 
-- `source/platform/wiiu/shaders/` receives the renderer's 31 shader
-  objects, the Mii icon module's two shader files, and the data the game
-  carries that this repository does not: the key the game logs in to
-  Nintendo's online service with, the keys its online monitoring traffic is
-  encrypted with, the Shift-JIS conversion tables and a table of decimal
-  digits used to print floating-point numbers. The original game built the
-  shaders from shader source with Nintendo's tools, and none of this data
-  can be written by hand, so all of it is taken from the update's
-  `Minecraft.Client.rpx`,
-  whose size and SHA-256 are checked first.
-  `tools/gamedata/recipe-v688.json` records where each one lives in that
-  executable. The files that include them do not compile until
+- `source/platform/wiiu/shaders/` receives data extracted from the update's
+  `Minecraft.Client.rpx` (its size and SHA-256 are checked first):
+  - the renderer's 31 shader objects and the Mii icon module's two shader
+    files;
+  - the key the game uses to log in to Nintendo's online service;
+  - the keys its online monitoring traffic is encrypted with;
+  - the Shift-JIS conversion tables;
+  - a table of decimal digits used to print floating-point numbers.
+
+  The original shaders were compiled from shader source with Nintendo's
+  tools, and none of this data can be reconstructed as source, so it is
+  taken from your executable. `tools/gamedata/recipe-v688.json` records where each item lives in the
+  executable. The files that include this data do not compile until
   `prepare.py` has run.
 - `assets/` receives `Common/`, `music/` and `WiiU/`: the base game's
   content with the update's files copied over it, about 1.5 GB.
@@ -184,7 +185,7 @@ uses are kept.
 | RapidXml | 1.13 | `tools/build/third_party/` | Boost Software License 1.0 |
 | newlib | 4.6.0.20260123 with devkitPro's patch | sourceware.org | BSD-style |
 | libstdc++ | GCC 16.1.0 with devkitPro's patch | gnu.org | GPL with the GCC Runtime Library Exception |
-| wut | Jacobwasbeast/wut (`31d8e6a`), headers and export lists | GitHub | zlib License |
+| wut | devkitPro/wut with this project's `legacy-console-recon` changes (`31d8e6a`), headers and export lists | Jacobwasbeast/wut, a fork of devkitPro/wut | zlib License |
 
 RapidXml is kept in the repository because its only distribution point
 refuses scripted downloads. The game's libpng differs from upstream in
